@@ -39,6 +39,9 @@ export const passwordResets = mysqlTable("password_resets", {
 export const DESIL = ["1", "2", "3", "4", "5", "6-10"] as const;
 export const AGAMA = ["Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha", "Khonghucu", "Kepercayaan terhadap Tuhan YME"] as const;
 
+export const TAHAP = ["administrasi", "ujian", "wawancara", "pengusulan", "pengumuman"] as const;
+export type Tahap = (typeof TAHAP)[number];
+
 export const STATUS = ["draft", "terkirim", "diperiksa", "perbaikan", "diterima", "ditolak"] as const;
 export type Status = (typeof STATUS)[number];
 
@@ -49,6 +52,12 @@ export const pendaftaran = mysqlTable(
     userId: ref("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
     gelombang: varchar("gelombang", { length: 100 }).notNull(),
     status: mysqlEnum("status", STATUS).notNull().default("draft"),
+    /** Tahap seleksi saat ini (null selama belum dikirim). */
+    tahap: mysqlEnum("tahap", TAHAP),
+    /** Hasil akhir, diisi saat tahap Pengumuman. */
+    hasil: mysqlEnum("hasil", ["diterima", "ditolak"]),
+    /** Jurusan tempat pendaftar diterima — salah satu dari Jurusan 1/2 pilihannya. */
+    jurusanDiterimaId: varchar("jurusan_diterima_id", { length: 36 }).references(() => jurusan.id),
     catatanAdmin: text("catatan_admin"),
     submittedAt: ts("submitted_at"),
     createdAt: now("created_at"),

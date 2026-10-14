@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { jurusan } from "@/db/schema";
-import { putuskan, ubahJurusanPendaftar, verifikasiBerkas } from "@/app/actions/admin";
-import { ActionForm, Select, SubmitButton, TextArea } from "@/components/form";
+import { perbaruiTahap, ubahJurusanPendaftar, verifikasiBerkas } from "@/app/actions/admin";
+import { ActionForm, Select, SubmitButton } from "@/components/form";
+import { FormTahapFields } from "@/components/form-tahap";
 import { RingkasanData } from "@/components/ringkasan-data";
 import { Riwayat } from "@/components/riwayat";
 import { Alert, Card, Dl, StatusBadge } from "@/components/ui";
@@ -85,7 +86,7 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
       </Link>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{d.diri?.namaLengkap ?? d.user.nama}</h1>
-        <StatusBadge status={d.status} />
+        <StatusBadge status={d.status} tahap={d.tahap} />
       </div>
 
       <div className="grid items-start gap-5 lg:grid-cols-[1fr_22rem]">
@@ -103,54 +104,37 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
         </div>
 
         <div className="space-y-4 lg:sticky lg:top-20">
-          <Card title="Keputusan verifikasi">
+          <Card title="Status seleksi">
             <Dl
               items={[
                 ["Akun", d.user.email],
                 ["Gelombang", d.gelombang],
                 ["Dikirim", tanggal(d.submittedAt)],
+                ...(d.jurusanDiterima ? ([["Diterima di", d.jurusanDiterima]] as [string, string][]) : []),
               ]}
             />
             <div className="mt-4 border-t border-slate-100 pt-4">
               {!dikirim ? (
-                <p className="text-sm text-slate-600">Pendaftar belum mengirim formulir. Keputusan dapat diberikan setelah dikirim.</p>
+                <p className="text-sm text-slate-600">Pendaftar belum mengirim formulir. Status seleksi dapat diatur setelah dikirim.</p>
               ) : (
-                <ActionForm action={putuskan.bind(null, d.id)} className="space-y-3" resetOnSuccess>
-                  <TextArea
-                    name="catatan"
-                    label="Catatan untuk pendaftar"
-                    rows={4}
-                    hint="Wajib untuk Minta Perbaikan dan Tolak. Sebutkan isian/berkas yang bermasalah."
+                <ActionForm action={perbaruiTahap.bind(null, d.id)} className="space-y-3">
+                  <FormTahapFields
+                    tahapSaatIni={d.tahap}
+                    hasilSaatIni={d.hasil}
+                    jurusanDiterimaId={d.jurusanDiterimaId}
+                    catatanSaatIni={d.catatanAdmin}
+                    pilihan={
+                      d.pilihan
+                        ? [
+                            { id: d.pilihan.jurusan1Id, label: `Jurusan 1 — ${d.pilihan.jurusan1}` },
+                            { id: d.pilihan.jurusan2Id, label: `Jurusan 2 — ${d.pilihan.jurusan2}` },
+                          ]
+                        : []
+                    }
                   />
-                  <div className="grid grid-cols-2 gap-2">
-                    {d.status === "terkirim" && (
-                      <div className="col-span-2">
-                        <SubmitButton variant="secondary" className="w-full" name="keputusan" value="diperiksa">
-                          Tandai Sedang Diperiksa
-                        </SubmitButton>
-                      </div>
-                    )}
-                    <SubmitButton variant="success" className="w-full" name="keputusan" value="diterima">
-                      Terima
-                    </SubmitButton>
-                    <SubmitButton variant="danger" className="w-full" name="keputusan" value="ditolak">
-                      Tolak
-                    </SubmitButton>
-                    <div className="col-span-2">
-                      <SubmitButton variant="secondary" className="w-full" name="keputusan" value="perbaikan">
-                        Minta Perbaikan
-                      </SubmitButton>
-                    </div>
-                  </div>
                 </ActionForm>
               )}
             </div>
-            {d.catatanAdmin && (
-              <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm">
-                <p className="text-xs font-semibold text-slate-500">Catatan terakhir</p>
-                <p className="mt-0.5 whitespace-pre-line text-slate-800">{d.catatanAdmin}</p>
-              </div>
-            )}
           </Card>
           <Card title="Pilihan jurusan">
             <p className="mb-3 text-[13px] text-slate-500">

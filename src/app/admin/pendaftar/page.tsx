@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import { inputCls } from "@/lib/styles";
-import { STATUS_LABEL, tanggal } from "@/lib/constants";
+import { TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { cariPendaftar, daftarGelombang, FILTER_STATUS, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
 import type { Status } from "@/db/schema";
 
 export const metadata = { title: "Daftar Pendaftar" };
 
-const LABEL_FILTER: Record<string, string> = { masuk: "Menunggu diperiksa", semua: "Semua status", ...STATUS_LABEL };
+const LABEL_FILTER: Record<string, string> = {
+  masuk: "Dalam proses seleksi",
+  semua: "Semua status",
+  ...Object.fromEntries(Object.entries(TAHAP_LABEL).map(([k, v]) => [`tahap:${k}`, `Tahap: ${v}`])),
+  diterima: "Pengumuman: Diterima",
+  ditolak: "Pengumuman: Tidak diterima",
+  draft: "Belum dikirim",
+};
 
 export default async function DaftarPendaftar({ searchParams }: { searchParams: Promise<FilterPendaftar> }) {
   const f = await searchParams;
@@ -119,7 +126,8 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-slate-600">{tanggal(r.submittedAt)}</td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={r.status as Status} />
+                  <StatusBadge status={r.status as Status} tahap={r.tahap} />
+                  {r.hasil === "diterima" && r.jurusanDiterima && <span className="mt-1 block text-xs text-emerald-800">{r.jurusanDiterima}</span>}
                 </td>
               </tr>
             ))}

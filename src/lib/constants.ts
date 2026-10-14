@@ -1,4 +1,4 @@
-import type { JenisBerkas, Status } from "@/db/schema";
+import type { JenisBerkas, Status, Tahap } from "@/db/schema";
 
 export const TAHUN_LULUS = [2024, 2025, 2026] as const;
 export const MAX_UMUR = 21;
@@ -8,8 +8,8 @@ export const LINK_FORMAT_SURAT = "https://s.id/permohonandirektur-kiptedc";
 
 export const STATUS_LABEL: Record<Status, string> = {
   draft: "Belum dikirim",
-  terkirim: "Menunggu pemeriksaan",
-  diperiksa: "Sedang diperiksa",
+  terkirim: "Seleksi Administrasi",
+  diperiksa: "Dalam proses seleksi",
   perbaikan: "Perlu perbaikan",
   diterima: "Diterima",
   ditolak: "Tidak diterima",
@@ -25,11 +25,32 @@ export const STATUS_TONE: Record<Status, string> = {
   ditolak: "bg-rose-50 text-rose-800 ring-rose-300",
 };
 
-/** Tiga tahapan yang dilihat pendaftar (PRD: belum dikirim → sedang diperiksa → selesai). */
-export function tahapan(status: Status): 0 | 1 | 2 {
-  if (status === "draft" || status === "perbaikan") return 0;
-  if (status === "terkirim" || status === "diperiksa") return 1;
-  return 2;
+export const TAHAP_LABEL: Record<Tahap, string> = {
+  administrasi: "Seleksi Administrasi",
+  ujian: "Seleksi Ujian",
+  wawancara: "Seleksi Wawancara",
+  pengusulan: "Pengusulan",
+  pengumuman: "Pengumuman",
+};
+
+export const TAHAP_DESKRIPSI: Record<Tahap, string> = {
+  administrasi: "Admin memeriksa kelengkapan dan kebenaran data serta berkas Anda.",
+  ujian: "Ujian seleksi calon penerima KIP Kuliah. Ikuti jadwal dan petunjuk pada catatan admin.",
+  wawancara: "Wawancara dan verifikasi kondisi ekonomi keluarga.",
+  pengusulan: "Kampus mengusulkan Anda sebagai calon penerima KIP Kuliah.",
+  pengumuman: "Hasil akhir seleksi diumumkan.",
+};
+
+/** Label proses yang dilihat pendaftar & admin: tahap seleksi bila sedang berjalan, hasil bila sudah diumumkan. */
+export function labelProses(status: Status, tahap: Tahap | null | undefined) {
+  if ((status === "terkirim" || status === "diperiksa") && tahap) return TAHAP_LABEL[tahap];
+  return STATUS_LABEL[status];
+}
+
+/** Label baris riwayat: status lama, tahap seleksi, atau hasil. */
+export function labelRiwayat(s: string) {
+  const khusus: Record<string, string> = { terkirim: "Pendaftaran dikirim", diterima: "Pengumuman: Diterima", ditolak: "Pengumuman: Tidak diterima" };
+  return khusus[s] ?? (TAHAP_LABEL as Record<string, string>)[s] ?? (STATUS_LABEL as Record<string, string>)[s] ?? s;
 }
 
 export const BERKAS_INFO: Record<JenisBerkas, { label: string; tips: string; wajib: boolean }> = {

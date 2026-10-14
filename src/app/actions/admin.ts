@@ -3,43 +3,65 @@
 import { revalidatePath } from "next/cache";
 import { and, count, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
-import { berkas, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi } from "@/db/schema";
+import { berkas, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi, TAHAP, type Tahap } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { TAHAP_LABEL } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 
-const KEPUTUSAN = ["diperiksa", "perbaikan", "diterima", "ditolak"] as const;
-type Keputusan = (typeof KEPUTUSAN)[number];
-
-export async function putuskan(pendaftaranId: string, _: FormState, fd: FormData): Promise<FormState> {
+/**
+ * Admin memindahkan pendaftar ke tahap seleksi berikutnya (atau mana pun), dengan catatan untuk pendaftar.
+ * Tahap Pengumuman wajib disertai hasil; bila diterima, jurusan harus salah satu dari Jurusan 1/2 pilihan pendaftar.
+ */
+export async function perbaruiTahap(pendaftaranId: string, _: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
-  const keputusan = String(fd.get("keputusan")) as Keputusan;
-  const catatan = String(fd.get("catatan") ?? "").trim();
-  if (!KEPUTUSAN.includes(keputusan)) return { message: "Keputusan tidak dikenal." };
-  if ((keputusan === "perbaikan" || keputusan === "ditolak") && catatan.length < 5)
-    return {
-      errors: { catatan: keputusan === "ditolak" ? "Tulis alasan penolakan untuk pendaftar." : "Tulis bagian yang perlu diperbaiki pendaftar." },
-      values: { catatan },
-    };
+  const v = nilaiForm(fd);
+  const tahap = v.tahap as Tahap;
+  const catatan = v.catatan ?? "";
+  const e: Record<string, string> = {};
+  if (!TAHAP.includes(tahap)) e.tahap = "Pilih tahap seleksi.";
+  const pengumuman = tahap === "pengumuman";
+  const hasil = pengumuman ? (v.hasil as "diterima" | "ditolak") : null;
+  if (pengumuman && hasil !== "diterima" && hasil !== "ditolak") e.hasil = "Pilih hasil pengumuman.";
+  if (hasil === "ditolak" && catatan.length < 5) e.catatan = "Tulis alasan atau keterangan untuk pendaftar yang tidak diterima.";
+
   const db = await getDb();
   const [p] = await db.select().from(pendaftaran).where(eq(pendaftaran.id, pendaftaranId));
   if (!p) return { message: "Pendaftaran tidak ditemukan." };
   if (p.status === "draft") return { message: "Pendaftaran ini belum dikirim oleh pendaftar." };
+  const [pil] = await db.select().from(pilihanJurusan).where(eq(pilihanJurusan.pendaftaranId, pendaftaranId));
+  const jurusanDiterimaId = hasil === "diterima" ? v.jurusanDiterimaId : null;
+  if (hasil === "diterima" && (!pil || (jurusanDiterimaId !== pil.jurusan1Id && jurusanDiterimaId !== pil.jurusan2Id)))
+    e.jurusanDiterimaId = "Pilih jurusan yang diterima (Jurusan 1 atau Jurusan 2 pilihan pendaftar).";
+  if (Object.keys(e).length) return { errors: e, values: v };
 
-  const catatanDefault = { diperiksa: "Pendaftaran mulai diperiksa admin", diterima: "Selamat, pendaftaran Anda diterima.", perbaikan: "", ditolak: "" };
+  const [j] = jurusanDiterimaId ? await db.select({ nama: jurusan.nama }).from(jurusan).where(eq(jurusan.id, jurusanDiterimaId)) : [];
+  const catatanBawaan = !pengumuman
+    ? `Masuk tahap ${TAHAP_LABEL[tahap]}`
+    : hasil === "diterima"
+      ? `Selamat, Anda diterima sebagai penerima KIP Kuliah di program studi ${j?.nama ?? "-"}.`
+      : "Pendaftaran tidak diterima.";
   await db.transaction(async (tx) => {
     await tx
       .update(pendaftaran)
       .set({
-        status: keputusan,
-        // "Mulai periksa" tidak menghapus catatan sebelumnya kecuali admin menulis catatan baru.
-        ...(keputusan !== "diperiksa" || catatan ? { catatanAdmin: catatan || null } : {}),
+        tahap,
+        // Status lama tetap dipakai untuk filter & statistik: proses seleksi = "diperiksa", pengumuman = hasilnya.
+        status: hasil ?? "diperiksa",
+        hasil,
+        jurusanDiterimaId,
+        catatanAdmin: catatan || null,
         updatedAt: new Date(),
       })
       .where(eq(pendaftaran.id, pendaftaranId));
-    await tx.insert(riwayatStatus).values({ pendaftaranId, status: keputusan, catatan: catatan || catatanDefault[keputusan], diubahOleh: admin.id });
+    await tx.insert(riwayatStatus).values({
+      pendaftaranId,
+      status: hasil ?? tahap,
+      catatan: catatan ? (hasil === "diterima" ? `${catatanBawaan}\n${catatan}` : catatan) : catatanBawaan,
+      diubahOleh: admin.id,
+    });
   });
   revalidatePath("/", "layout");
-  return { ok: true, message: "Keputusan tersimpan dan sudah terlihat oleh pendaftar." };
+  return { ok: true, message: "Tahap seleksi tersimpan dan sudah terlihat oleh pendaftar." };
 }
 
 export async function verifikasiBerkas(fd: FormData) {
@@ -202,6 +224,11 @@ export async function ubahJurusanPendaftar(pendaftaranId: string, _: FormState, 
   if (!p) return { message: "Pendaftaran tidak ditemukan." };
   const [lama] = await db.select().from(pilihanJurusan).where(eq(pilihanJurusan.pendaftaranId, pendaftaranId));
   if (lama?.jurusan1Id === j1 && lama?.jurusan2Id === j2) return { ok: true, message: "Tidak ada perubahan pilihan jurusan." };
+  if (p.jurusanDiterimaId && p.jurusanDiterimaId !== j1 && p.jurusanDiterimaId !== j2)
+    return {
+      message: `Pendaftar sudah diumumkan diterima di ${nama(p.jurusanDiterimaId)}. Jurusan tersebut harus tetap menjadi Jurusan 1 atau 2, atau ubah dulu status Pengumuman.`,
+      values: { jurusan1Id: j1, jurusan2Id: j2 },
+    };
 
   await db.transaction(async (tx) => {
     await tx

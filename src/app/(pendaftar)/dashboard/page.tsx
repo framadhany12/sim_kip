@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { ProsesSeleksi } from "@/components/proses-seleksi";
 import { Alert, ButtonLink, Card, StatusBadge } from "@/components/ui";
-import { LANGKAH, STATUS_LABEL, tahapan, tanggal } from "@/lib/constants";
+import { LANGKAH, TAHAP_DESKRIPSI, TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { konteksPendaftar } from "@/lib/konteks";
 
 export const metadata = { title: "Beranda" };
@@ -9,7 +10,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { user, d, cek, sudahDikirim } = await konteksPendaftar();
   const { terverifikasi } = await searchParams;
   const berikutnya = LANGKAH.find((l) => !cek.langkah[l.slug]) ?? LANGKAH[LANGKAH.length - 1];
-  const tahap = tahapan(d.status);
+  const diumumkan = d.tahap === "pengumuman" && !!d.hasil;
 
   return (
     <div className="space-y-6">
@@ -24,7 +25,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
-        <Card title="Pendaftaran Anda" action={<StatusBadge status={d.status} />}>
+        <Card title="Pendaftaran Anda" action={<StatusBadge status={d.status} tahap={d.tahap} />}>
           {!sudahDikirim ? (
             <>
               <div className="flex items-baseline justify-between">
@@ -59,13 +60,37 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </>
           ) : (
             <>
-              <p className="text-[15px] text-slate-700">
-                {tahap === 1
-                  ? "Pendaftaran Anda sudah terkirim dan sedang diperiksa oleh admin. Kami akan memperbarui status di sini."
-                  : d.status === "diterima"
-                    ? "Selamat! Pendaftaran KIP Kuliah Anda dinyatakan diterima."
-                    : "Mohon maaf, pendaftaran KIP Kuliah Anda belum dapat diterima."}
-              </p>
+              {diumumkan ? (
+                <p className="text-[15px] text-slate-700">
+                  {d.hasil === "diterima" ? (
+                    <>
+                      Selamat! Anda <b className="text-emerald-800">diterima</b> sebagai penerima KIP Kuliah
+                      {d.jurusanDiterima && (
+                        <>
+                          {" "}
+                          di program studi <b>{d.jurusanDiterima}</b>
+                        </>
+                      )}
+                      .
+                    </>
+                  ) : (
+                    "Mohon maaf, pendaftaran KIP Kuliah Anda belum dapat diterima."
+                  )}
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-500">Tahap saat ini</p>
+                  <p className="text-xl font-bold text-blue-900">{TAHAP_LABEL[d.tahap ?? "administrasi"]}</p>
+                  <p className="mt-1 text-[15px] text-slate-700">{TAHAP_DESKRIPSI[d.tahap ?? "administrasi"]}</p>
+                </>
+              )}
+              {d.catatanAdmin && (
+                <div className="mt-4">
+                  <Alert tone="info" title="Catatan dari admin">
+                    <span className="whitespace-pre-line">{d.catatanAdmin}</span>
+                  </Alert>
+                </div>
+              )}
               <p className="mt-2 text-sm text-slate-500">Dikirim: {tanggal(d.submittedAt)}</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <ButtonLink href="/status">Lihat Detail Status →</ButtonLink>
@@ -77,24 +102,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           )}
         </Card>
 
-        <Card title="Tahapan">
-          <ol className="space-y-3">
-            {["Belum dikirim", "Sedang diperiksa", "Selesai"].map((t, i) => (
-              <li key={t} className="flex items-center gap-3">
-                <span
-                  className={`grid size-7 place-items-center rounded-full text-xs font-bold ${
-                    i < tahap ? "bg-emerald-600 text-white" : i === tahap ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-500"
-                  }`}
-                >
-                  {i < tahap ? "✓" : i + 1}
-                </span>
-                <span className={`text-sm ${i === tahap ? "font-semibold text-slate-900" : "text-slate-600"}`}>
-                  {t}
-                  {i === tahap && <span className="block text-xs font-normal text-slate-500">{STATUS_LABEL[d.status]}</span>}
-                </span>
-              </li>
-            ))}
-          </ol>
+        <Card title="Proses seleksi">
+          <ProsesSeleksi
+            status={d.status}
+            tahap={d.tahap}
+            hasil={d.hasil}
+            jurusanDiterima={d.jurusanDiterima}
+            submittedAt={d.submittedAt}
+            riwayat={d.riwayat}
+            ringkas
+          />
           <p className="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-600">
             Bingung mengisi?{" "}
             <Link href="/bantuan" className="font-semibold text-blue-700 hover:underline">

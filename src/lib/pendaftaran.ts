@@ -100,6 +100,7 @@ export async function muatLengkap(pendaftaranId: string) {
   return {
     ...p.p,
     user: p.user,
+    jurusanDiterima: p.p.jurusanDiterimaId ? namaJurusan(p.p.jurusanDiterimaId) : null,
     diri: diri ? { ...diri.d, kabupaten: diri.kab ?? "-", provinsi: diri.prov ?? "-", kecamatan: diri.kec ?? "-" } : null,
     keluarga: keluarga ?? null,
     ekonomi: ekonomi ?? null,

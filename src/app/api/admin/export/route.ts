@@ -1,10 +1,12 @@
 import { getCurrentUser } from "@/lib/auth";
 import { cariPendaftar } from "@/lib/admin-query";
-import { DESIL_LABEL, STATUS_LABEL, STATUS_NIKAH_LABEL, yaTidak } from "@/lib/constants";
+import { DESIL_LABEL, STATUS_NIKAH_LABEL, labelProses, yaTidak } from "@/lib/constants";
 
 const KOLOM: [string, (r: Awaited<ReturnType<typeof cariPendaftar>>["rows"][number]) => unknown][] = [
   ["Gelombang", (r) => r.gelombang],
-  ["Status", (r) => STATUS_LABEL[r.status]],
+  ["Status / Tahap", (r) => labelProses(r.status, r.tahap)],
+  ["Hasil", (r) => (r.hasil === "diterima" ? "Diterima" : r.hasil === "ditolak" ? "Tidak diterima" : "")],
+  ["Jurusan Diterima", (r) => r.jurusanDiterima],
   ["Tanggal Kirim", (r) => r.submittedAt?.toISOString() ?? ""],
   ["No. Pendaftaran KIP Kuliah", (r) => r.nomorKip],
   ["Desil", (r) => (r.desil ? DESIL_LABEL[r.desil] : "")],

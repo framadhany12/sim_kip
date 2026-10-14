@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { asc, count, eq, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, STATUS, sumberRekomendasi, type Status } from "@/db/schema";
+import { jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, STATUS, sumberRekomendasi, TAHAP, type Status } from "@/db/schema";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
-import { tanggal } from "@/lib/constants";
+import { TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { cariPendaftar, daftarGelombang } from "@/lib/admin-query";
 import { GELOMBANG_AKTIF } from "@/lib/pendaftaran";
 
@@ -40,6 +40,17 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
   const menunggu = n.terkirim + n.diperiksa;
   const selesai = n.diterima + n.ditolak;
   const masuk = menunggu + selesai + n.perbaikan;
+  const perTahapRows = await db
+    .select({ tahap: pendaftaran.tahap, n: count() })
+    .from(pendaftaran)
+    .where(and(filterG, inArray(pendaftaran.status, ["terkirim", "diperiksa"])))
+    .groupBy(pendaftaran.tahap);
+  const perTahap = TAHAP.filter((t) => t !== "pengumuman").map((t) => ({
+    key: t,
+    nama: TAHAP_LABEL[t],
+    // Data lama tanpa tahap dihitung sebagai Seleksi Administrasi.
+    n: perTahapRows.filter((r) => (r.tahap ?? "administrasi") === t).reduce((a, r) => a + r.n, 0),
+  }));
 
   const statJurusan = async (kolom: typeof pilihanJurusan.jurusan1Id | typeof pilihanJurusan.jurusan2Id) =>
     db
@@ -92,9 +103,9 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           ["Pendaftaran masuk", masuk, "Sudah dikirim pendaftar", "/admin/pendaftar?status=semua"],
-          ["Menunggu diperiksa", menunggu, "Perlu tindakan admin", "/admin/pendaftar?status=masuk"],
-          ["Perlu perbaikan", n.perbaikan, "Menunggu pendaftar", "/admin/pendaftar?status=perbaikan"],
-          ["Akun belum kirim", n.draft, "Masih mengisi formulir", "/admin/pendaftar?status=draft"],
+          ["Dalam proses seleksi", menunggu, "Belum diumumkan", "/admin/pendaftar?status=masuk"],
+          ["Diterima", n.diterima, `${n.ditolak} tidak diterima`, "/admin/pendaftar?status=diterima"],
+          ["Akun belum kirim", n.draft + n.perbaikan, "Masih mengisi formulir", "/admin/pendaftar?status=draft"],
         ].map(([label, val, sub, href]) => (
           <Link key={label as string} href={href as string} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-blue-300">
             <p className="text-sm text-slate-600">{label}</p>
@@ -104,23 +115,30 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
         ))}
       </div>
 
-      <Card title="Progres verifikasi">
+      <Card title="Progres seleksi">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-sm text-slate-600">
-            <b className="text-slate-900">{selesai}</b> dari {masuk} pendaftaran sudah diputuskan ({n.diterima} diterima, {n.ditolak} tidak diterima)
+            <b className="text-slate-900">{selesai}</b> dari {masuk} pendaftaran sudah diumumkan ({n.diterima} diterima, {n.ditolak} tidak diterima)
           </p>
           <p className="text-2xl font-bold tabular-nums">{pct}%</p>
         </div>
-        <div className="mt-2 flex h-3 gap-0.5 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${pct}% selesai diverifikasi`}>
+        <div className="mt-2 flex h-3 gap-0.5 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${pct}% sudah diumumkan`}>
           <span className="h-full bg-blue-700" style={{ width: `${pct}%` }} />
         </div>
-        <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
-          {STATUS.filter((s) => s !== "draft").map((s) => (
-            <li key={s} className="flex items-center gap-2">
-              <StatusBadge status={s} /> <span className="font-semibold tabular-nums">{n[s]}</span>
+        <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {[
+            ...perTahap.map((t, i) => ({ label: `${i + 1}. ${t.nama}`, n: t.n, href: `/admin/pendaftar?status=tahap:${t.key}`, sub: "sedang di tahap ini" })),
+            { label: "5. Pengumuman", n: selesai, href: "/admin/pendaftar?status=semua", sub: `${n.diterima} diterima · ${n.ditolak} tidak` },
+          ].map((t) => (
+            <li key={t.label}>
+              <Link href={t.href} className="block rounded-lg border border-slate-200 px-3 py-2.5 hover:border-blue-300">
+                <span className="block text-xs font-medium text-slate-600">{t.label}</span>
+                <span className="block text-2xl font-bold tabular-nums text-slate-900">{t.n}</span>
+                <span className="block text-xs text-slate-500">{t.sub}</span>
+              </Link>
             </li>
           ))}
-        </ul>
+        </ol>
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
@@ -136,7 +154,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
           )}
         </Card>
         <Card
-          title="Menunggu diperiksa"
+          title="Dalam proses seleksi"
           action={
             <Link href="/admin/pendaftar" className="text-sm font-medium text-blue-700 hover:underline">
               Semua →
@@ -154,7 +172,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
                       <span className="block truncate text-sm font-medium text-slate-900">{r.nama ?? r.akunNama}</span>
                       <span className="block text-xs text-slate-500">{tanggal(r.submittedAt)}</span>
                     </span>
-                    <StatusBadge status={r.status} />
+                    <StatusBadge status={r.status} tahap={r.tahap} />
                   </Link>
                 </li>
               ))}

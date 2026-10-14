@@ -247,7 +247,11 @@ export async function kirimPendaftaran(_: FormState, fd: FormData): Promise<Form
   const db = await getDb();
   const kirimUlang = p.status === "perbaikan";
   await db.transaction(async (tx) => {
-    await tx.update(pendaftaran).set({ status: "terkirim", submittedAt: new Date(), updatedAt: new Date() }).where(eq(pendaftaran.id, p.id));
+    // Setelah dikirim, pendaftar otomatis masuk tahap pertama: Seleksi Administrasi.
+    await tx
+      .update(pendaftaran)
+      .set({ status: "terkirim", tahap: "administrasi", hasil: null, jurusanDiterimaId: null, submittedAt: new Date(), updatedAt: new Date() })
+      .where(eq(pendaftaran.id, p.id));
     await tx.insert(riwayatStatus).values({
       pendaftaranId: p.id,
       status: "terkirim",

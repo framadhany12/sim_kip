@@ -13,6 +13,8 @@ import {
   rekomendasi,
   STATUS,
   sumberRekomendasi,
+  TAHAP,
+  type Tahap,
   users,
   wilayahKabupaten,
   wilayahKecamatan,
@@ -21,13 +23,20 @@ import {
 
 export type FilterPendaftar = { q?: string; status?: string; gelombang?: string; dari?: string; sampai?: string; page?: string };
 
-/** "masuk" = menunggu diperiksa (default di daftar admin); "semua" = tanpa filter status. */
-export const FILTER_STATUS = ["masuk", "semua", ...STATUS] as const;
+/**
+ * Pilihan filter daftar admin. "masuk" = semua yang sedang dalam proses seleksi (bawaan), "semua" = tanpa filter,
+ * "tahap:<x>" = sedang di tahap tertentu, "diterima"/"ditolak" = hasil pengumuman, "draft" = belum mengirim.
+ */
+export const FILTER_STATUS = ["masuk", "semua", ...TAHAP.filter((t) => t !== "pengumuman").map((t) => `tahap:${t}` as const), "diterima", "ditolak", "draft"] as const;
+
+const DALAM_PROSES: Status[] = ["terkirim", "diperiksa"];
 
 function kondisi(f: FilterPendaftar): SQL | undefined {
   const c: (SQL | undefined)[] = [];
   const st = f.status || "masuk";
-  if (st === "masuk") c.push(inArray(pendaftaran.status, ["terkirim", "diperiksa"]));
+  if (st === "masuk") c.push(inArray(pendaftaran.status, DALAM_PROSES));
+  else if (st.startsWith("tahap:") && (TAHAP as readonly string[]).includes(st.slice(6)))
+    c.push(and(inArray(pendaftaran.status, DALAM_PROSES), eq(pendaftaran.tahap, st.slice(6) as Tahap)));
   else if ((STATUS as readonly string[]).includes(st)) c.push(eq(pendaftaran.status, st as Status));
   if (f.gelombang) c.push(eq(pendaftaran.gelombang, f.gelombang));
   // Rentang tanggal memakai tanggal kirim; pendaftaran yang belum dikirim memakai tanggal dibuat.
@@ -44,12 +53,16 @@ function kondisi(f: FilterPendaftar): SQL | undefined {
 
 const j1 = alias(jurusan, "j1");
 const j2 = alias(jurusan, "j2");
+const jDiterima = alias(jurusan, "j_diterima");
 
 function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
   return db
     .select({
       id: pendaftaran.id,
       status: pendaftaran.status,
+      tahap: pendaftaran.tahap,
+      hasil: pendaftaran.hasil,
+      jurusanDiterima: jDiterima.nama,
       gelombang: pendaftaran.gelombang,
       submittedAt: pendaftaran.submittedAt,
       createdAt: pendaftaran.createdAt,
@@ -105,6 +118,7 @@ function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
     .leftJoin(pilihanJurusan, eq(pilihanJurusan.pendaftaranId, pendaftaran.id))
     .leftJoin(j1, eq(j1.id, pilihanJurusan.jurusan1Id))
     .leftJoin(j2, eq(j2.id, pilihanJurusan.jurusan2Id))
+    .leftJoin(jDiterima, eq(jDiterima.id, pendaftaran.jurusanDiterimaId))
     .leftJoin(rekomendasi, eq(rekomendasi.pendaftaranId, pendaftaran.id))
     .leftJoin(sumberRekomendasi, eq(sumberRekomendasi.id, rekomendasi.sumberId));
 }

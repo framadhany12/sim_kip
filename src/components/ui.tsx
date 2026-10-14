@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { Status } from "@/db/schema";
-import { STATUS_LABEL, STATUS_TONE } from "@/lib/constants";
+import type { Status, Tahap } from "@/db/schema";
+import { STATUS_LABEL, STATUS_TONE, labelProses } from "@/lib/constants";
 
 export function Card({ children, className = "", title, action }: { children: ReactNode; className?: string; title?: ReactNode; action?: ReactNode }) {
   return (
@@ -51,10 +51,11 @@ export function Alert({ tone = "info", title, children }: { tone?: keyof typeof 
   );
 }
 
-export function StatusBadge({ status }: { status: Status }) {
+/** Lencana status; bila `tahap` diberikan dan seleksi sedang berjalan, yang tampil adalah nama tahapnya. */
+export function StatusBadge({ status, tahap }: { status: Status; tahap?: Tahap | null }) {
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${STATUS_TONE[status]}`}>
-      {STATUS_LABEL[status]}
+      {tahap !== undefined ? labelProses(status, tahap) : STATUS_LABEL[status]}
     </span>
   );
 }
