@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Tahap } from "@/db/schema";
-import { ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
+import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
 import { FieldShell, SubmitButton, TextArea, inputCls, useFormErrors } from "./form";
 
 /** Isian admin: dropdown tahap seleksi, hasil & jurusan diterima (khusus Pengumuman), dan catatan untuk pendaftar. */
@@ -28,7 +28,12 @@ export function FormTahapFields({
   const [hasilAdm, setHasilAdm] = useState(
     state?.values?.hasilAdministrasi ?? (tahapSaatIni === "administrasi" && hasilSaatIni === "ditolak" ? "tidak_lolos" : ""),
   );
-  const [alasan, setAlasan] = useState(state?.values?.alasan ?? alasanSaatIni ?? ALASAN_TIDAK_LOLOS_ADMINISTRASI[0]);
+  const [alasan, setAlasan] = useState(
+    state?.values?.alasan ?? (tahapSaatIni === "administrasi" ? alasanSaatIni : null) ?? ALASAN_TIDAK_LOLOS_ADMINISTRASI[0],
+  );
+  const [alasanPengumuman, setAlasanPengumuman] = useState(
+    state?.values?.alasanPengumuman ?? (tahapSaatIni === "pengumuman" ? alasanSaatIni : null) ?? "",
+  );
   const [jurusan, setJurusan] = useState(state?.values?.jurusanDiterimaId ?? jurusanDiterimaId ?? pilihan[0]?.id ?? "");
 
   return (
@@ -110,6 +115,25 @@ export function FormTahapFields({
               </select>
             </FieldShell>
           )}
+          {hasil === "ditolak" && (
+            <FieldShell name="alasanPengumuman" label="Alasan tidak diterima" required error={err?.alasanPengumuman}>
+              <select
+                id="alasanPengumuman"
+                name="alasanPengumuman"
+                value={alasanPengumuman}
+                onChange={(e) => setAlasanPengumuman(e.target.value)}
+                aria-invalid={!!err?.alasanPengumuman}
+                className={inputCls}
+              >
+                <option value="">— Pilih alasan —</option>
+                {ALASAN_TIDAK_DITERIMA.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </FieldShell>
+          )}
         </div>
       )}
 
@@ -118,8 +142,7 @@ export function FormTahapFields({
         label="Catatan untuk pendaftar"
         rows={4}
         defaultValue={catatanSaatIni}
-        required={hasil === "ditolak" && tahap === "pengumuman"}
-        hint="Catatan yang berlaku saat ini ditampilkan di sini; ubah atau kosongkan sesuai tahap. Tampil di halaman Status pendaftar, mis. jadwal ujian/wawancara atau data yang perlu diperbaiki. Wajib bila tidak diterima."
+        hint="Catatan yang berlaku saat ini ditampilkan di sini; ubah atau kosongkan sesuai tahap. Tampil di halaman Status pendaftar, mis. jadwal ujian/wawancara atau data yang perlu diperbaiki."
       />
       <SubmitButton className="w-full">Simpan Status</SubmitButton>
     </>

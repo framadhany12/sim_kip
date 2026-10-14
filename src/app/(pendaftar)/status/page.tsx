@@ -55,6 +55,11 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
           <p className={`mt-1 text-2xl font-bold ${d.hasil === "diterima" ? "text-emerald-800" : "text-rose-800"}`}>
             {d.hasil === "diterima" ? "✓ DITERIMA sebagai penerima KIP Kuliah" : "✕ TIDAK DITERIMA"}
           </p>
+          {d.hasil === "ditolak" && d.alasanDitolak && (
+            <p className="mt-2 text-[15px] text-slate-800">
+              Alasan: <b>{d.alasanDitolak}</b>
+            </p>
+          )}
           {d.hasil === "diterima" && d.jurusanDiterima && (
             <p className="mt-2 text-[15px] text-slate-800">
               Program studi: <b className="text-lg text-emerald-900">{d.jurusanDiterima}</b>

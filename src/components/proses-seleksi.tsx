@@ -6,7 +6,7 @@ type Props = {
   tahap: Tahap | null;
   hasil: "diterima" | "ditolak" | null;
   jurusanDiterima: string | null;
-  /** Alasan tidak lolos bila gugur sebelum Pengumuman. */
+  /** Alasan tidak lolos (gugur sebelum Pengumuman) atau tidak diterima (Pengumuman). */
   alasan?: string | null;
   submittedAt: Date | null;
   riwayat: { status: string; createdAt: Date }[];
@@ -76,7 +76,7 @@ export function ProsesSeleksi({ status, tahap, hasil, jurusanDiterima, alasan, s
                     ? `Diterima${jurusanDiterima ? ` — ${jurusanDiterima}` : ""}`
                     : gugur
                       ? `Tidak lolos${alasan ? ` — ${alasan}` : ""}`
-                      : "Tidak diterima"}
+                      : `Tidak diterima${alasan ? ` — ${alasan}` : ""}`}
                 </p>
               )}
               {l.ket && !now && <p className="mt-0.5 text-xs text-slate-500">{l.ket}</p>}

@@ -80,7 +80,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       {d.alasanDitolak && <> dengan alasan: {d.alasanDitolak}</>}.
                     </>
                   ) : (
-                    "Mohon maaf, pendaftaran KIP Kuliah Anda belum dapat diterima."
+                    <>
+                      Mohon maaf, pendaftaran KIP Kuliah Anda <b className="text-rose-800">tidak diterima</b>
+                      {d.alasanDitolak && <> dengan alasan: {d.alasanDitolak}</>}.
+                    </>
                   )}
                 </p>
               ) : (

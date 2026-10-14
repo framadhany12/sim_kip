@@ -111,7 +111,9 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
                 ["Gelombang", d.gelombang],
                 ["Dikirim", tanggal(d.submittedAt)],
                 ...(d.jurusanDiterima ? ([["Diterima di", d.jurusanDiterima]] as [string, string][]) : []),
-                ...(d.alasanDitolak ? ([["Alasan tidak lolos", d.alasanDitolak]] as [string, string][]) : []),
+                ...(d.alasanDitolak
+                  ? ([[d.tahap === "pengumuman" ? "Alasan tidak diterima" : "Alasan tidak lolos", d.alasanDitolak]] as [string, string][])
+                  : []),
               ]}
             />
             <div className="mt-4 border-t border-slate-100 pt-4">

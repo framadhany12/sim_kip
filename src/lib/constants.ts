@@ -43,6 +43,8 @@ export const TAHAP_DESKRIPSI: Record<Tahap, string> = {
 
 /** Pilihan alasan bila pendaftar dinyatakan tidak lolos Seleksi Administrasi. Tambahkan alasan lain di sini. */
 export const ALASAN_TIDAK_LOLOS_ADMINISTRASI = ["Administrasi Tidak Lolos"] as const;
+/** Pilihan alasan bila hasil Pengumuman adalah tidak diterima. */
+export const ALASAN_TIDAK_DITERIMA = ["Ditetapkan PTS Lain", "Gagal Pengusulan", "Dicalonkan PTS Lain"] as const;
 
 /** Label proses yang dilihat pendaftar & admin: tahap seleksi bila sedang berjalan, hasil bila sudah diputuskan. */
 export function labelProses(status: Status, tahap: Tahap | null | undefined) {

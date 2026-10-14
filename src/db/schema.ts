@@ -58,7 +58,7 @@ export const pendaftaran = mysqlTable(
     hasil: mysqlEnum("hasil", ["diterima", "ditolak"]),
     /** Jurusan tempat pendaftar diterima — salah satu dari Jurusan 1/2 pilihannya. */
     jurusanDiterimaId: varchar("jurusan_diterima_id", { length: 36 }).references(() => jurusan.id),
-    /** Alasan tidak lolos (mis. dari Seleksi Administrasi). */
+    /** Alasan tidak lolos Seleksi Administrasi atau tidak diterima saat Pengumuman. */
     alasanDitolak: varchar("alasan_ditolak", { length: 150 }),
     catatanAdmin: text("catatan_admin"),
     submittedAt: ts("submitted_at"),
