@@ -15,11 +15,13 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.44.5",
+    "lucide-react": "^1.48.0",
     "mysql2": "^3.14.3",
     "next": "15.5.4",
     "nodemailer": "^6.10.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "recharts": "^3.10.1",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
