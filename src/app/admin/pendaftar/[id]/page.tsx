@@ -87,6 +87,9 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{d.diri?.namaLengkap ?? d.user.nama}</h1>
         <StatusBadge status={d.status} tahap={d.tahap} />
+        <Link href={`/admin/mahasiswa/${d.userId}`} className="text-sm font-semibold text-blue-700 hover:underline">
+          Edit data & kata sandi →
+        </Link>
       </div>
 
       <div className="grid items-start gap-5 lg:grid-cols-[1fr_22rem]">

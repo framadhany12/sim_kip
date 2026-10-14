@@ -57,6 +57,13 @@ export async function pendaftaranSaya(userId: string) {
   return pendaftaranSaya(userId);
 }
 
+/** Pendaftaran terbaru milik seorang user (tanpa membuat baru); null bila akunnya belum pernah membuka formulir. */
+export async function cariPendaftaranUser(userId: string) {
+  const db = await getDb();
+  const [p] = await db.select().from(pendaftaran).where(eq(pendaftaran.userId, userId)).orderBy(desc(pendaftaran.createdAt)).limit(1);
+  return p ?? null;
+}
+
 /** True bila error berasal dari pelanggaran UNIQUE/PRIMARY KEY di MySQL. */
 export function isDuplikat(e: unknown): boolean {
   const err = e as { code?: string; cause?: { code?: string } };

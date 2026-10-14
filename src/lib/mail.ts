@@ -96,7 +96,7 @@ export async function kirimEmailResetSandi(to: string, nama: string, url: string
 }
 
 /** Pemberitahuan keamanan setelah kata sandi diganti lewat tautan lupa kata sandi. */
-export async function kirimEmailSandiDiubah(to: string, nama: string, urlLupa: string) {
+export async function kirimEmailSandiDiubah(to: string, nama: string, urlLupa: string, olehAdmin = false) {
   const waktu = new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date());
   await kirim(
     to,
@@ -104,7 +104,9 @@ export async function kirimEmailSandiDiubah(to: string, nama: string, urlLupa: s
     templat({
       judul: "Kata sandi berhasil diubah",
       sapaan: `Halo ${nama},`,
-      isi: `Kata sandi akun pendaftaran KIP Kuliah Anda telah diubah pada ${waktu} WIB. Semua perangkat yang sebelumnya masuk telah dikeluarkan.`,
+      isi: olehAdmin
+        ? `Kata sandi akun pendaftaran KIP Kuliah Anda diatur ulang oleh admin pada ${waktu} WIB. Admin akan menyampaikan kata sandi baru kepada Anda. Semua perangkat yang sebelumnya masuk telah dikeluarkan. Setelah masuk, sebaiknya ganti kata sandi di menu Akun Saya.`
+        : `Kata sandi akun pendaftaran KIP Kuliah Anda telah diubah pada ${waktu} WIB. Semua perangkat yang sebelumnya masuk telah dikeluarkan.`,
       tombol: "Bukan Saya — Atur Ulang Lagi",
       url: urlLupa,
       catatan: "Bila Anda yang mengubahnya, abaikan email ini. Bila bukan, segera atur ulang kata sandi dan hubungi admin.",
