@@ -39,7 +39,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
         <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]">
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
-              Cari nama, NIK, sekolah, atau email/HP
+              Cari nama, NIK, No. Pendaftaran KIP, sekolah, atau email
             </label>
             <input id="q" name="q" defaultValue={f.q} placeholder="mis. Siti / 3277… / SMKN 1" className={inputCls} />
           </div>
@@ -88,10 +88,11 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
       </Card>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[760px] text-left text-sm">
+        <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold">Pendaftar</th>
+              <th className="px-4 py-3 font-semibold">No. Pendaftaran KIP</th>
               <th className="px-4 py-3 font-semibold">NIK</th>
               <th className="px-4 py-3 font-semibold">Asal sekolah</th>
               <th className="px-4 py-3 font-semibold">Jurusan 1 / 2</th>
@@ -102,7 +103,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
                   Tidak ada pendaftar yang cocok dengan filter.
                 </td>
               </tr>
@@ -115,6 +116,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
                   </Link>
                   <span className="block text-xs text-slate-500">{r.kabupaten ?? r.akunLogin}</span>
                 </td>
+                <td className="px-4 py-3 font-mono text-[13px] text-slate-700">{r.nomorKip ?? <span className="font-sans text-amber-700">Belum diisi</span>}</td>
                 <td className="px-4 py-3 font-mono text-[13px] text-slate-700">{r.nik ?? "-"}</td>
                 <td className="px-4 py-3 text-slate-700">
                   {r.sekolah ?? "-"}

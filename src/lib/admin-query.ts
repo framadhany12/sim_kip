@@ -46,7 +46,16 @@ function kondisi(f: FilterPendaftar): SQL | undefined {
   const q = f.q?.trim();
   if (q) {
     const pola = `%${q}%`;
-    c.push(or(like(dataDiri.namaLengkap, pola), like(users.nama, pola), like(dataDiri.nik, pola), like(dataSekolah.namaSekolah, pola), like(users.email, pola)));
+    c.push(
+      or(
+        like(dataDiri.namaLengkap, pola),
+        like(users.nama, pola),
+        like(dataDiri.nik, pola),
+        like(dataDiri.nomorPendaftaranKip, pola),
+        like(dataSekolah.namaSekolah, pola),
+        like(users.email, pola),
+      ),
+    );
   }
   return and(...c);
 }
