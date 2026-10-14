@@ -12,7 +12,7 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Data Diri" };
 
 export default async function DataDiriPage({ searchParams }: { searchParams: Promise<{ peringatan?: string }> }) {
-  const { d, sudahDikirim } = await konteksPendaftar();
+  const { d, sudahDikirim, terkunci } = await konteksPendaftar();
   const { peringatan } = await searchParams;
   const db = await getDb();
   const kabupaten = await db.select().from(wilayahKabupaten).orderBy(asc(wilayahKabupaten.nama));
@@ -29,9 +29,9 @@ export default async function DataDiriPage({ searchParams }: { searchParams: Pro
           </Alert>
         </div>
       )}
-      <ActionForm action={simpanDataDiri}>
+      <ActionForm action={simpanDataDiri} disabled={terkunci}>
         <FieldsDataDiri x={x} namaBawaan={d.user.nama} kabupaten={kabupaten} />
-        <FormFooter sudahDikirim={sudahDikirim} />
+        <FormFooter sudahDikirim={sudahDikirim} terkunci={terkunci} />
       </ActionForm>
     </Card>
   );

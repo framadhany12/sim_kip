@@ -8,13 +8,13 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Ringkasan & Kirim" };
 
 export default async function RingkasanPage({ searchParams }: { searchParams: Promise<{ diperbarui?: string }> }) {
-  const { d, cek, sudahDikirim } = await konteksPendaftar();
+  const { d, cek, sudahDikirim, terkunci } = await konteksPendaftar();
   const { diperbarui } = await searchParams;
   return (
     <div className="space-y-6">
       {diperbarui && <Alert tone="success">Perubahan tersimpan dan tercatat di riwayat pendaftaran.</Alert>}
-      <p className="text-[15px] text-slate-600">Periksa kembali semua isian di bawah. Tekan <b>Ubah</b> pada bagian yang ingin diperbaiki.</p>
-      <RingkasanData d={d} editLinks />
+      <p className="text-[15px] text-slate-600">Periksa kembali semua isian di bawah.{terkunci ? " Data sudah terkunci dan tidak dapat diubah lagi." : <> Tekan <b>Ubah</b> pada bagian yang ingin diperbaiki.</>}</p>
+      <RingkasanData d={d} editLinks={!terkunci} />
       {!sudahDikirim && (
         <Card title="7. Kirim Pendaftaran">
           {cek.siapKirim ? (

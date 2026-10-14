@@ -9,7 +9,7 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Status Pendaftaran" };
 
 export default async function StatusPage({ searchParams }: { searchParams: Promise<{ terkirim?: string }> }) {
-  const { d, sudahDikirim } = await konteksPendaftar();
+  const { d, sudahDikirim, terkunci } = await konteksPendaftar();
   const { terkirim } = await searchParams;
   const diumumkan = d.tahap === "pengumuman" && !!d.hasil;
   const gugur = d.hasil === "ditolak" && !!d.tahap && d.tahap !== "pengumuman";
@@ -94,6 +94,14 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
                 <Link href="/formulir/ringkasan" className="font-semibold text-blue-700 hover:underline">
                   Lengkapi & kirim →
                 </Link>
+              </p>
+            ) : terkunci ? (
+              <p className="mt-4 text-sm text-slate-600">
+                🔒 Data terkunci sejak tahap Pengusulan. Hubungi admin lewat{" "}
+                <Link href="/bantuan" className="font-semibold text-blue-700 hover:underline">
+                  halaman Bantuan
+                </Link>{" "}
+                bila ada data yang salah.
               </p>
             ) : (
               <p className="mt-4 text-sm text-slate-600">

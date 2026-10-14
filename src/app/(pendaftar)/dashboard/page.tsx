@@ -8,7 +8,7 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Beranda" };
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ terverifikasi?: string }> }) {
-  const { user, d, cek, sudahDikirim } = await konteksPendaftar();
+  const { user, d, cek, sudahDikirim, terkunci } = await konteksPendaftar();
   const { terverifikasi } = await searchParams;
   const berikutnya = LANGKAH.find((l) => !cek.langkah[l.slug]) ?? LANGKAH[LANGKAH.length - 1];
   // Pengumuman, atau gugur di tahap sebelumnya (mis. tidak lolos Seleksi Administrasi).
@@ -107,7 +107,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <div className="mt-5 grid gap-2 sm:flex sm:flex-wrap">
                 <ButtonLink href="/status">Lihat Detail Status →</ButtonLink>
                 <ButtonLink href="/formulir/ringkasan" variant="secondary">
-                  Perbarui Data & Berkas
+                  {terkunci ? "Lihat Data Pendaftaran" : "Perbarui Data & Berkas"}
                 </ButtonLink>
               </div>
             </>

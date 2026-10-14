@@ -17,6 +17,7 @@ import {
   wilayahKabupaten,
   wilayahKecamatan,
   type Status,
+  type Tahap,
 } from "@/db/schema";
 import { BERKAS_INFO, BERKAS_UTAMA, LANGKAH, MAX_UMUR, TAHUN_LULUS, hitungUmur, type SlugLangkah } from "./constants";
 
@@ -28,6 +29,14 @@ export const GELOMBANG_AKTIF = "-";
  * yang dikunci setelah dikirim hanya pilihan Jurusan 1 & 2 (setelah itu hanya admin yang boleh mengubah).
  */
 export const belumDikirim = (status: Status) => status === "draft" || status === "perbaikan";
+
+/**
+ * Terkunci: sejak tahap Pengusulan (dan Pengumuman) pendaftar tidak dapat mengubah data apa pun, termasuk berkas.
+ * Perubahan setelah itu hanya bisa dilakukan admin (Master Mahasiswa).
+ */
+export const terkunci = (p: { tahap: Tahap | null }) => p.tahap === "pengusulan" || p.tahap === "pengumuman";
+
+export const PESAN_TERKUNCI = "Data pendaftaran Anda sudah terkunci karena memasuki tahap Pengusulan, sehingga tidak dapat diubah lagi. Hubungi admin lewat menu Bantuan bila ada data yang salah.";
 
 /** Catat di riwayat bila pendaftar mengubah data setelah pendaftaran dikirim, agar admin mengetahuinya. */
 export async function catatPerubahanPendaftar(p: { id: string; status: Status }, userId: string, bagian: string) {

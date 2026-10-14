@@ -8,12 +8,12 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Data Keluarga" };
 
 export default async function KeluargaPage() {
-  const { d, sudahDikirim } = await konteksPendaftar();
+  const { d, sudahDikirim, terkunci } = await konteksPendaftar();
   return (
     <Card title="2. Data Keluarga">
-      <ActionForm action={simpanKeluarga}>
+      <ActionForm action={simpanKeluarga} disabled={terkunci}>
         <FieldsKeluarga x={d.keluarga} />
-        <FormFooter back="/formulir/data-diri" sudahDikirim={sudahDikirim} />
+        <FormFooter back="/formulir/data-diri" sudahDikirim={sudahDikirim} terkunci={terkunci} />
       </ActionForm>
     </Card>
   );

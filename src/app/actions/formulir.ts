@@ -8,7 +8,7 @@ import { pendaftaran, riwayatStatus } from "@/db/schema";
 import { requirePendaftar } from "@/lib/auth";
 import { MAX_UMUR } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
-import { belumDikirim, catatPerubahanPendaftar, cekKelengkapan, muatLengkap, pendaftaranSaya } from "@/lib/pendaftaran";
+import { belumDikirim, catatPerubahanPendaftar, cekKelengkapan, muatLengkap, PESAN_TERKUNCI, pendaftaranSaya, terkunci } from "@/lib/pendaftaran";
 import {
   simpanDataDiriCore,
   simpanEkonomiCore,
@@ -20,7 +20,7 @@ import {
 async function ambilDraft() {
   const user = await requirePendaftar();
   const p = await pendaftaranSaya(user.id);
-  return { user, p, sudahDikirim: !belumDikirim(p.status) };
+  return { user, p, sudahDikirim: !belumDikirim(p.status), terkunci: terkunci(p) };
 }
 
 type Draft = Awaited<ReturnType<typeof ambilDraft>>;
@@ -38,6 +38,7 @@ const lanjut = (draft: Draft, berikutnya: string) => redirect(draft.sudahDikirim
 
 export async function simpanDataDiri(_: FormState, fd: FormData): Promise<FormState> {
   const draft = await ambilDraft();
+  if (draft.terkunci) return { message: PESAN_TERKUNCI };
   const hasil = await simpanDataDiriCore(draft.p.id, nilaiForm(fd));
   if (hasil.galat) return hasil.galat;
   await sentuh(draft, "Data Diri");
@@ -48,6 +49,7 @@ export async function simpanDataDiri(_: FormState, fd: FormData): Promise<FormSt
 
 export async function simpanKeluarga(_: FormState, fd: FormData): Promise<FormState> {
   const draft = await ambilDraft();
+  if (draft.terkunci) return { message: PESAN_TERKUNCI };
   const hasil = await simpanKeluargaCore(draft.p.id, nilaiForm(fd));
   if (hasil.galat) return hasil.galat;
   await sentuh(draft, "Data Keluarga");
@@ -56,6 +58,7 @@ export async function simpanKeluarga(_: FormState, fd: FormData): Promise<FormSt
 
 export async function simpanEkonomi(_: FormState, fd: FormData): Promise<FormState> {
   const draft = await ambilDraft();
+  if (draft.terkunci) return { message: PESAN_TERKUNCI };
   const hasil = await simpanEkonomiCore(draft.p.id, nilaiForm(fd));
   if (hasil.galat) return hasil.galat;
   await sentuh(draft, "Data Ekonomi Orang Tua");
@@ -64,6 +67,7 @@ export async function simpanEkonomi(_: FormState, fd: FormData): Promise<FormSta
 
 export async function simpanSekolah(_: FormState, fd: FormData): Promise<FormState> {
   const draft = await ambilDraft();
+  if (draft.terkunci) return { message: PESAN_TERKUNCI };
   // Setelah dikirim, pilihan jurusan hanya bisa diubah admin: isian jurusan dari pendaftar diabaikan.
   const hasil = await simpanSekolahCore(draft.p.id, nilaiForm(fd), draft.sudahDikirim ? "tidak" : "pendaftar");
   if (hasil.galat) return hasil.galat;
@@ -73,6 +77,7 @@ export async function simpanSekolah(_: FormState, fd: FormData): Promise<FormSta
 
 export async function simpanRekomendasi(_: FormState, fd: FormData): Promise<FormState> {
   const draft = await ambilDraft();
+  if (draft.terkunci) return { message: PESAN_TERKUNCI };
   const hasil = await simpanRekomendasiCore(draft.p.id, nilaiForm(fd));
   if (hasil.galat) return hasil.galat;
   await sentuh(draft, "Data Rekomendasi");
@@ -80,7 +85,8 @@ export async function simpanRekomendasi(_: FormState, fd: FormData): Promise<For
 }
 
 export async function kirimPendaftaran(_: FormState, fd: FormData): Promise<FormState> {
-  const { user, p, sudahDikirim } = await ambilDraft();
+  const { user, p, sudahDikirim, terkunci: kunci } = await ambilDraft();
+  if (kunci) return { message: PESAN_TERKUNCI };
   if (sudahDikirim) return { message: "Pendaftaran sudah dikirim. Perubahan data tersimpan otomatis saat Anda menekan Simpan di tiap bagian." };
   if (fd.get("setuju") !== "on") return { errors: { setuju: "Centang pernyataan ini sebelum mengirim." } };
   const lengkap = await muatLengkap(p.id);

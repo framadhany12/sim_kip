@@ -5,7 +5,7 @@ import { getDb } from "@/db";
 import { berkas, ekonomiOrangtua, JENIS_BERKAS, pendaftaran, type JenisBerkas } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { BERKAS_INFO, MAX_FILE_MB } from "@/lib/constants";
-import { catatPerubahanPendaftar, pendaftaranSaya } from "@/lib/pendaftaran";
+import { catatPerubahanPendaftar, PESAN_TERKUNCI, pendaftaranSaya, terkunci } from "@/lib/pendaftaran";
 import { deteksiTipe, hapusBerkas, simpanBerkas } from "@/lib/storage";
 
 const err = (message: string, status = 400) => NextResponse.json({ error: message }, { status });
@@ -17,6 +17,8 @@ async function konteks(jenisRaw: unknown) {
   if (!JENIS_BERKAS.includes(jenis)) return { error: err("Jenis berkas tidak dikenal.") };
   // Berkas tetap bisa diganti setelah pendaftaran dikirim; perubahannya dicatat di riwayat.
   const p = await pendaftaranSaya(user.id);
+  // Sejak tahap Pengusulan berkas tidak dapat diunggah, diganti, atau dihapus oleh pendaftar.
+  if (terkunci(p)) return { error: err(PESAN_TERKUNCI, 403) };
   return { p, jenis, userId: user.id };
 }
 
