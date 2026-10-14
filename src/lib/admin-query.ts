@@ -20,7 +20,7 @@ import {
   wilayahKecamatan,
   type Status,
 } from "@/db/schema";
-import { daftarPilihanTahun, parseTahun, rentangTahun } from "./tahun";
+import { daftarPilihanTahun, parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
 
 export type FilterPendaftar = { q?: string; status?: string; tahun?: string; dari?: string; sampai?: string; page?: string };
 
@@ -40,7 +40,9 @@ function kondisi(f: FilterPendaftar): SQL | undefined {
     c.push(and(inArray(pendaftaran.status, DALAM_PROSES), eq(pendaftaran.tahap, st.slice(6) as Tahap)));
   else if ((STATUS as readonly string[]).includes(st)) c.push(eq(pendaftaran.status, st as Status));
   // Tahun & rentang tanggal memakai waktu pendaftar mendaftar (akun dibuat), zona WIB.
-  const tahun = parseTahun(f.tahun);
+  // Tanpa pilihan tahun, bawaannya TAHUN BERJALAN: begitu masuk 1 Januari, data tahun lalu otomatis tidak tampil
+  // (tetap bisa dibuka lewat filter tahun atau "Semua tahun").
+  const tahun = f.tahun === SEMUA_TAHUN ? undefined : (parseTahun(f.tahun) ?? tahunBerjalan());
   if (tahun) {
     const { dari, sampai } = rentangTahun(tahun);
     c.push(gte(users.createdAt, dari), lt(users.createdAt, sampai));

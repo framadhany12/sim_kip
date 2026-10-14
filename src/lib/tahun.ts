@@ -6,6 +6,15 @@ const WIB_MS = 7 * 3600e3;
 /** Tahun kalender saat ini menurut WIB. */
 export const tahunSekarang = () => new Date(Date.now() + WIB_MS).getUTCFullYear();
 
+/**
+ * Tahun yang ditampilkan secara bawaan di panel admin: tahun berjalan menurut jam server (WIB), minimal 2026.
+ * Dihitung setiap permintaan, jadi pada 1 Januari 00.00 WIB tampilan awal otomatis berpindah ke tahun baru.
+ */
+export const tahunBerjalan = () => Math.max(TAHUN_MULAI, tahunSekarang());
+
+/** Nilai filter untuk menampilkan semua tahun. */
+export const SEMUA_TAHUN = "semua";
+
 /** Tahun dari teks (mis. query string); undefined bila kosong/"semua"/tidak valid (< 2026). */
 export function parseTahun(s?: string | null): number | undefined {
   const n = Number(s);

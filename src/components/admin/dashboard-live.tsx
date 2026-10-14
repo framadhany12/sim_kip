@@ -55,6 +55,12 @@ function useStatistikLive(awal: Statistik) {
   const [jeda, setJeda] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const urut = useRef(0);
+  // Selama admin tidak memilih tahun lain, dashboard mengikuti tahun berjalan (berpindah sendiri saat tahun berganti).
+  const ikutiTahunBerjalan = useRef(awal.tahun === awal.tahunBerjalan);
+  const ubahTahun = useCallback((t: string) => {
+    ikutiTahunBerjalan.current = false; // pilihan manual admin dihormati
+    setTahun(t);
+  }, []);
 
   const muat = useCallback(async () => {
     const saya = ++urut.current; // hanya respons terbaru yang dipakai (filter bisa berganti saat permintaan berjalan)
@@ -62,10 +68,11 @@ function useStatistikLive(awal: Statistik) {
     try {
       const r = await fetch(`/api/admin/statistik?tahun=${encodeURIComponent(tahun)}&hari=${hari}`, { cache: "no-store" });
       if (!r.ok) throw new Error(String(r.status));
-      const json = await r.json();
+      const json = (await r.json()) as Statistik;
       if (saya !== urut.current) return;
       setData(json);
       setGalat(false);
+      if (ikutiTahunBerjalan.current && String(json.tahunBerjalan) !== tahun) setTahun(String(json.tahunBerjalan)); // pergantian tahun
     } catch {
       if (saya === urut.current) setGalat(true);
     } finally {
@@ -96,7 +103,7 @@ function useStatistikLive(awal: Statistik) {
     return () => clearInterval(id);
   }, []);
 
-  return { data, tahun, setTahun, hari, setHari, memuat, galat, jeda, now, muat };
+  return { data, tahun, ubahTahun, hari, setHari, memuat, galat, jeda, now, muat };
 }
 
 /** Menandai sebentar nilai yang baru berubah (agar pembaruan langsung terlihat). */
@@ -258,11 +265,11 @@ function BarHorizontal({ data, seri, tinggiBaris = 34 }: { data: Record<string, 
 }
 
 // ---- Dashboard -------------------------------------------------------------------------------------
-export function DashboardLive({ awal, daftarTahun }: { awal: Statistik; daftarTahun: number[] }) {
-  const { data, tahun, setTahun, hari, setHari, memuat, galat, jeda, now, muat } = useStatistikLive(awal);
+export function DashboardLive({ awal }: { awal: Statistik }) {
+  const { data, tahun, ubahTahun, hari, setHari, memuat, galat, jeda, now, muat } = useStatistikLive(awal);
   const k = data.kpi;
   // Tautan kartu membawa tahun yang dipilih agar daftar yang terbuka sama dengan angkanya.
-  const thn = tahun === "semua" ? "" : `&tahun=${tahun}`;
+  const thn = `&tahun=${tahun}`; // "semua" harus eksplisit: tanpa parameter, daftar bawaannya tahun berjalan
 
   const komposisi = useMemo(
     () =>
@@ -318,11 +325,11 @@ export function DashboardLive({ awal, daftarTahun }: { awal: Statistik; daftarTa
         <select
           id="f-tahun"
           value={tahun}
-          onChange={(e) => setTahun(e.target.value)}
+          onChange={(e) => ubahTahun(e.target.value)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none"
         >
           <option value="semua">Semua tahun</option>
-          {daftarTahun.map((t) => (
+          {data.pilihanTahun.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>

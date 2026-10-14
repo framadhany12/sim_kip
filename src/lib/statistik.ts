@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { dataDiri, pendaftaran, pertanyaan, riwayatStatus, TAHAP, users, type Status } from "@/db/schema";
 import { DESIL_LABEL, TAHAP_LABEL, labelRiwayat } from "./constants";
-import { rentangTahun } from "./tahun";
+import { daftarPilihanTahun, rentangTahun, tahunBerjalan } from "./tahun";
 
 /** Ringkasan untuk dashboard admin. Semua nilai JSON-safe (tanggal sebagai string ISO). */
 export type Statistik = Awaited<ReturnType<typeof ambilStatistik>>;
@@ -30,6 +30,8 @@ export async function ambilStatistik({ tahun, hari = 30 }: { tahun?: number; har
   const rentang = tahun ? rentangTahun(tahun) : null;
   const akhirTren = tahun && `${tahun}-12-31` < hariIni ? `${tahun}-12-31` : hariIni;
   const awalRentang = new Date(Date.parse(`${akhirTren}T00:00:00+07:00`) - (hari - 1) * 864e5);
+  const [{ tahunData }] = await rows<{ tahunData: number | null }>(sql`
+    select max(year(date_add(created_at, interval 7 hour))) tahunData from users where role = 'pendaftar'`);
   const pemilikTahun = rentang
     ? sql`select u2.id from users u2 where u2.created_at >= ${rentang.dari} and u2.created_at < ${rentang.sampai}`
     : null;
@@ -146,6 +148,9 @@ export async function ambilStatistik({ tahun, hari = 30 }: { tahun?: number; har
   return {
     diperbarui: sekarang.toISOString(),
     tahun: tahun ?? null,
+    // Dikirim bersama data agar dashboard yang sedang terbuka tahu saat tahun berganti dan pilihan tahun baru muncul.
+    tahunBerjalan: tahunBerjalan(),
+    pilihanTahun: daftarPilihanTahun(tahunData ? Number(tahunData) : null),
     hari,
     kpi,
     tren,

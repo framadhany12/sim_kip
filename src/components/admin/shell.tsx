@@ -148,7 +148,9 @@ export function AdminShell({
               placeholder="Cari nama, NIK, No. KIP, sekolah…"
               className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20"
             />
+            {/* Pencarian cepat mencari di semua status dan semua tahun. */}
             <input type="hidden" name="status" value="semua" />
+            <input type="hidden" name="tahun" value="semua" />
           </form>
           <div className="ml-auto flex items-center gap-3">
             <div className="hidden text-right leading-tight sm:block">

@@ -4,6 +4,7 @@ import { inputCls } from "@/lib/styles";
 import { TAHAP_LABEL } from "@/lib/constants";
 import { cariPendaftar, daftarTahun, FILTER_STATUS, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
 import type { Status } from "@/db/schema";
+import { parseTahun, SEMUA_TAHUN, tahunBerjalan } from "@/lib/tahun";
 
 export const metadata = { title: "Daftar Pendaftar" };
 
@@ -23,12 +24,19 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
     new URLSearchParams(Object.entries({ ...f, ...extra }).filter(([, v]) => v !== undefined && v !== "") as [string, string][]).toString();
   const halaman = Math.max(1, Math.ceil(total / PER_HALAMAN));
   const exportQs = qs({ page: "" });
+  const tahunTampil = f.tahun === SEMUA_TAHUN ? "semua tahun" : `tahun ${parseTahun(f.tahun) ?? tahunBerjalan()}`;
+  const otomatis = !f.tahun || parseTahun(f.tahun) === undefined ? f.tahun !== SEMUA_TAHUN : false;
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Daftar Pendaftar"
-        desc="Cari, saring, buka detail untuk memverifikasi, dan unduh data untuk laporan."
+        desc={
+          <>
+            Menampilkan pendaftar yang mendaftar pada <b className="text-slate-800">{tahunTampil}</b>
+            {otomatis && " (tahun berjalan, berpindah otomatis setiap 1 Januari)"}. Ubah lewat filter <i>Tahun daftar</i>.
+          </>
+        }
         action={
           <a href={`/api/admin/export?${exportQs}`} className="rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">
             ⬇ Unduh CSV ({total})
@@ -59,8 +67,8 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
             <label htmlFor="tahun" className="mb-1 block text-xs font-medium text-slate-600">
               Tahun daftar
             </label>
-            <select id="tahun" name="tahun" defaultValue={f.tahun ?? ""} className={inputCls}>
-              <option value="">Semua tahun</option>
+            <select id="tahun" name="tahun" defaultValue={f.tahun ?? String(tahunBerjalan())} className={inputCls}>
+              <option value={SEMUA_TAHUN}>Semua tahun</option>
               {pilihanTahun.map((t) => (
                 <option key={t} value={t}>
                   {t}
