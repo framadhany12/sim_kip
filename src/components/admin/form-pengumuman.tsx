@@ -20,6 +20,9 @@ export type BarisKandidat = {
 };
 
 const TEKS: Record<JenisPengumuman, { tombol: string; ringkas: string; gaya: string }> = {
+  lolos_administrasi: { tombol: "Umumkan Lolos Administrasi", ringkas: "diumumkan LOLOS Seleksi Administrasi dan masuk Seleksi Ujian", gaya: "primary" },
+  selesai_ujian: { tombol: "Tandai Sudah Ujian", ringkas: "ditandai SUDAH MENGIKUTI Seleksi Ujian dan masuk Seleksi Wawancara", gaya: "primary" },
+  selesai_wawancara: { tombol: "Tandai Sudah Wawancara", ringkas: "ditandai SUDAH MENGIKUTI Seleksi Wawancara dan masuk tahap Pengusulan", gaya: "primary" },
   administrasi: { tombol: "Umumkan Tidak Lolos", ringkas: "dinyatakan TIDAK LOLOS Seleksi Administrasi", gaya: "danger" },
   ditolak: { tombol: "Umumkan Tidak Diterima", ringkas: "diumumkan TIDAK DITERIMA", gaya: "danger" },
   diterima: { tombol: "Umumkan Diterima", ringkas: "diumumkan DITERIMA", gaya: "success" },
@@ -60,6 +63,7 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
     });
   const semua = (on: boolean) => setDipilih(on ? new Set(rows.map((r) => r.id)) : new Set());
   const t = TEKS[jenis];
+  const butuhAlasan = opsiAlasan.length > 0;
 
   return (
     <>
@@ -139,7 +143,7 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
 
       {rows.length > 0 && (
         <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-2">
-          {jenis !== "diterima" && (
+          {butuhAlasan && (
             <FieldShell
               name="alasan"
               label={jenis === "administrasi" ? "Alasan tidak lolos" : "Alasan tidak diterima"}
@@ -162,8 +166,8 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
             label="Catatan untuk pendaftar"
             rows={3}
             defaultValue={state?.values?.catatan}
-            hint={jenis === "diterima" ? "Mis. petunjuk daftar ulang. Tampil di halaman Status semua yang diumumkan." : "Opsional. Tampil di halaman Status semua yang diumumkan."}
-            className={jenis === "diterima" ? "md:col-span-2" : ""}
+            hint={jenis === "diterima" ? "Mis. petunjuk daftar ulang. Tampil di halaman Status semua yang diumumkan." : jenis === "lolos_administrasi" ? "Mis. jadwal dan lokasi ujian. Tampil di halaman Status semua yang diumumkan." : jenis === "selesai_ujian" ? "Mis. jadwal wawancara. Tampil di halaman Status semua yang diumumkan." : "Opsional. Tampil di halaman Status semua yang diumumkan."}
+            className={butuhAlasan ? "" : "md:col-span-2"}
           />
         </div>
       )}
@@ -175,14 +179,14 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-slate-600" aria-live="polite">
                 <b className="text-slate-900">{terpilih.length}</b> dari {rows.length} pendaftar dipilih
-                {jenis !== "administrasi" && terpilih.length > 0 && tanpaJurusan.length > 0 && <span className="ml-2 text-rose-700">· {tanpaJurusan.length} belum punya pilihan jurusan</span>}
+                {terpilih.length > 0 && tanpaJurusan.length > 0 && <span className="ml-2 text-rose-700">· {tanpaJurusan.length} belum punya pilihan jurusan</span>}
               </p>
               <button
                 type="button"
-                disabled={terpilih.length === 0 || tanpaJurusan.length > 0 || (jenis !== "diterima" && !alasan)}
+                disabled={terpilih.length === 0 || tanpaJurusan.length > 0 || (butuhAlasan && !alasan)}
                 onClick={() => setKonfirmasi(true)}
                 className={`rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50 ${
-                  t.gaya === "success" ? "bg-emerald-700 hover:bg-emerald-800" : "bg-rose-700 hover:bg-rose-800"
+                  t.gaya === "success" ? "bg-emerald-700 hover:bg-emerald-800" : t.gaya === "primary" ? "bg-blue-700 hover:bg-blue-800" : "bg-rose-700 hover:bg-rose-800"
                 }`}
               >
                 {t.tombol} ({terpilih.length})
@@ -192,7 +196,7 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
             <div className="space-y-3" role="alertdialog" aria-label="Konfirmasi pengumuman">
               <p className="text-sm text-slate-800">
                 <b>{terpilih.length} pendaftar</b> akan {t.ringkas}
-                {jenis !== "diterima" && alasan ? <> dengan alasan <b>{alasan}</b></> : null}. Hasil <b>langsung terlihat oleh pendaftar</b>.
+                {butuhAlasan && alasan ? <> dengan alasan <b>{alasan}</b></> : null}. Hasil <b>langsung terlihat oleh pendaftar</b>.
               </p>
               <ul className="max-h-28 overflow-y-auto rounded-lg bg-slate-50 px-3 py-2 text-[13px] text-slate-700">
                 {terpilih.map((r) => (
@@ -206,7 +210,7 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
                 <button type="button" onClick={() => setKonfirmasi(false)} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
                   Batal
                 </button>
-                <SubmitButton variant={t.gaya === "success" ? "success" : "danger"}>Ya, umumkan sekarang</SubmitButton>
+                <SubmitButton variant={t.gaya === "success" ? "success" : t.gaya === "primary" ? "primary" : "danger"}>Ya, umumkan sekarang</SubmitButton>
               </div>
             </div>
           )}

@@ -5,9 +5,20 @@ import { getDb } from "@/db";
 import { dataDiri, dataSekolah, jurusan, pendaftaran, pilihanJurusan, TAHAP, users, type Tahap } from "@/db/schema";
 import { parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
 
-/** Tiga jenis pengumuman massal. */
-export const JENIS_PENGUMUMAN = ["administrasi", "ditolak", "diterima"] as const;
+/**
+ * Jenis pengumuman massal.
+ * - Meloloskan ke tahap berikutnya: lolos_administrasi, selesai_ujian, selesai_wawancara.
+ * - Hasil negatif/akhir: administrasi (tidak lolos administrasi), ditolak, diterima.
+ */
+export const JENIS_PENGUMUMAN = ["lolos_administrasi", "selesai_ujian", "selesai_wawancara", "administrasi", "ditolak", "diterima"] as const;
 export type JenisPengumuman = (typeof JENIS_PENGUMUMAN)[number];
+
+/** Jenis yang hanya memajukan pendaftar dari satu tahap ke tahap berikutnya (tanpa alasan). */
+export const JENIS_LANJUT: Partial<Record<JenisPengumuman, { dari: Tahap; ke: Tahap }>> = {
+  lolos_administrasi: { dari: "administrasi", ke: "ujian" },
+  selesai_ujian: { dari: "ujian", ke: "wawancara" },
+  selesai_wawancara: { dari: "wawancara", ke: "pengusulan" },
+};
 
 export type FilterKandidat = { jenis: JenisPengumuman; tahap?: string; tahun?: string; q?: string };
 
@@ -22,14 +33,18 @@ export const TAHAP_BAWAAN: Tahap = "pengusulan";
 
 /**
  * Pendaftar yang masih dalam proses seleksi dan bisa diumumkan.
- * - administrasi: yang masih di Seleksi Administrasi (belum diputuskan).
+ * - lolos_administrasi / administrasi: yang masih di Seleksi Administrasi (belum diputuskan).
+ * - selesai_ujian / selesai_wawancara: yang sedang di Seleksi Ujian / Seleksi Wawancara.
  * - ditolak / diterima: yang masih berproses, disaring per tahap (bawaan Pengusulan; "semua" = termasuk Seleksi Administrasi).
  */
 export async function kandidatPengumuman(f: FilterKandidat) {
   const db = await getDb();
   const c = [inArray(pendaftaran.status, ["terkirim", "diperiksa"])];
 
-  if (f.jenis === "administrasi") {
+  const lanjut = JENIS_LANJUT[f.jenis];
+  if (lanjut) {
+    c.push(lanjut.dari === "administrasi" ? or(eq(pendaftaran.tahap, "administrasi"), isNull(pendaftaran.tahap))! : eq(pendaftaran.tahap, lanjut.dari));
+  } else if (f.jenis === "administrasi") {
     c.push(or(eq(pendaftaran.tahap, "administrasi"), isNull(pendaftaran.tahap))!);
   } else {
     const t = f.tahap ?? TAHAP_BAWAAN;

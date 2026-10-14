@@ -5,7 +5,7 @@ import { FormPengumuman } from "@/components/admin/form-pengumuman";
 import { Alert, PageHeader } from "@/components/ui";
 import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
 import { daftarTahun } from "@/lib/admin-query";
-import { BATAS_KANDIDAT, JENIS_PENGUMUMAN, kandidatPengumuman, TAHAP_BAWAAN, type JenisPengumuman } from "@/lib/pengumuman";
+import { BATAS_KANDIDAT, JENIS_LANJUT, JENIS_PENGUMUMAN, kandidatPengumuman, TAHAP_BAWAAN, type JenisPengumuman } from "@/lib/pengumuman";
 import { inputCls } from "@/lib/styles";
 import { parseTahun, SEMUA_TAHUN, tahunBerjalan } from "@/lib/tahun";
 import { TAHAP } from "@/db/schema";
@@ -13,6 +13,18 @@ import { TAHAP } from "@/db/schema";
 export const metadata = { title: "Pengumuman" };
 
 const MODE: Record<JenisPengumuman, { judul: string; deskripsi: string }> = {
+  lolos_administrasi: {
+    judul: "Lolos administrasi",
+    deskripsi: "Pendaftar yang masih di Seleksi Administrasi dan dinyatakan lolos. Mereka otomatis masuk Seleksi Ujian.",
+  },
+  selesai_ujian: {
+    judul: "Sudah ujian",
+    deskripsi: "Pendaftar yang sedang di Seleksi Ujian dan sudah mengikuti ujian. Mereka otomatis masuk Seleksi Wawancara.",
+  },
+  selesai_wawancara: {
+    judul: "Sudah wawancara",
+    deskripsi: "Pendaftar yang sedang di Seleksi Wawancara dan sudah mengikuti wawancara. Mereka otomatis masuk tahap Pengusulan.",
+  },
   administrasi: {
     judul: "Tidak lolos administrasi",
     deskripsi: "Pendaftar yang masih di Seleksi Administrasi dan dinyatakan tidak lolos. Proses seleksi mereka berhenti di tahap ini.",
@@ -31,7 +43,7 @@ type Params = { jenis?: string; tahap?: string; tahun?: string; q?: string };
 
 export default async function PengumumanPage({ searchParams }: { searchParams: Promise<Params> }) {
   const sp = await searchParams;
-  const jenis = (JENIS_PENGUMUMAN as readonly string[]).includes(sp.jenis ?? "") ? (sp.jenis as JenisPengumuman) : "administrasi";
+  const jenis = (JENIS_PENGUMUMAN as readonly string[]).includes(sp.jenis ?? "") ? (sp.jenis as JenisPengumuman) : "lolos_administrasi";
   const [{ rows, terpotong }, pilihanTahun] = await Promise.all([kandidatPengumuman({ jenis, tahap: sp.tahap, tahun: sp.tahun, q: sp.q }), daftarTahun()]);
   const tahapDipilih = sp.tahap ?? TAHAP_BAWAAN;
   const tahunDipilih = sp.tahun ?? String(tahunBerjalan());
@@ -46,7 +58,7 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
     <div className="space-y-5">
       <PageHeader
         title="Pengumuman"
-        desc="Umumkan hasil seleksi untuk banyak pendaftar sekaligus: centang nama-namanya, lalu umumkan. Hasil langsung terlihat oleh pendaftar di halaman Status."
+        desc="Umumkan hasil dan majukan tahap seleksi untuk banyak pendaftar sekaligus: centang nama-namanya, lalu umumkan. Hasil langsung terlihat oleh pendaftar di halaman Status."
       />
 
       <div role="tablist" aria-label="Jenis pengumuman" className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1">
@@ -60,7 +72,9 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
               jenis === j
                 ? j === "diterima"
                   ? "bg-emerald-700 text-white shadow-sm"
-                  : "bg-rose-700 text-white shadow-sm"
+                  : JENIS_LANJUT[j]
+                    ? "bg-blue-700 text-white shadow-sm"
+                    : "bg-rose-700 text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -82,8 +96,11 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
           </label>
           <input id="q" name="q" defaultValue={sp.q} placeholder="mis. Siti / SMKN 1" className={inputCls} />
         </div>
-        {jenis === "administrasi" ? (
-          <div className="self-end pb-2 text-xs text-slate-500">Tahap: Seleksi Administrasi (belum diputuskan)</div>
+        {JENIS_LANJUT[jenis] || jenis === "administrasi" ? (
+          <div className="self-end pb-2 text-xs text-slate-500">
+            Tahap: {TAHAP_LABEL[JENIS_LANJUT[jenis]?.dari ?? "administrasi"]}
+            {jenis === "administrasi" || jenis === "lolos_administrasi" ? " (belum diputuskan)" : ""}
+          </div>
         ) : (
           <div>
             <label htmlFor="tahap" className="mb-1 block text-xs font-medium text-slate-600">

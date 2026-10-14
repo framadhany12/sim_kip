@@ -51,3 +51,4 @@ next-env.d.ts
 
 # cadangan database (berisi data pribadi)
 /database/backup/
+/.next-*/

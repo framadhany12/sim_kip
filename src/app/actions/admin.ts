@@ -7,7 +7,7 @@ import { berkas, dataDiri, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan
 import { requireAdmin } from "@/lib/auth";
 import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
-import { JENIS_PENGUMUMAN, type JenisPengumuman } from "@/lib/pengumuman";
+import { JENIS_LANJUT, JENIS_PENGUMUMAN, type JenisPengumuman } from "@/lib/pengumuman";
 
 /**
  * Admin memindahkan pendaftar ke tahap seleksi berikutnya (atau mana pun), dengan catatan untuk pendaftar.
@@ -285,6 +285,7 @@ export async function ubahJurusanPendaftar(pendaftaranId: string, _: FormState, 
 
 /**
  * Mengumumkan banyak pendaftar sekaligus (satu transaksi: semua berhasil atau tidak sama sekali).
+ * - lolos_administrasi / selesai_ujian / selesai_wawancara: dimajukan ke tahap berikutnya (Ujian / Wawancara / Pengusulan), tanpa alasan.
  * - administrasi: Tidak lolos Seleksi Administrasi + alasan.
  * - ditolak: Pengumuman "Tidak diterima" + alasan.
  * - diterima: Pengumuman "Diterima"; tiap pendaftar wajib punya jurusan (Jurusan 1 atau 2 pilihannya), dikirim sebagai `jurusan:<id>`.
@@ -299,7 +300,8 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
   if (!ids.length) return { message: "Pilih minimal satu pendaftar yang akan diumumkan." };
   if (catatan.length > 2000) return { message: "Catatan maksimal 2000 karakter." };
   const opsiAlasan: readonly string[] = jenis === "administrasi" ? ALASAN_TIDAK_LOLOS_ADMINISTRASI : jenis === "ditolak" ? ALASAN_TIDAK_DITERIMA : [];
-  if (jenis !== "diterima" && !opsiAlasan.includes(alasan)) return { errors: { alasan: "Pilih alasan." }, values: { catatan } };
+  const lanjut = JENIS_LANJUT[jenis];
+  if (jenis !== "diterima" && !lanjut && !opsiAlasan.includes(alasan)) return { errors: { alasan: "Pilih alasan." }, values: { catatan } };
 
   const db = await getDb();
   const rows = await db
@@ -310,7 +312,9 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
     .leftJoin(pilihanJurusan, eq(pilihanJurusan.pendaftaranId, pendaftaran.id))
     .where(inArray(pendaftaran.id, ids));
   const layak = rows.filter(
-    (r) => (r.p.status === "terkirim" || r.p.status === "diperiksa") && (jenis !== "administrasi" || (r.p.tahap ?? "administrasi") === "administrasi"),
+    (r) =>
+      (r.p.status === "terkirim" || r.p.status === "diperiksa") &&
+      (lanjut ? (r.p.tahap ?? "administrasi") === lanjut.dari : jenis !== "administrasi" || (r.p.tahap ?? "administrasi") === "administrasi"),
   );
   if (!layak.length) return { message: "Tidak ada pendaftar yang bisa diumumkan: statusnya sudah berubah. Muat ulang halaman." };
 
@@ -335,7 +339,16 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
       let set: Partial<typeof pendaftaran.$inferInsert>;
       let statusRiwayat: string;
       let bawaan: string;
-      if (jenis === "administrasi") {
+      if (lanjut) {
+        set = { tahap: lanjut.ke, status: "diperiksa", hasil: null, jurusanDiterimaId: null, alasanDitolak: null };
+        statusRiwayat = lanjut.ke;
+        bawaan =
+          jenis === "lolos_administrasi"
+            ? "Selamat, Anda lolos Seleksi Administrasi dan lanjut ke Seleksi Ujian."
+            : jenis === "selesai_ujian"
+              ? "Anda telah mengikuti Seleksi Ujian dan lanjut ke Seleksi Wawancara."
+              : "Anda telah mengikuti Seleksi Wawancara dan lanjut ke tahap Pengusulan.";
+      } else if (jenis === "administrasi") {
         set = { tahap: "administrasi", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, alasanDitolak: alasan };
         statusRiwayat = "tidak_lolos:administrasi";
         bawaan = `Tidak lolos Seleksi Administrasi. Alasan: ${alasan}.`;
@@ -353,10 +366,13 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
         .update(pendaftaran)
         .set({ ...set, catatanAdmin: catatan || null, updatedAt: new Date() })
         .where(eq(pendaftaran.id, r.p.id));
+      // Lolos administrasi dicatat dua kali (hasil + masuk Ujian) agar alur di sisi pendaftar punya tanggal tiap tahap, sama seperti keputusan satuan.
+      if (jenis === "lolos_administrasi")
+        await tx.insert(riwayatStatus).values({ pendaftaranId: r.p.id, status: "lolos:administrasi", catatan: catatan ? `${bawaan}\n${catatan}` : bawaan, diubahOleh: admin.id });
       await tx.insert(riwayatStatus).values({
         pendaftaranId: r.p.id,
         status: statusRiwayat,
-        catatan: catatan ? `${bawaan}\n${catatan}` : bawaan,
+        catatan: jenis === "lolos_administrasi" ? "Masuk tahap Seleksi Ujian" : catatan ? `${bawaan}\n${catatan}` : bawaan,
         diubahOleh: admin.id,
       });
     }
@@ -365,6 +381,6 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
   const dilewati = ids.length - layak.length;
   return {
     ok: true,
-    message: `${layak.length} pendaftar berhasil diumumkan dan sudah terlihat oleh pendaftar.${dilewati ? ` ${dilewati} dilewati karena statusnya sudah berubah.` : ""}`,
+    message: `${layak.length} pendaftar berhasil ${lanjut ? `dimajukan ke ${TAHAP_LABEL[lanjut.ke]}` : "diumumkan"} dan sudah terlihat oleh pendaftar.${dilewati ? ` ${dilewati} dilewati karena statusnya sudah berubah.` : ""}`,
   };
 }
