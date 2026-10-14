@@ -41,7 +41,7 @@ export default async function RingkasanPage({ searchParams }: { searchParams: Pr
       )}
       {sudahDikirim && (
         <div className="flex justify-end">
-          <Link href="/status" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-700 px-5 py-2.5 text-[15px] font-semibold text-white hover:bg-blue-800 sm:w-auto">
+          <Link href="/status" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-gradient-to-b from-[#2563eb] to-[#1646a0] text-white shadow-blue-900/20 hover:brightness-110 px-5 py-2.5 text-[15px] font-semibold shadow-sm sm:w-auto">
             Lihat Status Pendaftaran →
           </Link>
         </div>

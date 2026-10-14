@@ -40,7 +40,7 @@ export default async function BerkasPage() {
         <Link href="/formulir/rekomendasi" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-medium text-slate-600 ring-1 ring-slate-300 hover:text-slate-900 sm:ring-0">
           ← Kembali
         </Link>
-        <Link href="/formulir/ringkasan" className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-blue-700 px-5 sm:flex-none py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-blue-800">
+        <Link href="/formulir/ringkasan" className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-gradient-to-b from-[#2563eb] to-[#1646a0] px-5 py-2.5 text-[15px] font-semibold text-white shadow-sm hover:brightness-110 sm:flex-none">
           Lanjut ke Ringkasan →
         </Link>
       </div>

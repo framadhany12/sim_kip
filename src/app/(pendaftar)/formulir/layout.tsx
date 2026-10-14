@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Hero } from "@/components/hero";
 import { Stepper } from "@/components/stepper";
 import { Alert } from "@/components/ui";
 import { konteksPendaftar } from "@/lib/konteks";
@@ -7,12 +8,11 @@ export default async function FormulirLayout({ children }: { children: React.Rea
   const { d, cek, sudahDikirim } = await konteksPendaftar();
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Formulir Pendaftaran</h1>
-        <p className="mt-1 text-sm text-slate-600 sm:text-[15px]">
-          Isi berurutan. Setiap langkah tersimpan otomatis saat Anda menekan <b>Simpan & Lanjut</b>, jadi Anda bisa berhenti dan melanjutkan kapan saja.
-        </p>
-      </div>
+      <Hero
+        eyebrow="Pendaftaran KIP Kuliah"
+        title="Formulir Pendaftaran"
+        desc={<>Isi berurutan. Setiap langkah tersimpan otomatis saat Anda menekan <b>Simpan & Lanjut</b>, jadi Anda bisa berhenti dan melanjutkan kapan saja.</>}
+      />
       <Stepper selesai={cek.langkah} />
       {d.status === "perbaikan" && (
         <Alert tone="warning" title="Admin meminta perbaikan">

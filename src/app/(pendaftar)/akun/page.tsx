@@ -1,6 +1,7 @@
 import { perbaruiAkun, ubahSandi } from "@/app/actions/auth";
 import { ActionForm, Field, SubmitButton } from "@/components/form";
-import { Card, PageHeader } from "@/components/ui";
+import { Hero } from "@/components/hero";
+import { Card } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 
 export const metadata = { title: "Akun Saya" };
@@ -9,7 +10,7 @@ export default async function AkunPage() {
   const user = await requireUser();
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader title="Akun Saya" desc="Perbarui nama dan kata sandi akun Anda." />
+      <Hero eyebrow="Pengaturan" title="Akun Saya" desc="Perbarui nama dan kata sandi akun Anda." />
       <Card title="Data akun">
         <ActionForm action={perbaruiAkun}>
           <Field name="nama" label="Nama" required defaultValue={user.nama} />

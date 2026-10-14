@@ -15,7 +15,7 @@ html {
 }
 
 body {
-  background: #f6f7fb;
+  background: #f4f6fa linear-gradient(180deg, #e3ecfb 0, #f4f6fa 420px) no-repeat;
   color: #0f172a;
   overflow-wrap: break-word;
 }

@@ -16,7 +16,7 @@ export function NavLinks({ links, hanyaDesktop }: { links: { href: string; label
             href={l.href}
             aria-current={active ? "page" : undefined}
             className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition ${
-              active ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              active ? "bg-white/15 text-white ring-1 ring-inset ring-white/20" : "text-blue-100/85 hover:bg-white/10 hover:text-white"
             }`}
           >
             {l.label}

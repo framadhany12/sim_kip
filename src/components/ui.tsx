@@ -8,7 +8,7 @@ export function Card({ children, className = "", title, action }: { children: Re
     <section className={`rounded-xl border border-slate-200 bg-white shadow-sm ${className}`}>
       {title && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3.5 sm:px-5">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+          <h2 className="flex items-center gap-2.5 text-base font-semibold text-slate-900"><span aria-hidden className="h-4 w-1 shrink-0 rounded-full bg-gradient-to-b from-[#2563eb] to-[#0d2a63]" />{title}</h2>
           {action}
         </div>
       )}
@@ -63,7 +63,7 @@ export function StatusBadge({ status, tahap }: { status: Status; tahap?: Tahap |
 export function ButtonLink({ href, children, variant = "primary" }: { href: string; children: ReactNode; variant?: "primary" | "secondary" }) {
   const cls =
     variant === "primary"
-      ? "bg-blue-700 text-white hover:bg-blue-800"
+      ? "bg-gradient-to-b from-[#2563eb] to-[#1646a0] text-white shadow-blue-900/20 hover:brightness-110"
       : "bg-white text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50";
   return (
     <Link href={href} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-[15px] font-semibold shadow-sm transition active:scale-[0.98] ${cls}`}>

@@ -176,7 +176,7 @@ export function useFormErrors() {
 export function SubmitButton({ children, variant = "primary", name, value, className = "" }: { children: ReactNode; variant?: "primary" | "danger" | "secondary" | "success"; name?: string; value?: string; className?: string }) {
   const pending = useContext(PendingCtx);
   const styles = {
-    primary: "bg-blue-700 text-white hover:bg-blue-800",
+    primary: "bg-gradient-to-b from-[#2563eb] to-[#1646a0] text-white shadow-blue-900/20 hover:brightness-110",
     success: "bg-emerald-700 text-white hover:bg-emerald-800",
     danger: "bg-rose-700 text-white hover:bg-rose-800",
     secondary: "bg-white text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50",

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ProsesSeleksi } from "@/components/proses-seleksi";
 import { Riwayat } from "@/components/riwayat";
-import { Alert, Card, Dl, PageHeader, StatusBadge } from "@/components/ui";
+import { Hero } from "@/components/hero";
+import { Alert, Card, Dl, StatusBadge } from "@/components/ui";
 import { TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { konteksPendaftar } from "@/lib/konteks";
 
@@ -15,7 +16,7 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Status Pendaftaran" desc="Pantau sampai mana proses seleksi Anda, catatan dari admin, dan hasil akhir seleksi." />
+      <Hero eyebrow="Pendaftaran KIP Kuliah" title="Status Pendaftaran" desc="Pantau sampai mana proses seleksi Anda, catatan dari admin, dan hasil akhir seleksi." />
       {terkirim && (
         <Alert tone="success" title="Pendaftaran berhasil dikirim">
           Terima kasih. Pendaftaran Anda sekarang masuk tahap Seleksi Administrasi.

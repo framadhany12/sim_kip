@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ProsesSeleksi } from "@/components/proses-seleksi";
+import { Hero, HeroStat } from "@/components/hero";
 import { Alert, ButtonLink, Card, StatusBadge } from "@/components/ui";
 import { LANGKAH, TAHAP_DESKRIPSI, TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { konteksPendaftar } from "@/lib/konteks";
@@ -20,9 +21,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           Langkah pertama selesai. Lanjutkan dengan mengisi formulir pendaftaran.
         </Alert>
       )}
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Halo, {user.nama.split(" ")[0]}!</h1>
-      </div>
+      <Hero eyebrow="KIP Kuliah · Poltek TEDC" title={`Halo, ${user.nama.split(" ")[0]}!`} desc="Pantau kelengkapan formulir, tahap seleksi, dan hasil pendaftaran Anda di sini.">
+        <div className="grid grid-cols-2 gap-2.5 sm:max-w-md">
+          <HeroStat label="Kelengkapan" value={`${cek.persen}%`} />
+          <HeroStat label={sudahDikirim ? "Tahap seleksi" : "Status"} value={sudahDikirim ? TAHAP_LABEL[d.tahap ?? "administrasi"] : d.status === "perbaikan" ? "Perlu perbaikan" : "Belum dikirim"} />
+        </div>
+      </Hero>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Card title="Pendaftaran Anda" action={<StatusBadge status={d.status} tahap={d.tahap} />}>
