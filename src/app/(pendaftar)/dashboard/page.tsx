@@ -21,7 +21,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Alert>
       )}
       <div>
-        <p className="text-sm text-slate-500">{d.gelombang}</p>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Halo, {user.nama.split(" ")[0]}!</h1>
       </div>
 

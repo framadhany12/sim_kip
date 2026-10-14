@@ -6,7 +6,6 @@ import { jurusan } from "@/db/schema";
 import { LogoTedc } from "@/components/logo";
 import { getCurrentUser } from "@/lib/auth";
 import { BERKAS_INFO, BERKAS_UTAMA, MAX_UMUR, TAHUN_LULUS } from "@/lib/constants";
-import { GELOMBANG_AKTIF } from "@/lib/pendaftaran";
 import { KAMPUS, KIP } from "@/lib/profil";
 
 const ALUR = [
@@ -51,7 +50,7 @@ export default async function Home() {
               <LogoTedc size={56} />
               <div className="leading-tight">
                 <p className="text-sm font-bold">{KAMPUS.nama}</p>
-                <p className="text-xs text-blue-100/80">Penerimaan KIP Kuliah · {GELOMBANG_AKTIF}</p>
+                <p className="text-xs text-blue-100/80">Penerimaan KIP Kuliah</p>
               </div>
             </div>
             <h1 className="mt-8 text-3xl font-extrabold leading-[1.1] tracking-tight text-balance sm:text-5xl">

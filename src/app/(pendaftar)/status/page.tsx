@@ -83,7 +83,6 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
           <Card title="Data pendaftaran">
             <Dl
               items={[
-                ["Gelombang", d.gelombang],
                 ["Dikirim", tanggal(d.submittedAt)],
                 ["Pembaruan terakhir", tanggal(d.updatedAt)],
               ]}

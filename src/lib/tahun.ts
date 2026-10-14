@@ -15,10 +15,14 @@ export const tahunBerjalan = () => Math.max(TAHUN_MULAI, tahunSekarang());
 /** Nilai filter untuk menampilkan semua tahun. */
 export const SEMUA_TAHUN = "semua";
 
-/** Tahun dari teks (mis. query string); undefined bila kosong/"semua"/tidak valid (< 2026). */
+/** Rentang tahun ajaran yang boleh ditambahkan admin. */
+export const TAHUN_MIN = 2020;
+export const TAHUN_MAX = 2100;
+
+/** Tahun dari teks (mis. query string); undefined bila kosong/"semua"/tidak valid. */
 export function parseTahun(s?: string | null): number | undefined {
   const n = Number(s);
-  return Number.isInteger(n) && n >= TAHUN_MULAI && n <= 2100 ? n : undefined;
+  return Number.isInteger(n) && n >= TAHUN_MIN && n <= TAHUN_MAX ? n : undefined;
 }
 
 /** Batas waktu [dari, sampai) untuk satu tahun, mengikuti WIB (1 Januari 00.00 WIB). */
@@ -26,8 +30,3 @@ export function rentangTahun(tahun: number) {
   return { dari: new Date(`${tahun}-01-01T00:00:00+07:00`), sampai: new Date(`${tahun + 1}-01-01T00:00:00+07:00`) };
 }
 
-/** Daftar pilihan tahun: dari 2026 sampai tahun terbaru (tahun berjalan atau tahun data terakhir bila lebih besar). */
-export function daftarPilihanTahun(tahunDataTerakhir?: number | null) {
-  const akhir = Math.max(TAHUN_MULAI, tahunSekarang(), tahunDataTerakhir ?? 0);
-  return Array.from({ length: akhir - TAHUN_MULAI + 1 }, (_, i) => TAHUN_MULAI + i);
-}

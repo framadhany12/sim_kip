@@ -43,6 +43,13 @@
       "when": 1791963922036,
       "tag": "0005_riwayat_status_panjang",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1791990034109,
+      "tag": "0006_tahun_ajaran",
+      "breakpoints": true
     }
   ]
 }

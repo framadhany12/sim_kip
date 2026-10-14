@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BookOpenText,
+  CalendarDays,
   Contact,
   GraduationCap,
   LayoutDashboard,
@@ -54,6 +55,7 @@ export function AdminShell({
       judul: "Master data",
       item: [
         { href: "/admin/mahasiswa", label: "Master Mahasiswa", icon: Contact },
+        { href: "/admin/tahun-ajaran", label: "Tahun Ajaran", icon: CalendarDays },
         { href: "/admin/jurusan", label: "Jurusan", icon: GraduationCap },
         { href: "/admin/rekomendasi", label: "Sumber Rekomendasi", icon: Share2 },
       ],

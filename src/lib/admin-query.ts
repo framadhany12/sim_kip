@@ -20,7 +20,8 @@ import {
   wilayahKecamatan,
   type Status,
 } from "@/db/schema";
-import { daftarPilihanTahun, parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
+import { parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
+import { daftarPilihanTahun } from "./tahun-ajaran";
 
 export type FilterPendaftar = { q?: string; status?: string; tahun?: string; dari?: string; sampai?: string; page?: string };
 
@@ -163,12 +164,5 @@ export async function cariPendaftar(f: FilterPendaftar, semua = false) {
   return { rows, total, page };
 }
 
-/** Pilihan tahun untuk filter: dari 2026 sampai tahun berjalan (atau tahun data terakhir bila lebih besar). */
-export async function daftarTahun() {
-  const db = await getDb();
-  const [r] = await db
-    .select({ terakhir: sql<number | null>`max(year(date_add(${users.createdAt}, interval 7 hour)))` })
-    .from(users)
-    .where(eq(users.role, "pendaftar"));
-  return daftarPilihanTahun(r?.terakhir ? Number(r.terakhir) : null);
-}
+/** Pilihan tahun untuk filter: tahun ajaran dari menu Master data → Tahun Ajaran (+ tahun berjalan & tahun yang punya data). */
+export const daftarTahun = daftarPilihanTahun;

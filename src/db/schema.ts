@@ -130,6 +130,11 @@ export const sumberRekomendasi = mysqlTable("sumber_rekomendasi", {
   urutan: int("urutan").notNull().default(0),
 });
 
+/** Tahun ajaran yang dikelola admin; dipakai sebagai pilihan filter "Tahun daftar" di panel admin. */
+export const tahunAjaran = mysqlTable("tahun_ajaran", {
+  tahun: int("tahun").primaryKey(),
+});
+
 export const rekomendasi = mysqlTable("rekomendasi", {
   id: id(),
   pendaftaranId: ref("pendaftaran_id").notNull().unique().references(() => pendaftaran.id, { onDelete: "cascade" }),

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
   berkas,
@@ -20,7 +20,8 @@ import {
 } from "@/db/schema";
 import { BERKAS_INFO, BERKAS_UTAMA, LANGKAH, MAX_UMUR, TAHUN_LULUS, hitungUmur, type SlugLangkah } from "./constants";
 
-export const GELOMBANG_AKTIF = process.env.GELOMBANG_AKTIF ?? "Gelombang 1 — 2026";
+/** Kolom `gelombang` dipertahankan di database (tidak lagi dipakai/ditampilkan); pendaftaran baru diisi nilai tetap ini. */
+export const GELOMBANG_AKTIF = "-";
 
 /**
  * True bila pendaftaran belum (atau perlu) dikirim. Data & berkas tetap bisa diubah pendaftar kapan saja;
@@ -35,14 +36,10 @@ export async function catatPerubahanPendaftar(p: { id: string; status: Status },
   await db.insert(riwayatStatus).values({ pendaftaranId: p.id, status: p.status, catatan: `Pendaftar memperbarui ${bagian}`, diubahOleh: userId });
 }
 
-/** Ambil pendaftaran milik user pada gelombang aktif; buat draft baru bila belum ada. */
+/** Ambil pendaftaran milik user; buat draft baru bila belum ada. */
 export async function pendaftaranSaya(userId: string) {
   const db = await getDb();
-  const [ada] = await db
-    .select()
-    .from(pendaftaran)
-    .where(and(eq(pendaftaran.userId, userId), eq(pendaftaran.gelombang, GELOMBANG_AKTIF)))
-    .limit(1);
+  const ada = await cariPendaftaranUser(userId);
   if (ada) return ada;
   const id = crypto.randomUUID();
   try {
