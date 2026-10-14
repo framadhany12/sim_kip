@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1791953716021,
+      "tag": "0000_init_mysql",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1791957767063,
+      "tag": "0001_verifikasi_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1791960051925,
+      "tag": "0002_data_kip_rekomendasi",
+      "breakpoints": true
+    }
+  ]
+}

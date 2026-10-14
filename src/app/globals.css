@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #f6f7fb;
+  color: #0f172a;
+}
