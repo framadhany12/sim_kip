@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Megaphone,
   MessageCircleQuestion,
   Search,
   Share2,
@@ -41,7 +42,13 @@ export function AdminShell({
 
   const grup: { judul: string; item: Item[] }[] = [
     { judul: "Utama", item: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true }] },
-    { judul: "Seleksi", item: [{ href: "/admin/pendaftar", label: "Data Pendaftar", icon: Users }] },
+    {
+      judul: "Seleksi",
+      item: [
+        { href: "/admin/pendaftar", label: "Data Pendaftar", icon: Users },
+        { href: "/admin/pengumuman", label: "Pengumuman", icon: Megaphone },
+      ],
+    },
     {
       judul: "Master data",
       item: [

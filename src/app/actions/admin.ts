@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, count, eq, ne } from "drizzle-orm";
+import { and, count, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { berkas, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi, TAHAP, type Tahap } from "@/db/schema";
+import { berkas, dataDiri, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi, TAHAP, users, type Tahap } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
+import { JENIS_PENGUMUMAN, type JenisPengumuman } from "@/lib/pengumuman";
 
 /**
  * Admin memindahkan pendaftar ke tahap seleksi berikutnya (atau mana pun), dengan catatan untuk pendaftar.
@@ -278,4 +279,92 @@ export async function ubahJurusanPendaftar(pendaftaranId: string, _: FormState, 
   });
   revalidatePath("/", "layout");
   return { ok: true, message: "Pilihan jurusan diperbarui dan tercatat di riwayat." };
+}
+
+// ---------- Pengumuman massal ----------
+
+/**
+ * Mengumumkan banyak pendaftar sekaligus (satu transaksi: semua berhasil atau tidak sama sekali).
+ * - administrasi: Tidak lolos Seleksi Administrasi + alasan.
+ * - ditolak: Pengumuman "Tidak diterima" + alasan.
+ * - diterima: Pengumuman "Diterima"; tiap pendaftar wajib punya jurusan (Jurusan 1 atau 2 pilihannya), dikirim sebagai `jurusan:<id>`.
+ * Pendaftar yang statusnya sudah berubah sejak daftar dimuat (mis. diputuskan admin lain) dilewati dan dilaporkan.
+ */
+export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  if (!JENIS_PENGUMUMAN.includes(jenis)) return { message: "Jenis pengumuman tidak dikenal." };
+  const ids = [...new Set(fd.getAll("ids").map(String))].slice(0, 500);
+  const catatan = String(fd.get("catatan") ?? "").trim();
+  const alasan = String(fd.get("alasan") ?? "");
+  if (!ids.length) return { message: "Pilih minimal satu pendaftar yang akan diumumkan." };
+  if (catatan.length > 2000) return { message: "Catatan maksimal 2000 karakter." };
+  const opsiAlasan: readonly string[] = jenis === "administrasi" ? ALASAN_TIDAK_LOLOS_ADMINISTRASI : jenis === "ditolak" ? ALASAN_TIDAK_DITERIMA : [];
+  if (jenis !== "diterima" && !opsiAlasan.includes(alasan)) return { errors: { alasan: "Pilih alasan." }, values: { catatan } };
+
+  const db = await getDb();
+  const rows = await db
+    .select({ p: pendaftaran, pil: pilihanJurusan, nama: sql<string>`coalesce(${dataDiri.namaLengkap}, ${users.nama})` })
+    .from(pendaftaran)
+    .innerJoin(users, eq(users.id, pendaftaran.userId))
+    .leftJoin(dataDiri, eq(dataDiri.pendaftaranId, pendaftaran.id))
+    .leftJoin(pilihanJurusan, eq(pilihanJurusan.pendaftaranId, pendaftaran.id))
+    .where(inArray(pendaftaran.id, ids));
+  const layak = rows.filter(
+    (r) => (r.p.status === "terkirim" || r.p.status === "diperiksa") && (jenis !== "administrasi" || (r.p.tahap ?? "administrasi") === "administrasi"),
+  );
+  if (!layak.length) return { message: "Tidak ada pendaftar yang bisa diumumkan: statusnya sudah berubah. Muat ulang halaman." };
+
+  const namaJurusan = new Map((await db.select({ id: jurusan.id, nama: jurusan.nama }).from(jurusan)).map((j) => [j.id, j.nama]));
+  const pilihan = new Map<string, string>();
+  if (jenis === "diterima") {
+    const galat: string[] = [];
+    for (const r of layak) {
+      const j = String(fd.get(`jurusan:${r.p.id}`) ?? "");
+      if (!r.pil || (j !== r.pil.jurusan1Id && j !== r.pil.jurusan2Id)) galat.push(r.nama);
+      else pilihan.set(r.p.id, j);
+    }
+    if (galat.length)
+      return {
+        message: `Pilih jurusan yang diterima (Jurusan 1 atau 2 pilihan pendaftar) untuk: ${galat.slice(0, 5).join(", ")}${galat.length > 5 ? `, dan ${galat.length - 5} lainnya` : ""}.`,
+        values: { catatan },
+      };
+  }
+
+  await db.transaction(async (tx) => {
+    for (const r of layak) {
+      let set: Partial<typeof pendaftaran.$inferInsert>;
+      let statusRiwayat: string;
+      let bawaan: string;
+      if (jenis === "administrasi") {
+        set = { tahap: "administrasi", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, alasanDitolak: alasan };
+        statusRiwayat = "tidak_lolos:administrasi";
+        bawaan = `Tidak lolos Seleksi Administrasi. Alasan: ${alasan}.`;
+      } else if (jenis === "ditolak") {
+        set = { tahap: "pengumuman", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, alasanDitolak: alasan };
+        statusRiwayat = "ditolak";
+        bawaan = `Pendaftaran tidak diterima. Alasan: ${alasan}.`;
+      } else {
+        const jid = pilihan.get(r.p.id)!;
+        set = { tahap: "pengumuman", status: "diterima", hasil: "diterima", jurusanDiterimaId: jid, alasanDitolak: null };
+        statusRiwayat = "diterima";
+        bawaan = `Selamat, Anda diterima sebagai penerima KIP Kuliah di program studi ${namaJurusan.get(jid) ?? "-"}.`;
+      }
+      await tx
+        .update(pendaftaran)
+        .set({ ...set, catatanAdmin: catatan || null, updatedAt: new Date() })
+        .where(eq(pendaftaran.id, r.p.id));
+      await tx.insert(riwayatStatus).values({
+        pendaftaranId: r.p.id,
+        status: statusRiwayat,
+        catatan: catatan ? `${bawaan}\n${catatan}` : bawaan,
+        diubahOleh: admin.id,
+      });
+    }
+  });
+  revalidatePath("/", "layout");
+  const dilewati = ids.length - layak.length;
+  return {
+    ok: true,
+    message: `${layak.length} pendaftar berhasil diumumkan dan sudah terlihat oleh pendaftar.${dilewati ? ` ${dilewati} dilewati karena statusnya sudah berubah.` : ""}`,
+  };
 }
