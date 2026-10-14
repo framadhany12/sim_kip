@@ -6,7 +6,8 @@ import { ActionForm, FieldShell, SubmitButton, inputCls, useFormErrors } from "@
 import { Alert } from "@/components/ui";
 import type { FormAction } from "@/lib/form-state";
 
-function Isi({ nama }: { nama: string }) {
+function Isi({ nama, admin }: { nama: string; admin?: boolean }) {
+  const peran = admin ? "admin" : "pendaftar";
   const state = useFormErrors();
   const [mode, setMode] = useState<"acak" | "manual">("acak");
   const [sandi, setSandi] = useState("");
@@ -38,8 +39,8 @@ function Isi({ nama }: { nama: string }) {
   return (
     <>
       <Alert tone="info" title="Kata sandi lama tidak dapat dilihat">
-        Kata sandi pendaftar disimpan terenkripsi satu arah sehingga tidak bisa dilihat siapa pun, termasuk admin. Yang bisa dilakukan adalah <b>mengatur kata sandi baru</b>:
-        pendaftar otomatis keluar dari semua perangkat dan mendapat email pemberitahuan.
+        Kata sandi {peran} disimpan terenkripsi satu arah sehingga tidak bisa dilihat siapa pun, termasuk admin. Yang bisa dilakukan adalah <b>mengatur kata sandi baru</b>:
+        {peran} otomatis keluar dari semua perangkat dan mendapat email pemberitahuan.
       </Alert>
 
       <fieldset className="space-y-3">
@@ -94,7 +95,7 @@ function Isi({ nama }: { nama: string }) {
       ) : (
         <div className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-4" role="alertdialog" aria-label="Konfirmasi atur ulang kata sandi">
           <p className="text-sm text-rose-950">
-            Atur ulang kata sandi <b>{nama}</b>? Pendaftar akan <b>keluar dari semua perangkat</b> dan sandi lamanya tidak berlaku lagi.
+            Atur ulang kata sandi <b>{nama}</b>? Yang bersangkutan akan <b>keluar dari semua perangkat</b> dan sandi lamanya tidak berlaku lagi.
           </p>
           <div className="flex flex-wrap gap-2">
             <SubmitButton variant="danger">Ya, atur ulang</SubmitButton>
@@ -116,7 +117,7 @@ function Isi({ nama }: { nama: string }) {
             </button>
           </div>
           <p className="text-[13px] text-emerald-900">
-            Sandi ini <b>hanya tampil sekali</b>. Setelah halaman ditutup, sandi tidak bisa dilihat lagi. Sampaikan kepada pendaftar lewat saluran yang aman, dan sarankan menggantinya di menu Akun Saya setelah masuk.
+            Sandi ini <b>hanya tampil sekali</b>. Setelah halaman ditutup, sandi tidak bisa dilihat lagi. Sampaikan lewat saluran yang aman, dan sarankan menggantinya di menu Akun Saya setelah masuk.
           </p>
         </div>
       )}
@@ -124,10 +125,10 @@ function Isi({ nama }: { nama: string }) {
   );
 }
 
-export function FormSandi({ nama, action }: { nama: string; action: FormAction }) {
+export function FormSandi({ nama, action, admin }: { nama: string; action: FormAction; admin?: boolean }) {
   return (
     <ActionForm action={action} className="space-y-4">
-      <Isi nama={nama} />
+      <Isi nama={nama} admin={admin} />
     </ActionForm>
   );
 }

@@ -1,6 +1,5 @@
 "use server";
 
-import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
@@ -10,6 +9,7 @@ import { MAX_UMUR } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { cariPendaftaranUser, GELOMBANG_AKTIF, isDuplikat } from "@/lib/pendaftaran";
 import { EMAIL_RE } from "@/lib/anti-bot";
+import { buatSandiAcak } from "@/lib/sandi-acak";
 import { hashPassword } from "@/lib/password";
 import { kirimEmailSandiDiubah, urlAplikasi } from "@/lib/mail";
 import {
@@ -119,16 +119,6 @@ export async function simpanAkunPendaftar(userId: string, _: FormState, fd: Form
   }
   revalidatePath("/", "layout");
   return { ok: true, message: "Data akun tersimpan." };
-}
-
-const ALFABET_SANDI = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"; // tanpa huruf/angka yang mirip (I, l, 1, O, 0)
-
-/** Sandi acak 12 karakter yang pasti memuat huruf dan angka. */
-function buatSandiAcak() {
-  for (;;) {
-    const s = Array.from({ length: 12 }, () => ALFABET_SANDI[randomInt(ALFABET_SANDI.length)]).join("");
-    if (/[a-zA-Z]/.test(s) && /\d/.test(s)) return s;
-  }
 }
 
 /**

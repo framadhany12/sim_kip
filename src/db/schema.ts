@@ -17,6 +17,17 @@ export const users = mysqlTable("users", {
   createdAt: now("created_at"),
 });
 
+/** Profil sederhana pengelola (admin) yang bisa ditampilkan ke calon mahasiswa di halaman Bantuan. */
+export const profilAdmin = mysqlTable("profil_admin", {
+  userId: ref("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  jabatan: varchar("jabatan", { length: 100 }),
+  /** Format internasional tanpa plus, mis. 6281234567890. */
+  whatsapp: varchar("whatsapp", { length: 20 }),
+  keterangan: varchar("keterangan", { length: 300 }),
+  /** Hanya admin dengan tampil = true yang muncul di halaman Bantuan. */
+  tampil: boolean("tampil").notNull().default(false),
+});
+
 export const emailVerifications = mysqlTable("email_verifications", {
   id: varchar("id", { length: 64 }).primaryKey(), // sha256 dari token di tautan email
   userId: ref("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),

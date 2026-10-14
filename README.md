@@ -64,7 +64,7 @@ Akun yang sudah ada sebelum fitur ini dianggap terverifikasi.
 Kebutuhan Ekonomi) → Sekolah & Jurusan 1/2 → Unggah 5 berkas → Ringkasan & Kirim → Pantau status → (bila diminta) Perbaiki & kirim ulang.
 
 **Admin:** Masuk → Ringkasan (progres & statistik) → Daftar pendaftar (cari/filter/unduh CSV) → Detail: periksa isian & berkas,
-tandai berkas valid/tidak valid, lalu *Tandai Sedang Diperiksa / Minta Perbaikan / Terima / Tolak* → Master Mahasiswa (edit data & atur ulang kata sandi) → Tahun Ajaran → Kelola jurusan → Jawab pertanyaan → Kelola FAQ.
+tandai berkas valid/tidak valid, lalu *Tandai Sedang Diperiksa / Minta Perbaikan / Terima / Tolak* → Master Mahasiswa (edit data & atur ulang kata sandi) → Manajemen User (tambah admin, reset sandi admin, profil kontak resmi di halaman Bantuan) → Tahun Ajaran → Kelola jurusan → Jawab pertanyaan → Kelola FAQ.
 
 Status pendaftaran: `draft` → `terkirim` → `diperiksa` → `diterima` / `ditolak`, plus `perbaikan` (formulir dibuka lagi untuk pendaftar).
 Setiap perubahan dicatat di `riwayat_status`.

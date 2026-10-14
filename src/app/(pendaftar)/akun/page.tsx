@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { perbaruiAkun, ubahSandi } from "@/app/actions/auth";
 import { ActionForm, Field, SubmitButton } from "@/components/form";
 import { Hero } from "@/components/hero";
@@ -31,6 +32,16 @@ export default async function AkunPage() {
           </div>
         </ActionForm>
       </Card>
+      {user.role === "admin" && (
+        <Card title="Profil untuk calon mahasiswa">
+          <p className="text-sm text-slate-600">
+            Lengkapi jabatan dan nomor WhatsApp Anda agar calon mahasiswa bisa memastikan kontak resmi pengelola di halaman Bantuan.{" "}
+            <Link href={`/admin/user/${user.id}`} className="font-semibold text-blue-700 hover:underline">
+              Atur profil saya →
+            </Link>
+          </p>
+        </Card>
+      )}
       <Card title="Ubah kata sandi">
         <ActionForm action={ubahSandi}>
           <Field name="lama" type="password" label="Kata sandi lama" required autoComplete="current-password" />
