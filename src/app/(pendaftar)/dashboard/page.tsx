@@ -6,7 +6,7 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Beranda" };
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ terverifikasi?: string }> }) {
-  const { user, d, cek, editable } = await konteksPendaftar();
+  const { user, d, cek, sudahDikirim } = await konteksPendaftar();
   const { terverifikasi } = await searchParams;
   const berikutnya = LANGKAH.find((l) => !cek.langkah[l.slug]) ?? LANGKAH[LANGKAH.length - 1];
   const tahap = tahapan(d.status);
@@ -25,7 +25,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
         <Card title="Pendaftaran Anda" action={<StatusBadge status={d.status} />}>
-          {editable ? (
+          {!sudahDikirim ? (
             <>
               <div className="flex items-baseline justify-between">
                 <p className="text-sm text-slate-600">Kelengkapan formulir</p>
@@ -67,8 +67,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     : "Mohon maaf, pendaftaran KIP Kuliah Anda belum dapat diterima."}
               </p>
               <p className="mt-2 text-sm text-slate-500">Dikirim: {tanggal(d.submittedAt)}</p>
-              <div className="mt-5">
+              <div className="mt-5 flex flex-wrap gap-2">
                 <ButtonLink href="/status">Lihat Detail Status →</ButtonLink>
+                <ButtonLink href="/formulir/ringkasan" variant="secondary">
+                  Perbarui Data & Berkas
+                </ButtonLink>
               </div>
             </>
           )}

@@ -4,8 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { berkas, ekonomiOrangtua, JENIS_BERKAS, pendaftaran, type JenisBerkas } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { MAX_FILE_MB } from "@/lib/constants";
-import { bisaDiedit, pendaftaranSaya } from "@/lib/pendaftaran";
+import { BERKAS_INFO, MAX_FILE_MB } from "@/lib/constants";
+import { catatPerubahanPendaftar, pendaftaranSaya } from "@/lib/pendaftaran";
 import { deteksiTipe, hapusBerkas, simpanBerkas } from "@/lib/storage";
 
 const err = (message: string, status = 400) => NextResponse.json({ error: message }, { status });
@@ -15,9 +15,9 @@ async function konteks(jenisRaw: unknown) {
   if (!user || user.role !== "pendaftar") return { error: err("Silakan masuk terlebih dahulu.", 401) };
   const jenis = String(jenisRaw ?? "") as JenisBerkas;
   if (!JENIS_BERKAS.includes(jenis)) return { error: err("Jenis berkas tidak dikenal.") };
+  // Berkas tetap bisa diganti setelah pendaftaran dikirim; perubahannya dicatat di riwayat.
   const p = await pendaftaranSaya(user.id);
-  if (!bisaDiedit(p.status)) return { error: err("Pendaftaran sudah dikirim; berkas tidak dapat diubah.", 403) };
-  return { p, jenis };
+  return { p, jenis, userId: user.id };
 }
 
 export async function POST(req: Request) {
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
   if (k.jenis === "surat_ekonomi")
     await db.update(ekonomiOrangtua).set({ suratKebutuhanEkonomiUrl: `/api/berkas/${row.id}` }).where(eq(ekonomiOrangtua.pendaftaranId, k.p.id));
   await db.update(pendaftaran).set({ updatedAt: new Date() }).where(eq(pendaftaran.id, k.p.id));
+  await catatPerubahanPendaftar(k.p, k.userId, `berkas ${BERKAS_INFO[k.jenis].label}${lama ? " (diganti)" : ""}`);
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true, id: row.id });
 }
@@ -60,6 +61,8 @@ export async function DELETE(req: Request) {
   const url = new URL(req.url);
   const k = await konteks(url.searchParams.get("jenis"));
   if ("error" in k) return k.error;
+  // Berkas wajib tidak boleh dihapus, hanya diganti.
+  if (BERKAS_INFO[k.jenis].wajib) return err("Berkas wajib tidak dapat dihapus. Gunakan tombol Ganti.", 403);
   const db = await getDb();
   const where = and(eq(berkas.pendaftaranId, k.p.id), eq(berkas.jenis, k.jenis));
   const [row] = await db.select({ fileUrl: berkas.fileUrl }).from(berkas).where(where);
@@ -67,6 +70,7 @@ export async function DELETE(req: Request) {
   if (row) await hapusBerkas(row.fileUrl);
   if (k.jenis === "surat_ekonomi")
     await db.update(ekonomiOrangtua).set({ suratKebutuhanEkonomiUrl: null }).where(eq(ekonomiOrangtua.pendaftaranId, k.p.id));
+  if (row) await catatPerubahanPendaftar(k.p, k.userId, `berkas ${BERKAS_INFO[k.jenis].label} (dihapus)`);
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });
 }

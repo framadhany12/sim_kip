@@ -4,7 +4,7 @@ import { Alert } from "@/components/ui";
 import { konteksPendaftar } from "@/lib/konteks";
 
 export default async function FormulirLayout({ children }: { children: React.ReactNode }) {
-  const { d, cek, editable } = await konteksPendaftar();
+  const { d, cek, sudahDikirim } = await konteksPendaftar();
   return (
     <div className="space-y-6">
       <div>
@@ -21,9 +21,10 @@ export default async function FormulirLayout({ children }: { children: React.Rea
           Perbaiki isian/berkas yang disebutkan, lalu kirim ulang di langkah <b>Ringkasan & Kirim</b>.
         </Alert>
       )}
-      {!editable && (
-        <Alert tone="info" title="Formulir terkunci">
-          Pendaftaran sudah dikirim, jadi isian tidak dapat diubah. Pantau perkembangannya di{" "}
+      {sudahDikirim && (
+        <Alert tone="info" title="Pendaftaran sudah dikirim">
+          Anda masih bisa memperbarui data dan mengganti berkas; setiap perubahan tercatat di riwayat dan terlihat oleh admin. Pilihan
+          jurusan hanya dapat diubah oleh admin. Pantau perkembangan di{" "}
           <Link href="/status" className="font-semibold underline">
             halaman Status
           </Link>

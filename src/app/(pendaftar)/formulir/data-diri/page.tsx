@@ -16,7 +16,7 @@ function Subjudul({ children }: { children: React.ReactNode }) {
 }
 
 export default async function DataDiriPage({ searchParams }: { searchParams: Promise<{ peringatan?: string }> }) {
-  const { d, editable } = await konteksPendaftar();
+  const { d, sudahDikirim } = await konteksPendaftar();
   const { peringatan } = await searchParams;
   const db = await getDb();
   const kabupaten = await db.select().from(wilayahKabupaten).orderBy(asc(wilayahKabupaten.nama));
@@ -33,7 +33,7 @@ export default async function DataDiriPage({ searchParams }: { searchParams: Pro
           </Alert>
         </div>
       )}
-      <ActionForm action={simpanDataDiri} disabled={!editable}>
+      <ActionForm action={simpanDataDiri}>
         <Subjudul>Data KIP Kuliah</Subjudul>
         <div className="grid gap-5 sm:grid-cols-3">
           <Field
@@ -104,7 +104,7 @@ export default async function DataDiriPage({ searchParams }: { searchParams: Pro
         <div className="grid gap-5 sm:grid-cols-3">
           <WilayahSelect kabupaten={kabupaten} defaultKab={x?.kabupatenId} defaultKec={x?.kecamatanId} />
         </div>
-        <FormFooter editable={editable} next="/formulir/keluarga" />
+        <FormFooter sudahDikirim={sudahDikirim} />
       </ActionForm>
     </Card>
   );

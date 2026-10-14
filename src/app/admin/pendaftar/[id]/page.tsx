@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { putuskan, verifikasiBerkas } from "@/app/actions/admin";
-import { ActionForm, SubmitButton, TextArea } from "@/components/form";
+import { asc, eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { jurusan } from "@/db/schema";
+import { putuskan, ubahJurusanPendaftar, verifikasiBerkas } from "@/app/actions/admin";
+import { ActionForm, Select, SubmitButton, TextArea } from "@/components/form";
 import { RingkasanData } from "@/components/ringkasan-data";
 import { Riwayat } from "@/components/riwayat";
 import { Alert, Card, Dl, StatusBadge } from "@/components/ui";
@@ -17,7 +20,10 @@ const VERIF_BTN = [
 
 export default async function DetailPendaftar({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const d = await muatLengkap(id);
+  const [d, daftarJurusan] = await Promise.all([
+    muatLengkap(id),
+    getDb().then((db) => db.select({ id: jurusan.id, nama: jurusan.nama }).from(jurusan).where(eq(jurusan.aktif, true)).orderBy(asc(jurusan.nama))),
+  ]);
   if (!d) notFound();
   const cek = cekKelengkapan(d);
   const umur = d.diri ? hitungUmur(d.diri.tanggalLahir) : null;
@@ -144,6 +150,34 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
                 <p className="text-xs font-semibold text-slate-500">Catatan terakhir</p>
                 <p className="mt-0.5 whitespace-pre-line text-slate-800">{d.catatanAdmin}</p>
               </div>
+            )}
+          </Card>
+          <Card title="Pilihan jurusan">
+            <p className="mb-3 text-[13px] text-slate-500">
+              Setelah pendaftaran dikirim, hanya admin yang dapat mengubah pilihan jurusan. Perubahan tercatat di riwayat dan terlihat oleh pendaftar.
+            </p>
+            {daftarJurusan.length === 0 ? (
+              <p className="text-sm text-slate-500">Belum ada jurusan aktif.</p>
+            ) : (
+              <ActionForm action={ubahJurusanPendaftar.bind(null, d.id)} className="space-y-3">
+                <Select
+                  name="jurusan1Id"
+                  label="Jurusan 1"
+                  required
+                  defaultValue={d.pilihan?.jurusan1Id}
+                  options={daftarJurusan.map((j) => ({ value: j.id, label: j.nama }))}
+                />
+                <Select
+                  name="jurusan2Id"
+                  label="Jurusan 2"
+                  required
+                  defaultValue={d.pilihan?.jurusan2Id}
+                  options={daftarJurusan.map((j) => ({ value: j.id, label: j.nama }))}
+                />
+                <SubmitButton variant="secondary" className="w-full">
+                  Simpan Pilihan Jurusan
+                </SubmitButton>
+              </ActionForm>
             )}
           </Card>
           <Card title="Riwayat">

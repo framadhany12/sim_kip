@@ -7,11 +7,11 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Data Keluarga" };
 
 export default async function KeluargaPage() {
-  const { d, editable } = await konteksPendaftar();
+  const { d, sudahDikirim } = await konteksPendaftar();
   const x = d.keluarga;
   return (
     <Card title="2. Data Keluarga">
-      <ActionForm action={simpanKeluarga} disabled={!editable}>
+      <ActionForm action={simpanKeluarga}>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field name="namaAyah" label="Nama ayah" required defaultValue={x?.namaAyah} hint="Sesuai Kartu Keluarga. Tetap diisi walau ayah sudah meninggal." contoh="Ahmad Sutisna" />
           <Field name="namaIbu" label="Nama ibu" required defaultValue={x?.namaIbu} hint="Sesuai Kartu Keluarga. Tetap diisi walau ibu sudah meninggal." contoh="Rina Marlina" />
@@ -36,7 +36,7 @@ export default async function KeluargaPage() {
             contoh="5"
           />
         </div>
-        <FormFooter back="/formulir/data-diri" editable={editable} next="/formulir/ekonomi" />
+        <FormFooter back="/formulir/data-diri" sudahDikirim={sudahDikirim} />
       </ActionForm>
     </Card>
   );

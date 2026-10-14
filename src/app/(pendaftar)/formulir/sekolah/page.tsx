@@ -11,7 +11,7 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Sekolah & Pilihan Jurusan" };
 
 export default async function SekolahPage() {
-  const { d, editable } = await konteksPendaftar();
+  const { d, sudahDikirim } = await konteksPendaftar();
   const db = await getDb();
   const daftar = await db.select().from(jurusan).where(eq(jurusan.aktif, true)).orderBy(asc(jurusan.nama));
   const opsi1 = daftar.filter((j) => j.bukaPilihan1).map((j) => ({ value: j.id, label: j.nama }));
@@ -19,7 +19,7 @@ export default async function SekolahPage() {
   const s = d.sekolah;
   return (
     <Card title="4. Data Sekolah & Pilihan Jurusan">
-      <ActionForm action={simpanSekolah} disabled={!editable}>
+      <ActionForm action={simpanSekolah}>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field name="namaSekolah" label="Nama sekolah" required defaultValue={s?.namaSekolah} hint="Nama SMA/SMK/MA atau sederajat sesuai ijazah." contoh="SMK Negeri 1 Cimahi" />
           <Field
@@ -44,7 +44,28 @@ export default async function SekolahPage() {
         </div>
 
         <h3 className="pt-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Pilihan jurusan kuliah</h3>
-        {opsi1.length === 0 ? (
+        {sudahDikirim ? (
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["Jurusan 1 (prioritas utama)", d.pilihan?.jurusan1],
+                ["Jurusan 2 (cadangan)", d.pilihan?.jurusan2],
+              ].map(([label, nama]) => (
+                <div key={label}>
+                  <p className="mb-1.5 text-sm font-medium text-slate-800">{label}</p>
+                  <p className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[15px] text-slate-700">
+                    <span aria-hidden>🔒</span>
+                    {nama ?? "-"}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="text-[13px] text-slate-500">
+              Pilihan jurusan dikunci setelah pendaftaran dikirim dan hanya dapat diubah oleh admin. Bila perlu mengganti, ajukan lewat menu Bantuan → Tanya
+              Admin.
+            </p>
+          </div>
+        ) : opsi1.length === 0 ? (
           <Alert tone="warning">Belum ada jurusan yang dibuka. Silakan hubungi admin.</Alert>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">
@@ -52,7 +73,7 @@ export default async function SekolahPage() {
             <Select name="jurusan2Id" label="Jurusan 2 (cadangan)" required defaultValue={d.pilihan?.jurusan2Id} options={opsi2} hint="Harus berbeda dari Jurusan 1." />
           </div>
         )}
-        <FormFooter back="/formulir/ekonomi" editable={editable} next="/formulir/berkas" />
+        <FormFooter back="/formulir/ekonomi" sudahDikirim={sudahDikirim} />
       </ActionForm>
     </Card>
   );

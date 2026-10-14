@@ -8,7 +8,7 @@ import { ringkasBerkas } from "@/lib/berkas-view";
 export const metadata = { title: "Unggah Berkas" };
 
 export default async function BerkasPage() {
-  const { d, editable } = await konteksPendaftar();
+  const { d } = await konteksPendaftar();
   const jumlah = BERKAS_UTAMA.filter((j) => d.berkas[j]).length;
   return (
     <Card title="6. Unggah Berkas Persyaratan" action={<span className="text-sm text-slate-600">{jumlah} dari {BERKAS_UTAMA.length} berkas wajib</span>}>
@@ -25,7 +25,7 @@ export default async function BerkasPage() {
             tips={BERKAS_INFO[j].tips}
             wajib
             berkas={ringkasBerkas(d.berkas[j])}
-            editable={editable}
+            editable
             extra={
               j === "surat_permohonan_direktur" ? (
                 <a href={LINK_FORMAT_SURAT} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[13px] font-semibold text-blue-700 hover:underline">

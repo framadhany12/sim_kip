@@ -26,13 +26,13 @@ const PEKERJAAN = [
 ].map((p) => ({ value: p, label: p }));
 
 export default async function EkonomiPage() {
-  const { d, editable } = await konteksPendaftar();
+  const { d, sudahDikirim } = await konteksPendaftar();
   const x = d.ekonomi;
   const info = BERKAS_INFO.surat_ekonomi;
   return (
     <div className="space-y-6">
       <Card title="3. Ekonomi Orang Tua/Wali">
-        <ActionForm action={simpanEkonomi} disabled={!editable}>
+        <ActionForm action={simpanEkonomi}>
           <div className="grid gap-5 sm:grid-cols-2">
             <Field
               name="penghasilanBulanan"
@@ -62,10 +62,10 @@ export default async function EkonomiPage() {
             hint="Kondisi khusus yang perlu diketahui: penerima PKH/KIP/KKS, orang tua sakit, yatim/piatu, dsb."
             contoh="Keluarga penerima PKH; ayah sudah meninggal sejak 2020."
           />
-          <FormFooter back="/formulir/keluarga" editable={editable} next="/formulir/sekolah" />
+          <FormFooter back="/formulir/keluarga" sudahDikirim={sudahDikirim} />
         </ActionForm>
       </Card>
-      <UploadBerkas jenis="surat_ekonomi" label={info.label} tips={info.tips} wajib={false} berkas={ringkasBerkas(d.berkas.surat_ekonomi)} editable={editable} />
+      <UploadBerkas jenis="surat_ekonomi" label={info.label} tips={info.tips} wajib={false} berkas={ringkasBerkas(d.berkas.surat_ekonomi)} editable />
     </div>
   );
 }

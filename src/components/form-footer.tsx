@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { SubmitButton } from "./form";
 
-export function FormFooter({ back, editable, next }: { back?: string; editable: boolean; next?: string }) {
+/** Footer langkah formulir. Setelah pendaftaran dikirim, menyimpan kembali ke Ringkasan, bukan ke langkah berikutnya. */
+export function FormFooter({ back, sudahDikirim }: { back?: string; sudahDikirim: boolean }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
       {back ? (
@@ -11,15 +12,7 @@ export function FormFooter({ back, editable, next }: { back?: string; editable: 
       ) : (
         <span />
       )}
-      {editable ? (
-        <SubmitButton>Simpan & Lanjut →</SubmitButton>
-      ) : (
-        next && (
-          <Link href={next} className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50">
-            Lanjut →
-          </Link>
-        )
-      )}
+      <SubmitButton>{sudahDikirim ? "Simpan Perubahan" : "Simpan & Lanjut →"}</SubmitButton>
     </div>
   );
 }

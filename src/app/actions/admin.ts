@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, count, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
-import { berkas, faq, jurusan, pendaftaran, pertanyaan, rekomendasi, riwayatStatus, sumberRekomendasi } from "@/db/schema";
+import { berkas, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 
@@ -178,4 +178,44 @@ export async function hapusSumberRekomendasi(fd: FormData) {
   if (n > 0) await db.update(sumberRekomendasi).set({ aktif: false }).where(eq(sumberRekomendasi.id, id));
   else await db.delete(sumberRekomendasi).where(eq(sumberRekomendasi.id, id));
   revalidatePath("/admin/rekomendasi");
+}
+
+// ---------- Ubah pilihan jurusan pendaftar (khusus admin) ----------
+
+export async function ubahJurusanPendaftar(pendaftaranId: string, _: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const j1 = String(fd.get("jurusan1Id") ?? "");
+  const j2 = String(fd.get("jurusan2Id") ?? "");
+  const e: Record<string, string> = {};
+  if (!j1) e.jurusan1Id = "Pilih Jurusan 1.";
+  if (!j2) e.jurusan2Id = "Pilih Jurusan 2.";
+  if (j1 && j1 === j2) e.jurusan2Id = "Jurusan 2 harus berbeda dari Jurusan 1.";
+  const db = await getDb();
+  const semua = await db.select().from(jurusan);
+  const nama = (id?: string | null) => semua.find((j) => j.id === id)?.nama ?? "-";
+  // Admin boleh memilih jurusan aktif mana pun, termasuk yang tidak dibuka untuk pilihan 1/2 di formulir pendaftar.
+  for (const [k, id] of [["jurusan1Id", j1], ["jurusan2Id", j2]] as const)
+    if (id && !e[k] && !semua.some((j) => j.id === id && j.aktif)) e[k] = "Jurusan tidak ditemukan atau nonaktif.";
+  if (Object.keys(e).length) return { errors: e, values: { jurusan1Id: j1, jurusan2Id: j2 } };
+
+  const [p] = await db.select().from(pendaftaran).where(eq(pendaftaran.id, pendaftaranId));
+  if (!p) return { message: "Pendaftaran tidak ditemukan." };
+  const [lama] = await db.select().from(pilihanJurusan).where(eq(pilihanJurusan.pendaftaranId, pendaftaranId));
+  if (lama?.jurusan1Id === j1 && lama?.jurusan2Id === j2) return { ok: true, message: "Tidak ada perubahan pilihan jurusan." };
+
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(pilihanJurusan)
+      .values({ pendaftaranId, jurusan1Id: j1, jurusan2Id: j2 })
+      .onDuplicateKeyUpdate({ set: { jurusan1Id: j1, jurusan2Id: j2 } });
+    await tx.update(pendaftaran).set({ updatedAt: new Date() }).where(eq(pendaftaran.id, pendaftaranId));
+    await tx.insert(riwayatStatus).values({
+      pendaftaranId,
+      status: p.status,
+      catatan: `Admin mengubah pilihan jurusan.\nJurusan 1: ${nama(lama?.jurusan1Id)} → ${nama(j1)}\nJurusan 2: ${nama(lama?.jurusan2Id)} → ${nama(j2)}`,
+      diubahOleh: admin.id,
+    });
+  });
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Pilihan jurusan diperbarui dan tercatat di riwayat." };
 }

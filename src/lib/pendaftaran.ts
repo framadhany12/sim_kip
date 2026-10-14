@@ -22,7 +22,18 @@ import { BERKAS_INFO, BERKAS_UTAMA, LANGKAH, MAX_UMUR, TAHUN_LULUS, hitungUmur, 
 
 export const GELOMBANG_AKTIF = process.env.GELOMBANG_AKTIF ?? "Gelombang 1 — 2026";
 
-export const bisaDiedit = (status: Status) => status === "draft" || status === "perbaikan";
+/**
+ * True bila pendaftaran belum (atau perlu) dikirim. Data & berkas tetap bisa diubah pendaftar kapan saja;
+ * yang dikunci setelah dikirim hanya pilihan Jurusan 1 & 2 (setelah itu hanya admin yang boleh mengubah).
+ */
+export const belumDikirim = (status: Status) => status === "draft" || status === "perbaikan";
+
+/** Catat di riwayat bila pendaftar mengubah data setelah pendaftaran dikirim, agar admin mengetahuinya. */
+export async function catatPerubahanPendaftar(p: { id: string; status: Status }, userId: string, bagian: string) {
+  if (belumDikirim(p.status)) return;
+  const db = await getDb();
+  await db.insert(riwayatStatus).values({ pendaftaranId: p.id, status: p.status, catatan: `Pendaftar memperbarui ${bagian}`, diubahOleh: userId });
+}
 
 /** Ambil pendaftaran milik user pada gelombang aktif; buat draft baru bila belum ada. */
 export async function pendaftaranSaya(userId: string) {

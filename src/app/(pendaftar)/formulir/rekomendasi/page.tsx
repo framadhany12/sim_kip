@@ -11,7 +11,7 @@ import { konteksPendaftar } from "@/lib/konteks";
 export const metadata = { title: "Rekomendasi" };
 
 export default async function RekomendasiPage() {
-  const { d, editable } = await konteksPendaftar();
+  const { d, sudahDikirim } = await konteksPendaftar();
   const db = await getDb();
   const aktif = await db
     .select({ id: sumberRekomendasi.id, nama: sumberRekomendasi.nama, butuhKontak: sumberRekomendasi.butuhKontak })
@@ -27,9 +27,9 @@ export default async function RekomendasiPage() {
       {sumber.length === 0 ? (
         <Alert tone="warning">Pilihan rekomendasi belum disiapkan admin. Silakan hubungi admin lewat menu Bantuan.</Alert>
       ) : (
-        <ActionForm action={simpanRekomendasi} disabled={!editable}>
+        <ActionForm action={simpanRekomendasi}>
           <RekomendasiFields sumber={sumber} defaultSumber={r?.sumberId} defaultNama={r?.namaPerekomendasi} defaultTelepon={r?.teleponPerekomendasi} />
-          <FormFooter back="/formulir/sekolah" editable={editable} next="/formulir/berkas" />
+          <FormFooter back="/formulir/sekolah" sudahDikirim={sudahDikirim} />
         </ActionForm>
       )}
     </Card>

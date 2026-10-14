@@ -7,13 +7,15 @@ import { konteksPendaftar } from "@/lib/konteks";
 
 export const metadata = { title: "Ringkasan & Kirim" };
 
-export default async function RingkasanPage() {
-  const { d, cek, editable } = await konteksPendaftar();
+export default async function RingkasanPage({ searchParams }: { searchParams: Promise<{ diperbarui?: string }> }) {
+  const { d, cek, sudahDikirim } = await konteksPendaftar();
+  const { diperbarui } = await searchParams;
   return (
     <div className="space-y-6">
+      {diperbarui && <Alert tone="success">Perubahan tersimpan dan tercatat di riwayat pendaftaran.</Alert>}
       <p className="text-[15px] text-slate-600">Periksa kembali semua isian di bawah. Tekan <b>Ubah</b> pada bagian yang ingin diperbaiki.</p>
-      <RingkasanData d={d} editLinks={editable} />
-      {editable && (
+      <RingkasanData d={d} editLinks />
+      {!sudahDikirim && (
         <Card title="7. Kirim Pendaftaran">
           {cek.siapKirim ? (
             <ActionForm action={kirimPendaftaran}>
@@ -37,7 +39,7 @@ export default async function RingkasanPage() {
           )}
         </Card>
       )}
-      {!editable && (
+      {sudahDikirim && (
         <div className="flex justify-end">
           <Link href="/status" className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
             Lihat Status Pendaftaran →
