@@ -74,12 +74,12 @@ export function UploadBerkas({
 
   return (
     <div className={`rounded-xl border p-4 ${berkas?.statusVerifikasi === "tidak_valid" ? "border-rose-300 bg-rose-50/40" : "border-slate-200 bg-white"}`}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-3 sm:flex-nowrap">
         <a
           href={url || undefined}
           target="_blank"
           rel="noreferrer"
-          className={`grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border ${
+          className={`grid size-16 shrink-0 place-items-center sm:size-20 overflow-hidden rounded-lg border ${
             berkas ? "border-slate-200 bg-slate-50 hover:ring-2 hover:ring-blue-600/30" : "border-dashed border-slate-300 bg-slate-50"
           }`}
           aria-label={berkas ? `Pratinjau ${label}` : undefined}
@@ -95,7 +95,7 @@ export function UploadBerkas({
             <span className="text-2xl text-slate-300">＋</span>
           )}
         </a>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-40">
           <p className="font-semibold text-slate-900">
             {label} {wajib ? <span className="text-rose-600">*</span> : <span className="text-sm font-normal text-slate-500">(opsional)</span>}
           </p>
@@ -119,7 +119,7 @@ export function UploadBerkas({
           )}
         </div>
         {editable && (
-          <div className="flex shrink-0 gap-2">
+          <div className="flex w-full shrink-0 gap-2 sm:w-auto">
             <input
               ref={input}
               type="file"
@@ -130,14 +130,14 @@ export function UploadBerkas({
             />
             <label
               htmlFor={`file-${jenis}`}
-              className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold ${
+              className={`inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-lg px-5 py-2 text-[15px] font-semibold active:scale-[0.98] sm:flex-none ${
                 berkas ? "bg-white text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50" : "bg-blue-700 text-white hover:bg-blue-800"
               } ${busy ? "pointer-events-none opacity-60" : ""}`}
             >
               {busy ? "Mengunggah…" : berkas ? "Ganti" : "Unggah"}
             </label>
             {berkas && !wajib && (
-              <button type="button" onClick={hapus} disabled={busy} className="rounded-lg px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50">
+              <button type="button" onClick={hapus} disabled={busy} className="min-h-11 rounded-lg px-4 py-2 text-[15px] font-medium text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50">
                 Hapus
               </button>
             )}

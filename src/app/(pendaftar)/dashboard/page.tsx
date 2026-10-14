@@ -21,10 +21,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Alert>
       )}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Halo, {user.nama.split(" ")[0]}!</h1>
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Halo, {user.nama.split(" ")[0]}!</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Card title="Pendaftaran Anda" action={<StatusBadge status={d.status} tahap={d.tahap} />}>
           {!sudahDikirim ? (
             <>
@@ -100,7 +100,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </div>
               )}
               <p className="mt-2 text-sm text-slate-500">Dikirim: {tanggal(d.submittedAt)}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-5 grid gap-2 sm:flex sm:flex-wrap">
                 <ButtonLink href="/status">Lihat Detail Status →</ButtonLink>
                 <ButtonLink href="/formulir/ringkasan" variant="secondary">
                   Perbarui Data & Berkas

@@ -35,9 +35,9 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
       </Card>
 
       {gugur && (
-        <section className="rounded-xl border border-rose-200 bg-rose-50 p-6" aria-label="Hasil seleksi">
+        <section className="rounded-xl border border-rose-200 bg-rose-50 p-5 sm:p-6" aria-label="Hasil seleksi">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Hasil {TAHAP_LABEL[d.tahap!]}</p>
-          <p className="mt-1 text-2xl font-bold text-rose-800">✕ TIDAK LOLOS {TAHAP_LABEL[d.tahap!].toUpperCase()}</p>
+          <p className="mt-1 text-xl font-bold text-rose-800 sm:text-2xl">✕ TIDAK LOLOS {TAHAP_LABEL[d.tahap!].toUpperCase()}</p>
           {d.alasanDitolak && (
             <p className="mt-2 text-[15px] text-slate-800">
               Alasan: <b>{d.alasanDitolak}</b>
@@ -48,11 +48,11 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
 
       {diumumkan && (
         <section
-          className={`rounded-xl border p-6 ${d.hasil === "diterima" ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}
+          className={`rounded-xl border p-5 sm:p-6 ${d.hasil === "diterima" ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}
           aria-label="Pengumuman hasil seleksi"
         >
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Pengumuman hasil seleksi</p>
-          <p className={`mt-1 text-2xl font-bold ${d.hasil === "diterima" ? "text-emerald-800" : "text-rose-800"}`}>
+          <p className={`mt-1 text-xl font-bold sm:text-2xl ${d.hasil === "diterima" ? "text-emerald-800" : "text-rose-800"}`}>
             {d.hasil === "diterima" ? "✓ DITERIMA sebagai penerima KIP Kuliah" : "✕ TIDAK DITERIMA"}
           </p>
           {d.hasil === "ditolak" && d.alasanDitolak && (
@@ -68,7 +68,7 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
         </section>
       )}
 
-      <div className="grid gap-4 md:grid-cols-[1fr_1.2fr]">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
         <div className="space-y-4">
           <Card title="Catatan dari admin">
             {d.catatanAdmin ? (

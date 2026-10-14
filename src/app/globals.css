@@ -9,7 +9,13 @@
   color-scheme: light;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background: #f6f7fb;
   color: #0f172a;
+  overflow-wrap: break-word;
 }

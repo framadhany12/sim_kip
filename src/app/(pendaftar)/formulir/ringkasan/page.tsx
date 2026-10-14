@@ -25,7 +25,7 @@ export default async function RingkasanPage({ searchParams }: { searchParams: Pr
                 tidak dapat diubah selama diperiksa admin.
               </Checkbox>
               <div className="flex justify-end">
-                <SubmitButton variant="success">{d.status === "perbaikan" ? "Kirim Ulang Pendaftaran" : "Kirim Pendaftaran"}</SubmitButton>
+                <SubmitButton variant="success" className="w-full sm:w-auto">{d.status === "perbaikan" ? "Kirim Ulang Pendaftaran" : "Kirim Pendaftaran"}</SubmitButton>
               </div>
             </ActionForm>
           ) : (
@@ -41,7 +41,7 @@ export default async function RingkasanPage({ searchParams }: { searchParams: Pr
       )}
       {sudahDikirim && (
         <div className="flex justify-end">
-          <Link href="/status" className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">
+          <Link href="/status" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-700 px-5 py-2.5 text-[15px] font-semibold text-white hover:bg-blue-800 sm:w-auto">
             Lihat Status Pendaftaran →
           </Link>
         </div>

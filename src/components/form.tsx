@@ -160,11 +160,11 @@ export function Checkbox({ name, children }: { name: string; children: ReactNode
   const error = useContext(Ctx)?.errors?.[name];
   return (
     <div>
-      <label className="flex items-start gap-3 text-sm text-slate-700">
-        <input type="checkbox" name={name} className="mt-0.5 size-4 shrink-0 accent-blue-700" />
+      <label className="flex items-start gap-3 py-1 text-[15px] leading-snug text-slate-700">
+        <input type="checkbox" name={name} className="mt-0.5 size-5 shrink-0 accent-blue-700" />
         <span>{children}</span>
       </label>
-      {error && <p className="mt-1.5 pl-7 text-sm text-rose-700">{error}</p>}
+      {error && <p className="mt-1.5 pl-8 text-sm text-rose-700">{error}</p>}
     </div>
   );
 }
@@ -187,7 +187,7 @@ export function SubmitButton({ children, variant = "primary", name, value, class
       name={name}
       value={value}
       disabled={pending}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${styles} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 min-h-11 text-[15px] font-semibold shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${styles} ${className}`}
     >
       {pending ? "Memproses…" : children}
     </button>

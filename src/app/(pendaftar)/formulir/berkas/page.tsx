@@ -36,11 +36,11 @@ export default async function BerkasPage() {
           />
         ))}
       </div>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
-        <Link href="/formulir/rekomendasi" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] z-20 -mx-4 -mb-4 mt-6 flex items-stretch gap-2 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:items-center sm:justify-between sm:px-5 lg:static lg:mx-0 lg:mb-0 lg:gap-3 lg:border-slate-100 lg:bg-transparent lg:px-0 lg:pb-0 lg:pt-5 lg:backdrop-blur-none">
+        <Link href="/formulir/rekomendasi" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-medium text-slate-600 ring-1 ring-slate-300 hover:text-slate-900 sm:ring-0">
           ← Kembali
         </Link>
-        <Link href="/formulir/ringkasan" className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-800">
+        <Link href="/formulir/ringkasan" className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-blue-700 px-5 sm:flex-none py-2.5 text-[15px] font-semibold text-white shadow-sm hover:bg-blue-800">
           Lanjut ke Ringkasan →
         </Link>
       </div>

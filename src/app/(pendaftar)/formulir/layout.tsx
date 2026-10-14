@@ -8,8 +8,8 @@ export default async function FormulirLayout({ children }: { children: React.Rea
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Formulir Pendaftaran</h1>
-        <p className="mt-1 text-[15px] text-slate-600">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Formulir Pendaftaran</h1>
+        <p className="mt-1 text-sm text-slate-600 sm:text-[15px]">
           Isi berurutan. Setiap langkah tersimpan otomatis saat Anda menekan <b>Simpan & Lanjut</b>, jadi Anda bisa berhenti dan melanjutkan kapan saja.
         </p>
       </div>

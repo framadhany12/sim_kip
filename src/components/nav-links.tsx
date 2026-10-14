@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function NavLinks({ links }: { links: { href: string; label: string; match?: string; exact?: boolean }[] }) {
+export function NavLinks({ links, hanyaDesktop }: { links: { href: string; label: string; match?: string; exact?: boolean }[]; hanyaDesktop?: boolean }) {
   const path = usePathname();
   return (
-    <nav className="order-last -mx-1 flex w-full gap-1 overflow-x-auto md:order-none md:w-auto">
+    <nav className={`order-last -mx-1 w-full gap-1 overflow-x-auto ${hanyaDesktop ? "hidden lg:order-none lg:flex lg:w-auto" : "hidden md:order-none md:flex md:w-auto"}`}>
       {links.map((l) => {
         const base = l.match ?? l.href;
         const active = l.exact ? path === base : path === base || path.startsWith(base + "/");
