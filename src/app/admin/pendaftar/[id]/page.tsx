@@ -108,7 +108,7 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
             <Dl
               items={[
                 ["Akun", d.user.email],
-                ["Gelombang", d.gelombang],
+                ["Mendaftar", tanggal(d.user.createdAt)],
                 ["Dikirim", tanggal(d.submittedAt)],
                 ...(d.jurusanDiterima ? ([["Diterima di", d.jurusanDiterima]] as [string, string][]) : []),
                 ...(d.alasanDitolak

@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { dataDiri, pendaftaran, pertanyaan, riwayatStatus, TAHAP, users, type Status } from "@/db/schema";
 import { DESIL_LABEL, TAHAP_LABEL, labelRiwayat } from "./constants";
+import { rentangTahun } from "./tahun";
 
 /** Ringkasan untuk dashboard admin. Semua nilai JSON-safe (tanggal sebagai string ISO). */
 export type Statistik = Awaited<ReturnType<typeof ambilStatistik>>;
@@ -18,13 +19,23 @@ async function rows<T extends Baris>(q: SQL): Promise<T[]> {
   return r;
 }
 
-export async function ambilStatistik({ gelombang, hari = 30 }: { gelombang?: string; hari?: number }) {
+/**
+ * `tahun` menyaring pendaftar yang mendaftar (akun dibuat) pada tahun itu, menurut WIB; kosong = semua tahun.
+ * Grafik tren menampilkan `hari` hari terakhir, berakhir hari ini (atau 31 Desember bila tahun sudah lewat).
+ */
+export async function ambilStatistik({ tahun, hari = 30 }: { tahun?: number; hari?: number }) {
   const db = await getDb();
   const sekarang = new Date();
   const hariIni = tglWib(sekarang);
-  const awalRentang = new Date(Date.parse(`${hariIni}T00:00:00+07:00`) - (hari - 1) * 864e5);
-  const fG = gelombang ? eq(pendaftaran.gelombang, gelombang) : undefined;
-  const gSql = gelombang ? sql` and p.gelombang = ${gelombang}` : sql``;
+  const rentang = tahun ? rentangTahun(tahun) : null;
+  const akhirTren = tahun && `${tahun}-12-31` < hariIni ? `${tahun}-12-31` : hariIni;
+  const awalRentang = new Date(Date.parse(`${akhirTren}T00:00:00+07:00`) - (hari - 1) * 864e5);
+  const pemilikTahun = rentang
+    ? sql`select u2.id from users u2 where u2.created_at >= ${rentang.dari} and u2.created_at < ${rentang.sampai}`
+    : null;
+  const fG = pemilikTahun ? sql`${pendaftaran.userId} in (${pemilikTahun})` : undefined;
+  const gSql = pemilikTahun ? sql` and p.user_id in (${pemilikTahun})` : sql``;
+  const akunFilter = rentang ? sql` and created_at >= ${rentang.dari} and created_at < ${rentang.sampai}` : sql``;
   const dikirim = sql`p.status not in ('draft','perbaikan')`;
 
   // --- Angka utama -----------------------------------------------------------
@@ -38,7 +49,7 @@ export async function ambilStatistik({ gelombang, hari = 30 }: { gelombang?: str
     select count(*) total,
            sum(email_verified_at is not null) terverifikasi,
            sum(date_format(date_add(created_at, interval 7 hour), '%Y-%m-%d') = ${hariIni}) hariIni
-    from users where role = 'pendaftar'`);
+    from users where role = 'pendaftar' ${akunFilter}`);
   const [kirimHariIni] = await rows<{ n: number }>(sql`
     select count(*) n from pendaftaran p
     where p.submitted_at is not null and date_format(date_add(p.submitted_at, interval 7 hour), '%Y-%m-%d') = ${hariIni} ${gSql}`);
@@ -61,7 +72,7 @@ export async function ambilStatistik({ gelombang, hari = 30 }: { gelombang?: str
   // --- Tren harian (WIB) -------------------------------------------------------
   const akunHarian = await rows<{ tgl: string; n: number }>(sql`
     select date_format(date_add(created_at, interval 7 hour), '%Y-%m-%d') tgl, count(*) n
-    from users where role = 'pendaftar' and created_at >= ${awalRentang} group by tgl`);
+    from users where role = 'pendaftar' and created_at >= ${awalRentang} ${akunFilter} group by tgl`);
   const kirimHarian = await rows<{ tgl: string; n: number }>(sql`
     select date_format(date_add(p.submitted_at, interval 7 hour), '%Y-%m-%d') tgl, count(*) n
     from pendaftaran p where p.submitted_at >= ${awalRentang} ${gSql} group by tgl`);
@@ -134,7 +145,7 @@ export async function ambilStatistik({ gelombang, hari = 30 }: { gelombang?: str
 
   return {
     diperbarui: sekarang.toISOString(),
-    gelombang: gelombang ?? null,
+    tahun: tahun ?? null,
     hari,
     kpi,
     tren,

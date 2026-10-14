@@ -1,13 +1,13 @@
 import { DashboardLive } from "@/components/admin/dashboard-live";
-import { daftarGelombang } from "@/lib/admin-query";
-import { GELOMBANG_AKTIF } from "@/lib/pendaftaran";
+import { daftarTahun } from "@/lib/admin-query";
 import { ambilStatistik } from "@/lib/statistik";
+import { tahunSekarang, TAHUN_MULAI } from "@/lib/tahun";
 
 export const metadata = { title: "Dashboard Admin" };
 
 export default async function AdminHome() {
-  // Render awal di server (tanpa layar kosong); setelah itu dashboard memperbarui diri tiap 10 detik.
-  const [awal, gelombangList] = await Promise.all([ambilStatistik({ gelombang: GELOMBANG_AKTIF, hari: 30 }), daftarGelombang()]);
-  const pilihan = [...new Set([GELOMBANG_AKTIF, ...gelombangList])];
-  return <DashboardLive awal={awal} daftarGelombang={pilihan} />;
+  // Bawaan: tahun berjalan (minimal 2026). Render awal di server, lalu dashboard memperbarui diri tiap 10 detik.
+  const tahun = Math.max(TAHUN_MULAI, tahunSekarang());
+  const [awal, pilihanTahun] = await Promise.all([ambilStatistik({ tahun, hari: 30 }), daftarTahun()]);
+  return <DashboardLive awal={awal} daftarTahun={pilihanTahun} />;
 }

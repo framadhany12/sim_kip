@@ -48,30 +48,30 @@ function relatif(iso: string, now: number) {
 // ---- Data & pembaruan otomatis -------------------------------------------------------------------
 function useStatistikLive(awal: Statistik) {
   const [data, setData] = useState(awal);
-  const [gelombang, setGelombang] = useState(awal.gelombang ?? "semua");
+  const [tahun, setTahun] = useState(awal.tahun ? String(awal.tahun) : "semua");
   const [hari, setHari] = useState(awal.hari);
   const [memuat, setMemuat] = useState(false);
   const [galat, setGalat] = useState(false);
   const [jeda, setJeda] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const berjalan = useRef(false);
+  const urut = useRef(0);
 
   const muat = useCallback(async () => {
-    if (berjalan.current) return;
-    berjalan.current = true;
+    const saya = ++urut.current; // hanya respons terbaru yang dipakai (filter bisa berganti saat permintaan berjalan)
     setMemuat(true);
     try {
-      const r = await fetch(`/api/admin/statistik?gelombang=${encodeURIComponent(gelombang)}&hari=${hari}`, { cache: "no-store" });
+      const r = await fetch(`/api/admin/statistik?tahun=${encodeURIComponent(tahun)}&hari=${hari}`, { cache: "no-store" });
       if (!r.ok) throw new Error(String(r.status));
-      setData(await r.json());
+      const json = await r.json();
+      if (saya !== urut.current) return;
+      setData(json);
       setGalat(false);
     } catch {
-      setGalat(true);
+      if (saya === urut.current) setGalat(true);
     } finally {
-      berjalan.current = false;
-      setMemuat(false);
+      if (saya === urut.current) setMemuat(false);
     }
-  }, [gelombang, hari]);
+  }, [tahun, hari]);
 
   // Muat ulang saat filter berubah, lalu berkala selama tab terlihat.
   useEffect(() => {
@@ -96,7 +96,7 @@ function useStatistikLive(awal: Statistik) {
     return () => clearInterval(id);
   }, []);
 
-  return { data, gelombang, setGelombang, hari, setHari, memuat, galat, jeda, now, muat };
+  return { data, tahun, setTahun, hari, setHari, memuat, galat, jeda, now, muat };
 }
 
 /** Menandai sebentar nilai yang baru berubah (agar pembaruan langsung terlihat). */
@@ -258,9 +258,11 @@ function BarHorizontal({ data, seri, tinggiBaris = 34 }: { data: Record<string, 
 }
 
 // ---- Dashboard -------------------------------------------------------------------------------------
-export function DashboardLive({ awal, daftarGelombang }: { awal: Statistik; daftarGelombang: string[] }) {
-  const { data, gelombang, setGelombang, hari, setHari, memuat, galat, jeda, now, muat } = useStatistikLive(awal);
+export function DashboardLive({ awal, daftarTahun }: { awal: Statistik; daftarTahun: number[] }) {
+  const { data, tahun, setTahun, hari, setHari, memuat, galat, jeda, now, muat } = useStatistikLive(awal);
   const k = data.kpi;
+  // Tautan kartu membawa tahun yang dipilih agar daftar yang terbuka sama dengan angkanya.
+  const thn = tahun === "semua" ? "" : `&tahun=${tahun}`;
 
   const komposisi = useMemo(
     () =>
@@ -310,18 +312,20 @@ export function DashboardLive({ awal, daftarGelombang }: { awal: Statistik; daft
 
       {/* Filter: satu baris, berlaku untuk semua angka & grafik di bawahnya */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-        <label htmlFor="f-gelombang" className="text-xs font-medium text-slate-500">
-          Gelombang
+        <label htmlFor="f-tahun" className="text-xs font-medium text-slate-500">
+          Tahun daftar
         </label>
         <select
-          id="f-gelombang"
-          value={gelombang}
-          onChange={(e) => setGelombang(e.target.value)}
+          id="f-tahun"
+          value={tahun}
+          onChange={(e) => setTahun(e.target.value)}
           className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none"
         >
-          <option value="semua">Semua gelombang</option>
-          {daftarGelombang.map((g) => (
-            <option key={g}>{g}</option>
+          <option value="semua">Semua tahun</option>
+          {daftarTahun.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
         <span className="mx-1 hidden h-5 w-px bg-slate-200 sm:block" aria-hidden />
@@ -347,18 +351,18 @@ export function DashboardLive({ awal, daftarGelombang }: { awal: Statistik; daft
         {/* KPI */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <Kpi label="Akun pendaftar" nilai={k.akun} ikon={Users} ket={<>+{fmt.format(k.akunHariIni)} hari ini · {fmt.format(k.akunTerverifikasi)} terverifikasi</>} />
-          <Kpi label="Pendaftaran masuk" nilai={k.masuk} ikon={ClipboardCheck} ket={<>+{fmt.format(k.kirimHariIni)} dikirim hari ini</>} href="/admin/pendaftar?status=semua" />
-          <Kpi label="Dalam proses seleksi" nilai={k.proses} ikon={Activity} ket="Belum ada keputusan akhir" href="/admin/pendaftar?status=masuk" />
-          <Kpi label="Diterima" nilai={k.diterima} ikon={CheckCircle2} ket="Hasil pengumuman" href="/admin/pendaftar?status=diterima" nada="hijau" />
+          <Kpi label="Pendaftaran masuk" nilai={k.masuk} ikon={ClipboardCheck} ket={<>+{fmt.format(k.kirimHariIni)} dikirim hari ini</>} href={`/admin/pendaftar?status=semua${thn}`} />
+          <Kpi label="Dalam proses seleksi" nilai={k.proses} ikon={Activity} ket="Belum ada keputusan akhir" href={`/admin/pendaftar?status=masuk${thn}`} />
+          <Kpi label="Diterima" nilai={k.diterima} ikon={CheckCircle2} ket="Hasil pengumuman" href={`/admin/pendaftar?status=diterima${thn}`} nada="hijau" />
           <Kpi
             label="Tidak diterima / lolos"
             nilai={k.tidakDiterima + k.gugurAdministrasi}
             ikon={XCircle}
             ket={<>{fmt.format(k.gugurAdministrasi)} gugur di administrasi</>}
-            href="/admin/pendaftar?status=ditolak"
+            href={`/admin/pendaftar?status=ditolak${thn}`}
             nada="merah"
           />
-          <Kpi label="Belum mengirim" nilai={k.belumKirim} ikon={FileClock} ket="Masih mengisi formulir" href="/admin/pendaftar?status=draft" nada="abu" />
+          <Kpi label="Belum mengirim" nilai={k.belumKirim} ikon={FileClock} ket="Masih mengisi formulir" href={`/admin/pendaftar?status=draft${thn}`} nada="abu" />
         </div>
 
         {/* Tren + komposisi */}
@@ -472,7 +476,7 @@ export function DashboardLive({ awal, daftarGelombang }: { awal: Statistik; daft
             </div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
               {data.perTahap.map((t) => (
-                <Link key={t.tahap} href={`/admin/pendaftar?status=tahap:${t.tahap}`} className="rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:border-blue-300 hover:text-blue-700">
+                <Link key={t.tahap} href={`/admin/pendaftar?status=tahap:${t.tahap}${thn}`} className="rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:border-blue-300 hover:text-blue-700">
                   Lihat {t.label} →
                 </Link>
               ))}

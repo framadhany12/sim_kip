@@ -66,7 +66,7 @@ export function isDuplikat(e: unknown): boolean {
 export async function muatLengkap(pendaftaranId: string) {
   const db = await getDb();
   const [p] = await db
-    .select({ p: pendaftaran, user: { nama: users.nama, email: users.email } })
+    .select({ p: pendaftaran, user: { nama: users.nama, email: users.email, createdAt: users.createdAt } })
     .from(pendaftaran)
     .innerJoin(users, eq(users.id, pendaftaran.userId))
     .where(eq(pendaftaran.id, pendaftaranId));

@@ -20,8 +20,9 @@ import {
   wilayahKecamatan,
   type Status,
 } from "@/db/schema";
+import { daftarPilihanTahun, parseTahun, rentangTahun } from "./tahun";
 
-export type FilterPendaftar = { q?: string; status?: string; gelombang?: string; dari?: string; sampai?: string; page?: string };
+export type FilterPendaftar = { q?: string; status?: string; tahun?: string; dari?: string; sampai?: string; page?: string };
 
 /**
  * Pilihan filter daftar admin. "masuk" = semua yang sedang dalam proses seleksi (bawaan), "semua" = tanpa filter,
@@ -38,11 +39,14 @@ function kondisi(f: FilterPendaftar): SQL | undefined {
   else if (st.startsWith("tahap:") && (TAHAP as readonly string[]).includes(st.slice(6)))
     c.push(and(inArray(pendaftaran.status, DALAM_PROSES), eq(pendaftaran.tahap, st.slice(6) as Tahap)));
   else if ((STATUS as readonly string[]).includes(st)) c.push(eq(pendaftaran.status, st as Status));
-  if (f.gelombang) c.push(eq(pendaftaran.gelombang, f.gelombang));
-  // Rentang tanggal memakai tanggal kirim; pendaftaran yang belum dikirim memakai tanggal dibuat.
-  const tgl = sql`coalesce(${pendaftaran.submittedAt}, ${pendaftaran.createdAt})`;
-  if (f.dari) c.push(gte(tgl, new Date(`${f.dari}T00:00:00+07:00`)));
-  if (f.sampai) c.push(lt(tgl, new Date(new Date(`${f.sampai}T00:00:00+07:00`).getTime() + 864e5)));
+  // Tahun & rentang tanggal memakai waktu pendaftar mendaftar (akun dibuat), zona WIB.
+  const tahun = parseTahun(f.tahun);
+  if (tahun) {
+    const { dari, sampai } = rentangTahun(tahun);
+    c.push(gte(users.createdAt, dari), lt(users.createdAt, sampai));
+  }
+  if (f.dari) c.push(gte(users.createdAt, new Date(`${f.dari}T00:00:00+07:00`)));
+  if (f.sampai) c.push(lt(users.createdAt, new Date(new Date(`${f.sampai}T00:00:00+07:00`).getTime() + 864e5)));
   const q = f.q?.trim();
   if (q) {
     const pola = `%${q}%`;
@@ -74,7 +78,7 @@ function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
       hasil: pendaftaran.hasil,
       jurusanDiterima: jDiterima.nama,
       alasanDitolak: pendaftaran.alasanDitolak,
-      gelombang: pendaftaran.gelombang,
+      daftarPada: users.createdAt,
       submittedAt: pendaftaran.submittedAt,
       createdAt: pendaftaran.createdAt,
       updatedAt: pendaftaran.updatedAt,
@@ -141,7 +145,7 @@ export async function cariPendaftar(f: FilterPendaftar, semua = false) {
   const where = kondisi(f);
   const q = baseQuery(db)
     .where(where)
-    .orderBy(desc(sql`coalesce(${pendaftaran.submittedAt}, ${pendaftaran.createdAt})`));
+    .orderBy(desc(users.createdAt));
   if (semua) return { rows: await q, total: 0 };
   const page = Math.max(1, Number(f.page) || 1);
   const [rows, [{ total }]] = await Promise.all([
@@ -157,8 +161,12 @@ export async function cariPendaftar(f: FilterPendaftar, semua = false) {
   return { rows, total, page };
 }
 
-export async function daftarGelombang() {
+/** Pilihan tahun untuk filter: dari 2026 sampai tahun berjalan (atau tahun data terakhir bila lebih besar). */
+export async function daftarTahun() {
   const db = await getDb();
-  const rows = await db.selectDistinct({ g: pendaftaran.gelombang }).from(pendaftaran);
-  return rows.map((r) => r.g);
+  const [r] = await db
+    .select({ terakhir: sql<number | null>`max(year(date_add(${users.createdAt}, interval 7 hour)))` })
+    .from(users)
+    .where(eq(users.role, "pendaftar"));
+  return daftarPilihanTahun(r?.terakhir ? Number(r.terakhir) : null);
 }

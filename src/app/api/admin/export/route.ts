@@ -3,7 +3,8 @@ import { cariPendaftar } from "@/lib/admin-query";
 import { DESIL_LABEL, STATUS_NIKAH_LABEL, labelProses, yaTidak } from "@/lib/constants";
 
 const KOLOM: [string, (r: Awaited<ReturnType<typeof cariPendaftar>>["rows"][number]) => unknown][] = [
-  ["Gelombang", (r) => r.gelombang],
+  ["Tahun Daftar", (r) => new Date(r.daftarPada.getTime() + 7 * 3600e3).getUTCFullYear()],
+  ["Tanggal Daftar", (r) => r.daftarPada.toISOString()],
   ["Status / Tahap", (r) => labelProses(r.status, r.tahap)],
   ["Hasil", (r) => (r.hasil === "diterima" ? "Diterima" : r.hasil === "ditolak" ? "Tidak diterima" : "")],
   ["Jurusan Diterima", (r) => r.jurusanDiterima],

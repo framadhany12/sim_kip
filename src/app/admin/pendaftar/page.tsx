@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import { inputCls } from "@/lib/styles";
 import { TAHAP_LABEL } from "@/lib/constants";
-import { cariPendaftar, daftarGelombang, FILTER_STATUS, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
+import { cariPendaftar, daftarTahun, FILTER_STATUS, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
 import type { Status } from "@/db/schema";
 
 export const metadata = { title: "Daftar Pendaftar" };
@@ -18,7 +18,7 @@ const LABEL_FILTER: Record<string, string> = {
 
 export default async function DaftarPendaftar({ searchParams }: { searchParams: Promise<FilterPendaftar> }) {
   const f = await searchParams;
-  const [{ rows, total, page = 1 }, gelombang] = await Promise.all([cariPendaftar(f), daftarGelombang()]);
+  const [{ rows, total, page = 1 }, pilihanTahun] = await Promise.all([cariPendaftar(f), daftarTahun()]);
   const qs = (extra: Record<string, string | number>) =>
     new URLSearchParams(Object.entries({ ...f, ...extra }).filter(([, v]) => v !== undefined && v !== "") as [string, string][]).toString();
   const halaman = Math.max(1, Math.ceil(total / PER_HALAMAN));
@@ -56,25 +56,27 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
             </select>
           </div>
           <div>
-            <label htmlFor="gelombang" className="mb-1 block text-xs font-medium text-slate-600">
-              Gelombang
+            <label htmlFor="tahun" className="mb-1 block text-xs font-medium text-slate-600">
+              Tahun daftar
             </label>
-            <select id="gelombang" name="gelombang" defaultValue={f.gelombang ?? ""} className={inputCls}>
-              <option value="">Semua</option>
-              {gelombang.map((g) => (
-                <option key={g}>{g}</option>
+            <select id="tahun" name="tahun" defaultValue={f.tahun ?? ""} className={inputCls}>
+              <option value="">Semua tahun</option>
+              {pilihanTahun.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </select>
           </div>
           <div>
             <label htmlFor="dari" className="mb-1 block text-xs font-medium text-slate-600">
-              Dari tanggal
+              Daftar dari tanggal
             </label>
             <input id="dari" name="dari" type="date" defaultValue={f.dari} className={inputCls} />
           </div>
           <div>
             <label htmlFor="sampai" className="mb-1 block text-xs font-medium text-slate-600">
-              Sampai tanggal
+              Daftar sampai tanggal
             </label>
             <input id="sampai" name="sampai" type="date" defaultValue={f.sampai} className={inputCls} />
           </div>
