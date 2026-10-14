@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import { inputCls } from "@/lib/styles";
-import { TAHAP_LABEL, tanggal } from "@/lib/constants";
+import { TAHAP_LABEL } from "@/lib/constants";
 import { cariPendaftar, daftarGelombang, FILTER_STATUS, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
 import type { Status } from "@/db/schema";
 
@@ -39,7 +39,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
         <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]">
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
-              Cari nama, NIK, No. Pendaftaran KIP, sekolah, atau email
+              Cari nama, NIK, NISN, No. Pendaftaran KIP, sekolah, atau email
             </label>
             <input id="q" name="q" defaultValue={f.q} placeholder="mis. Siti / 3277… / SMKN 1" className={inputCls} />
           </div>
@@ -96,7 +96,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
               <th className="px-4 py-3 font-semibold">NIK</th>
               <th className="px-4 py-3 font-semibold">Asal sekolah</th>
               <th className="px-4 py-3 font-semibold">Jurusan 1 / 2</th>
-              <th className="px-4 py-3 font-semibold">Dikirim</th>
+              <th className="px-4 py-3 font-semibold">NISN</th>
               <th className="px-4 py-3 font-semibold">Status</th>
             </tr>
           </thead>
@@ -126,7 +126,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
                   {r.jurusan1 ?? "-"}
                   <span className="block text-xs text-slate-500">{r.jurusan2 ?? ""}</span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-600">{tanggal(r.submittedAt)}</td>
+                <td className="px-4 py-3 font-mono text-[13px] text-slate-700">{r.nisn ?? <span className="font-sans text-amber-700">Belum diisi</span>}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={r.status as Status} tahap={r.tahap} />
                   {r.hasil === "diterima" && r.jurusanDiterima && <span className="mt-1 block text-xs text-emerald-800">{r.jurusanDiterima}</span>}

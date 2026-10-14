@@ -52,6 +52,7 @@ function kondisi(f: FilterPendaftar): SQL | undefined {
         like(users.nama, pola),
         like(dataDiri.nik, pola),
         like(dataDiri.nomorPendaftaranKip, pola),
+        like(dataDiri.nisn, pola),
         like(dataSekolah.namaSekolah, pola),
         like(users.email, pola),
       ),
