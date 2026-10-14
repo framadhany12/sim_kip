@@ -48,3 +48,6 @@ next-env.d.ts
 # kredensial uji lokal
 *.local.md
 /data/sqlite-lama/
+
+# cadangan database (berisi data pribadi)
+/database/backup/

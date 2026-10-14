@@ -30,8 +30,18 @@ Memindahkan data dari database SQLite versi lama (cadangannya ada di `data/sqlit
 npm run db:migrasi-sqlite -- data/sqlite-lama/kip.db
 ```
 
-Skrip ini aman dijalankan ulang (baris dengan id yang sama dilewati). Setelah mengubah `src/db/schema.ts`,
-buat file migrasi baru dengan `npm run db:generate`; migrasi dijalankan otomatis saat aplikasi start.
+Skrip ini aman dijalankan ulang (baris dengan id yang sama dilewati).
+
+### Migrasi & cadangan database
+
+| Perintah | Fungsi |
+|---|---|
+| `npm run db:migrate` | Membuat database (bila belum ada) dan menerapkan semua migrasi di `drizzle/` ke `DATABASE_URL`, tanpa menjalankan aplikasi. Aman diulang. Migrasi juga otomatis dijalankan saat aplikasi start. |
+| `npm run db:generate` | Setelah mengubah `src/db/schema.ts`, membuat file migrasi baru di `drizzle/`. |
+| `npm run db:backup` | Cadangan lengkap (struktur + data) ke `database/backup/kip_kuliah-<tanggal-jam>.sql` lewat `mysqldump`. Bisa diimpor ke server MySQL/MariaDB lain (phpMyAdmin → Import, atau `mysql -u root < file.sql`). Berisi data pribadi; folder ini tidak di-commit. |
+
+Pindah ke server MySQL baru: atur `DATABASE_URL` ke server tersebut lalu jalankan `npm run db:migrate`
+(database kosong + data referensi otomatis), **atau** impor file hasil `npm run db:backup` untuk ikut membawa data pendaftar.
 
 Panduan pemakaian untuk pendaftar dan admin: https://claude.ai/artifact/AkwiSYQ4Q54dz1Un94NVrk
 

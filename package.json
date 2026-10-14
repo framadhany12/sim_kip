@@ -9,6 +9,8 @@
     "lint": "eslint",
     "admin:buat": "node scripts/buat-admin.mjs",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "node scripts/migrasi.mjs",
+    "db:backup": "node scripts/backup.mjs",
     "db:migrasi-sqlite": "node scripts/migrasi-sqlite-ke-mysql.mjs"
   },
   "dependencies": {
