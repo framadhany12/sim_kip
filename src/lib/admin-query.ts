@@ -72,6 +72,7 @@ function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
       tahap: pendaftaran.tahap,
       hasil: pendaftaran.hasil,
       jurusanDiterima: jDiterima.nama,
+      alasanDitolak: pendaftaran.alasanDitolak,
       gelombang: pendaftaran.gelombang,
       submittedAt: pendaftaran.submittedAt,
       createdAt: pendaftaran.createdAt,

@@ -6,6 +6,8 @@ type Props = {
   tahap: Tahap | null;
   hasil: "diterima" | "ditolak" | null;
   jurusanDiterima: string | null;
+  /** Alasan tidak lolos bila gugur sebelum Pengumuman. */
+  alasan?: string | null;
   submittedAt: Date | null;
   riwayat: { status: string; createdAt: Date }[];
   /** Tampilan ringkas (kartu sempit di dashboard): tanpa deskripsi tahap. */
@@ -13,11 +15,13 @@ type Props = {
 };
 
 /** Alur seleksi yang dilihat pendaftar: Pendaftaran → 5 tahap seleksi, dengan tanda selesai / sedang berjalan. */
-export function ProsesSeleksi({ status, tahap, hasil, jurusanDiterima, submittedAt, riwayat, ringkas }: Props) {
+export function ProsesSeleksi({ status, tahap, hasil, jurusanDiterima, alasan, submittedAt, riwayat, ringkas }: Props) {
   const dikirim = !(status === "draft" || status === "perbaikan");
   // Indeks langkah aktif: 0 = pendaftaran, 1..5 = tahap seleksi.
   const aktif = !dikirim ? 0 : 1 + Math.max(0, TAHAP.indexOf(tahap ?? "administrasi"));
   const selesaiSemua = tahap === "pengumuman" && !!hasil;
+  // Gugur sebelum Pengumuman (mis. tidak lolos Seleksi Administrasi): proses berhenti di tahap itu.
+  const gugur = hasil === "ditolak" && tahap !== "pengumuman";
   // Tanggal pertama kali masuk tiap tahap, dari riwayat (riwayat diurutkan terbaru dulu).
   const masuk = (key: string) => [...riwayat].reverse().find((r) => r.status === key)?.createdAt;
 
@@ -28,7 +32,7 @@ export function ProsesSeleksi({ status, tahap, hasil, jurusanDiterima, submitted
       desk: "Isi formulir, unggah berkas, lalu kirim.",
     },
     ...TAHAP.map((t) => {
-      const tgl = t === "pengumuman" ? masuk("diterima") ?? masuk("ditolak") : masuk(t);
+      const tgl = t === "pengumuman" ? masuk("diterima") ?? masuk("ditolak") : masuk(t) ?? masuk(`tidak_lolos:${t}`) ?? masuk(`lolos:${t}`);
       return { label: TAHAP_LABEL[t], ket: tgl ? tanggal(tgl, false) : "", desk: TAHAP_DESKRIPSI[t] };
     }),
   ];
@@ -37,9 +41,9 @@ export function ProsesSeleksi({ status, tahap, hasil, jurusanDiterima, submitted
     <ol className={ringkas ? "space-y-0" : "grid gap-0 md:grid-cols-6 md:gap-2"}>
       {langkah.map((l, i) => {
         const done = i < aktif || (i === aktif && selesaiSemua) || (i === 0 && dikirim);
-        const now = i === aktif && !done;
+        const now = i === aktif && !done && !gugur;
         const terakhir = i === langkah.length - 1;
-        const hasilAkhir = terakhir && selesaiSemua;
+        const hasilAkhir = (terakhir && selesaiSemua) || (gugur && i === aktif);
         const warnaBulatan = hasilAkhir
           ? hasil === "diterima"
             ? "bg-emerald-600 text-white"
@@ -68,7 +72,11 @@ export function ProsesSeleksi({ status, tahap, hasil, jurusanDiterima, submitted
               {now && <p className="mt-0.5 text-xs font-semibold text-blue-700">Sedang berlangsung</p>}
               {hasilAkhir && (
                 <p className={`mt-0.5 text-xs font-semibold ${hasil === "diterima" ? "text-emerald-700" : "text-rose-700"}`}>
-                  {hasil === "diterima" ? `Diterima${jurusanDiterima ? ` — ${jurusanDiterima}` : ""}` : "Tidak diterima"}
+                  {hasil === "diterima"
+                    ? `Diterima${jurusanDiterima ? ` — ${jurusanDiterima}` : ""}`
+                    : gugur
+                      ? `Tidak lolos${alasan ? ` — ${alasan}` : ""}`
+                      : "Tidak diterima"}
                 </p>
               )}
               {l.ket && !now && <p className="mt-0.5 text-xs text-slate-500">{l.ket}</p>}

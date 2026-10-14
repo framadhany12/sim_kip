@@ -58,6 +58,8 @@ export const pendaftaran = mysqlTable(
     hasil: mysqlEnum("hasil", ["diterima", "ditolak"]),
     /** Jurusan tempat pendaftar diterima — salah satu dari Jurusan 1/2 pilihannya. */
     jurusanDiterimaId: varchar("jurusan_diterima_id", { length: 36 }).references(() => jurusan.id),
+    /** Alasan tidak lolos (mis. dari Seleksi Administrasi). */
+    alasanDitolak: varchar("alasan_ditolak", { length: 150 }),
     catatanAdmin: text("catatan_admin"),
     submittedAt: ts("submitted_at"),
     createdAt: now("created_at"),
@@ -195,7 +197,8 @@ export const riwayatStatus = mysqlTable(
   {
     id: id(),
     pendaftaranId: ref("pendaftaran_id").notNull().references(() => pendaftaran.id, { onDelete: "cascade" }),
-    status: varchar("status", { length: 20 }).notNull(),
+    // Bisa berupa status, tahap, atau hasil tahap seperti "tidak_lolos:administrasi".
+    status: varchar("status", { length: 40 }).notNull(),
     catatan: text("catatan"),
     diubahOleh: ref("diubah_oleh").references(() => users.id, { onDelete: "set null" }),
     createdAt: now("created_at"),

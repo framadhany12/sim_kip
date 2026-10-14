@@ -41,15 +41,22 @@ export const TAHAP_DESKRIPSI: Record<Tahap, string> = {
   pengumuman: "Hasil akhir seleksi diumumkan.",
 };
 
-/** Label proses yang dilihat pendaftar & admin: tahap seleksi bila sedang berjalan, hasil bila sudah diumumkan. */
+/** Pilihan alasan bila pendaftar dinyatakan tidak lolos Seleksi Administrasi. Tambahkan alasan lain di sini. */
+export const ALASAN_TIDAK_LOLOS_ADMINISTRASI = ["Administrasi Tidak Lolos"] as const;
+
+/** Label proses yang dilihat pendaftar & admin: tahap seleksi bila sedang berjalan, hasil bila sudah diputuskan. */
 export function labelProses(status: Status, tahap: Tahap | null | undefined) {
   if ((status === "terkirim" || status === "diperiksa") && tahap) return TAHAP_LABEL[tahap];
+  // Gugur sebelum Pengumuman, mis. tidak lolos Seleksi Administrasi.
+  if (status === "ditolak" && tahap && tahap !== "pengumuman") return `Tidak lolos ${TAHAP_LABEL[tahap]}`;
   return STATUS_LABEL[status];
 }
 
-/** Label baris riwayat: status lama, tahap seleksi, atau hasil. */
+/** Label baris riwayat: status lama, tahap seleksi, hasil tahap ("lolos:<tahap>"/"tidak_lolos:<tahap>"), atau hasil pengumuman. */
 export function labelRiwayat(s: string) {
   const khusus: Record<string, string> = { terkirim: "Pendaftaran dikirim", diterima: "Pengumuman: Diterima", ditolak: "Pengumuman: Tidak diterima" };
+  const [jenis, t] = s.split(":");
+  if (t && t in TAHAP_LABEL) return `${jenis === "lolos" ? "Lolos" : "Tidak lolos"} ${TAHAP_LABEL[t as Tahap]}`;
   return khusus[s] ?? (TAHAP_LABEL as Record<string, string>)[s] ?? (STATUS_LABEL as Record<string, string>)[s] ?? s;
 }
 

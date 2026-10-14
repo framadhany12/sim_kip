@@ -37,6 +37,11 @@ function create() {
     // Semua waktu disimpan dalam UTC; tampilan dikonversi ke Asia/Jakarta.
     timezone: "Z",
   });
+  // Mode strict: data yang terlalu panjang/tidak valid ditolak dengan error, bukan dipotong diam-diam
+  // (bawaan MariaDB XAMPP adalah non-strict).
+  pool.on("connection", (conn) => {
+    conn.query("SET SESSION sql_mode = CONCAT_WS(',', NULLIF(@@SESSION.sql_mode, ''), 'STRICT_ALL_TABLES')");
+  });
   const db = drizzle(pool, { schema, mode: "default" });
   const ready = (async () => {
     await pastikanDatabase(url);

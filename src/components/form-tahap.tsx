@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Tahap } from "@/db/schema";
-import { TAHAP_LABEL } from "@/lib/constants";
+import { ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
 import { FieldShell, SubmitButton, TextArea, inputCls, useFormErrors } from "./form";
 
 /** Isian admin: dropdown tahap seleksi, hasil & jurusan diterima (khusus Pengumuman), dan catatan untuk pendaftar. */
@@ -12,17 +12,23 @@ export function FormTahapFields({
   jurusanDiterimaId,
   pilihan,
   catatanSaatIni,
+  alasanSaatIni,
 }: {
   tahapSaatIni: Tahap | null;
   hasilSaatIni: "diterima" | "ditolak" | null;
   jurusanDiterimaId: string | null;
   pilihan: { id: string; label: string }[];
   catatanSaatIni: string | null;
+  alasanSaatIni: string | null;
 }) {
   const state = useFormErrors();
   const err = state?.errors;
   const [tahap, setTahap] = useState(state?.values?.tahap ?? tahapSaatIni ?? "administrasi");
-  const [hasil, setHasil] = useState(state?.values?.hasil ?? hasilSaatIni ?? "");
+  const [hasil, setHasil] = useState(state?.values?.hasil ?? (tahapSaatIni === "pengumuman" ? hasilSaatIni : null) ?? "");
+  const [hasilAdm, setHasilAdm] = useState(
+    state?.values?.hasilAdministrasi ?? (tahapSaatIni === "administrasi" && hasilSaatIni === "ditolak" ? "tidak_lolos" : ""),
+  );
+  const [alasan, setAlasan] = useState(state?.values?.alasan ?? alasanSaatIni ?? ALASAN_TIDAK_LOLOS_ADMINISTRASI[0]);
   const [jurusan, setJurusan] = useState(state?.values?.jurusanDiterimaId ?? jurusanDiterimaId ?? pilihan[0]?.id ?? "");
 
   return (
@@ -36,6 +42,42 @@ export function FormTahapFields({
           ))}
         </select>
       </FieldShell>
+
+      {tahap === "administrasi" && (
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <FieldShell name="hasilAdministrasi" label="Hasil Seleksi Administrasi" error={err?.hasilAdministrasi}>
+            <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Hasil Seleksi Administrasi">
+              {[
+                ["", "Belum diputuskan", "bg-slate-700 text-white ring-slate-700"],
+                ["lolos", "Lolos", "bg-emerald-700 text-white ring-emerald-700"],
+                ["tidak_lolos", "Tidak lolos", "bg-rose-700 text-white ring-rose-700"],
+              ].map(([v, l, on]) => (
+                <label
+                  key={v || "belum"}
+                  className={`cursor-pointer rounded-lg px-2 py-2 text-center text-sm font-semibold ring-1 ring-inset ${
+                    hasilAdm === v ? on : "bg-white text-slate-700 ring-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <input type="radio" name="hasilAdministrasi" value={v} checked={hasilAdm === v} onChange={() => setHasilAdm(v)} className="sr-only" />
+                  {l}
+                </label>
+              ))}
+            </div>
+          </FieldShell>
+          {hasilAdm === "lolos" && <p className="text-[13px] text-emerald-800">Pendaftar akan otomatis lanjut ke tahap Seleksi Ujian.</p>}
+          {hasilAdm === "tidak_lolos" && (
+            <FieldShell name="alasan" label="Alasan tidak lolos" required error={err?.alasan} hint="Proses seleksi pendaftar berhenti di tahap ini.">
+              <select id="alasan" name="alasan" value={alasan} onChange={(e) => setAlasan(e.target.value)} className={inputCls}>
+                {ALASAN_TIDAK_LOLOS_ADMINISTRASI.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </FieldShell>
+          )}
+        </div>
+      )}
 
       {tahap === "pengumuman" && (
         <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">

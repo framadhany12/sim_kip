@@ -45,6 +45,10 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
     .from(pendaftaran)
     .where(and(filterG, inArray(pendaftaran.status, ["terkirim", "diperiksa"])))
     .groupBy(pendaftaran.tahap);
+  const [{ gugurAdm }] = await db
+    .select({ gugurAdm: count() })
+    .from(pendaftaran)
+    .where(and(filterG, eq(pendaftaran.status, "ditolak"), eq(pendaftaran.tahap, "administrasi")));
   const perTahap = TAHAP.filter((t) => t !== "pengumuman").map((t) => ({
     key: t,
     nama: TAHAP_LABEL[t],
@@ -127,8 +131,18 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
         </div>
         <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           {[
-            ...perTahap.map((t, i) => ({ label: `${i + 1}. ${t.nama}`, n: t.n, href: `/admin/pendaftar?status=tahap:${t.key}`, sub: "sedang di tahap ini" })),
-            { label: "5. Pengumuman", n: selesai, href: "/admin/pendaftar?status=semua", sub: `${n.diterima} diterima · ${n.ditolak} tidak` },
+            ...perTahap.map((t, i) => ({
+              label: `${i + 1}. ${t.nama}`,
+              n: t.n,
+              href: `/admin/pendaftar?status=tahap:${t.key}`,
+              sub: t.key === "administrasi" && gugurAdm > 0 ? `sedang di tahap ini · ${gugurAdm} tidak lolos` : "sedang di tahap ini",
+            })),
+            {
+              label: "5. Pengumuman",
+              n: selesai - gugurAdm,
+              href: "/admin/pendaftar?status=semua",
+              sub: `${n.diterima} diterima · ${n.ditolak - gugurAdm} tidak`,
+            },
           ].map((t) => (
             <li key={t.label}>
               <Link href={t.href} className="block rounded-lg border border-slate-200 px-3 py-2.5 hover:border-blue-300">

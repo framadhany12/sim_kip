@@ -29,6 +29,20 @@
       "when": 1791962207431,
       "tag": "0003_tahap_seleksi",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1791963608510,
+      "tag": "0004_alasan_ditolak",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1791963922036,
+      "tag": "0005_riwayat_status_panjang",
+      "breakpoints": true
     }
   ]
 }

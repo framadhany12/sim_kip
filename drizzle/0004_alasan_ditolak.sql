@@ -1,0 +1,1 @@
+ALTER TABLE `pendaftaran` ADD `alasan_ditolak` varchar(150);

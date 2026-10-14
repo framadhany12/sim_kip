@@ -111,6 +111,7 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
                 ["Gelombang", d.gelombang],
                 ["Dikirim", tanggal(d.submittedAt)],
                 ...(d.jurusanDiterima ? ([["Diterima di", d.jurusanDiterima]] as [string, string][]) : []),
+                ...(d.alasanDitolak ? ([["Alasan tidak lolos", d.alasanDitolak]] as [string, string][]) : []),
               ]}
             />
             <div className="mt-4 border-t border-slate-100 pt-4">
@@ -119,10 +120,13 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
               ) : (
                 <ActionForm action={perbaruiTahap.bind(null, d.id)} className="space-y-3">
                   <FormTahapFields
+                    // Pasang ulang setelah data berubah agar dropdown & catatan menampilkan nilai terbaru dari server.
+                    key={`${d.tahap}-${d.hasil}-${d.updatedAt.getTime()}`}
                     tahapSaatIni={d.tahap}
                     hasilSaatIni={d.hasil}
                     jurusanDiterimaId={d.jurusanDiterimaId}
                     catatanSaatIni={d.catatanAdmin}
+                    alasanSaatIni={d.alasanDitolak}
                     pilihan={
                       d.pilihan
                         ? [

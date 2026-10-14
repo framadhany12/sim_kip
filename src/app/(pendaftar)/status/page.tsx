@@ -11,6 +11,7 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
   const { d, sudahDikirim } = await konteksPendaftar();
   const { terkirim } = await searchParams;
   const diumumkan = d.tahap === "pengumuman" && !!d.hasil;
+  const gugur = d.hasil === "ditolak" && !!d.tahap && d.tahap !== "pengumuman";
 
   return (
     <div className="space-y-6">
@@ -22,8 +23,28 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
       )}
 
       <Card title="Proses seleksi" action={<StatusBadge status={d.status} tahap={d.tahap} />}>
-        <ProsesSeleksi status={d.status} tahap={d.tahap} hasil={d.hasil} jurusanDiterima={d.jurusanDiterima} submittedAt={d.submittedAt} riwayat={d.riwayat} />
+        <ProsesSeleksi
+          status={d.status}
+          tahap={d.tahap}
+          hasil={d.hasil}
+          jurusanDiterima={d.jurusanDiterima}
+          alasan={d.alasanDitolak}
+          submittedAt={d.submittedAt}
+          riwayat={d.riwayat}
+        />
       </Card>
+
+      {gugur && (
+        <section className="rounded-xl border border-rose-200 bg-rose-50 p-6" aria-label="Hasil seleksi">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Hasil {TAHAP_LABEL[d.tahap!]}</p>
+          <p className="mt-1 text-2xl font-bold text-rose-800">✕ TIDAK LOLOS {TAHAP_LABEL[d.tahap!].toUpperCase()}</p>
+          {d.alasanDitolak && (
+            <p className="mt-2 text-[15px] text-slate-800">
+              Alasan: <b>{d.alasanDitolak}</b>
+            </p>
+          )}
+        </section>
+      )}
 
       {diumumkan && (
         <section

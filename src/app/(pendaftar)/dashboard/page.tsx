@@ -10,7 +10,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { user, d, cek, sudahDikirim } = await konteksPendaftar();
   const { terverifikasi } = await searchParams;
   const berikutnya = LANGKAH.find((l) => !cek.langkah[l.slug]) ?? LANGKAH[LANGKAH.length - 1];
-  const diumumkan = d.tahap === "pengumuman" && !!d.hasil;
+  // Pengumuman, atau gugur di tahap sebelumnya (mis. tidak lolos Seleksi Administrasi).
+  const diumumkan = !!d.hasil;
 
   return (
     <div className="space-y-6">
@@ -73,6 +74,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       )}
                       .
                     </>
+                  ) : d.tahap && d.tahap !== "pengumuman" ? (
+                    <>
+                      Mohon maaf, Anda <b className="text-rose-800">tidak lolos {TAHAP_LABEL[d.tahap]}</b>
+                      {d.alasanDitolak && <> dengan alasan: {d.alasanDitolak}</>}.
+                    </>
                   ) : (
                     "Mohon maaf, pendaftaran KIP Kuliah Anda belum dapat diterima."
                   )}
@@ -108,6 +114,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             tahap={d.tahap}
             hasil={d.hasil}
             jurusanDiterima={d.jurusanDiterima}
+            alasan={d.alasanDitolak}
             submittedAt={d.submittedAt}
             riwayat={d.riwayat}
             ringkas

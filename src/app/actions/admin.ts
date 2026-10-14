@@ -5,24 +5,36 @@ import { and, count, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { berkas, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi, TAHAP, type Tahap } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
-import { TAHAP_LABEL } from "@/lib/constants";
+import { ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 
 /**
  * Admin memindahkan pendaftar ke tahap seleksi berikutnya (atau mana pun), dengan catatan untuk pendaftar.
- * Tahap Pengumuman wajib disertai hasil; bila diterima, jurusan harus salah satu dari Jurusan 1/2 pilihan pendaftar.
+ * - Seleksi Administrasi boleh disertai hasil: Lolos (otomatis lanjut ke Seleksi Ujian) atau Tidak lolos (wajib alasan; proses berhenti).
+ * - Pengumuman wajib disertai hasil; bila diterima, jurusan harus salah satu dari Jurusan 1/2 pilihan pendaftar.
  */
 export async function perbaruiTahap(pendaftaranId: string, _: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
   const v = nilaiForm(fd);
-  const tahap = v.tahap as Tahap;
+  const tahapDipilih = v.tahap as Tahap;
   const catatan = v.catatan ?? "";
   const e: Record<string, string> = {};
-  if (!TAHAP.includes(tahap)) e.tahap = "Pilih tahap seleksi.";
-  const pengumuman = tahap === "pengumuman";
-  const hasil = pengumuman ? (v.hasil as "diterima" | "ditolak") : null;
+  if (!TAHAP.includes(tahapDipilih)) e.tahap = "Pilih tahap seleksi.";
+  const pengumuman = tahapDipilih === "pengumuman";
+
+  // Hasil Seleksi Administrasi
+  const hasilAdm = tahapDipilih === "administrasi" ? v.hasilAdministrasi || "" : "";
+  if (hasilAdm && hasilAdm !== "lolos" && hasilAdm !== "tidak_lolos") e.hasilAdministrasi = "Pilih hasil Seleksi Administrasi.";
+  const alasan = hasilAdm === "tidak_lolos" ? v.alasan : null;
+  if (hasilAdm === "tidak_lolos" && !(ALASAN_TIDAK_LOLOS_ADMINISTRASI as readonly string[]).includes(alasan ?? ""))
+    e.alasan = "Pilih alasan tidak lolos.";
+  const lolosAdm = hasilAdm === "lolos";
+  // Lolos administrasi = langsung masuk Seleksi Ujian.
+  const tahap: Tahap = lolosAdm ? "ujian" : tahapDipilih;
+
+  const hasil = pengumuman ? (v.hasil as "diterima" | "ditolak") : hasilAdm === "tidak_lolos" ? "ditolak" : null;
   if (pengumuman && hasil !== "diterima" && hasil !== "ditolak") e.hasil = "Pilih hasil pengumuman.";
-  if (hasil === "ditolak" && catatan.length < 5) e.catatan = "Tulis alasan atau keterangan untuk pendaftar yang tidak diterima.";
+  if (pengumuman && hasil === "ditolak" && catatan.length < 5) e.catatan = "Tulis alasan atau keterangan untuk pendaftar yang tidak diterima.";
 
   const db = await getDb();
   const [p] = await db.select().from(pendaftaran).where(eq(pendaftaran.id, pendaftaranId));
@@ -35,28 +47,44 @@ export async function perbaruiTahap(pendaftaranId: string, _: FormState, fd: For
   if (Object.keys(e).length) return { errors: e, values: v };
 
   const [j] = jurusanDiterimaId ? await db.select({ nama: jurusan.nama }).from(jurusan).where(eq(jurusan.id, jurusanDiterimaId)) : [];
-  const catatanBawaan = !pengumuman
-    ? `Masuk tahap ${TAHAP_LABEL[tahap]}`
-    : hasil === "diterima"
-      ? `Selamat, Anda diterima sebagai penerima KIP Kuliah di program studi ${j?.nama ?? "-"}.`
-      : "Pendaftaran tidak diterima.";
+  let statusRiwayat: string;
+  let catatanBawaan: string;
+  if (lolosAdm) {
+    statusRiwayat = "lolos:administrasi";
+    catatanBawaan = "Selamat, Anda lolos Seleksi Administrasi dan lanjut ke Seleksi Ujian.";
+  } else if (hasilAdm === "tidak_lolos") {
+    statusRiwayat = "tidak_lolos:administrasi";
+    catatanBawaan = `Tidak lolos Seleksi Administrasi. Alasan: ${alasan}.`;
+  } else if (pengumuman) {
+    statusRiwayat = hasil!;
+    catatanBawaan = hasil === "diterima" ? `Selamat, Anda diterima sebagai penerima KIP Kuliah di program studi ${j?.nama ?? "-"}.` : "Pendaftaran tidak diterima.";
+  } else {
+    statusRiwayat = tahap;
+    catatanBawaan = `Masuk tahap ${TAHAP_LABEL[tahap]}`;
+  }
+  // Untuk hasil positif/negatif, kalimat bawaan selalu ikut; catatan admin ditambahkan di bawahnya.
+  const catatanRiwayat = !catatan ? catatanBawaan : statusRiwayat === tahap || statusRiwayat === "ditolak" ? catatan : `${catatanBawaan}\n${catatan}`;
   await db.transaction(async (tx) => {
     await tx
       .update(pendaftaran)
       .set({
         tahap,
-        // Status lama tetap dipakai untuk filter & statistik: proses seleksi = "diperiksa", pengumuman = hasilnya.
+        // Status lama tetap dipakai untuk filter & statistik: proses seleksi = "diperiksa", gugur/pengumuman = hasilnya.
         status: hasil ?? "diperiksa",
         hasil,
         jurusanDiterimaId,
+        alasanDitolak: alasan,
         catatanAdmin: catatan || null,
         updatedAt: new Date(),
       })
       .where(eq(pendaftaran.id, pendaftaranId));
+    if (lolosAdm)
+      // Catat juga perpindahan ke tahap berikutnya agar alur di sisi pendaftar punya tanggalnya.
+      await tx.insert(riwayatStatus).values({ pendaftaranId, status: statusRiwayat, catatan: catatanRiwayat, diubahOleh: admin.id });
     await tx.insert(riwayatStatus).values({
       pendaftaranId,
-      status: hasil ?? tahap,
-      catatan: catatan ? (hasil === "diterima" ? `${catatanBawaan}\n${catatan}` : catatan) : catatanBawaan,
+      status: lolosAdm ? "ujian" : statusRiwayat,
+      catatan: lolosAdm ? "Masuk tahap Seleksi Ujian" : catatanRiwayat,
       diubahOleh: admin.id,
     });
   });
