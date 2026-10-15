@@ -3,11 +3,11 @@ import { TombolUnduh } from "@/components/admin/tombol-unduh";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import type { Status } from "@/db/schema";
 import { cariPendaftar, daftarTahun, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
-import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI } from "@/lib/constants";
+import { ALASAN_DESIL, ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI } from "@/lib/constants";
 import { inputCls } from "@/lib/styles";
 import { SEMUA_TAHUN } from "@/lib/tahun";
 
-const SEMUA_ALASAN = [...ALASAN_TIDAK_LOLOS_ADMINISTRASI, ...ALASAN_TIDAK_DITERIMA];
+const SEMUA_ALASAN = [...ALASAN_TIDAK_LOLOS_ADMINISTRASI, ALASAN_DESIL, ...ALASAN_TIDAK_DITERIMA];
 
 /** Daftar khusus pendaftar yang sudah diputuskan: Diterima, atau Ditolak (semua alasan, termasuk tidak lolos administrasi). */
 export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak"; f: FilterPendaftar }) {

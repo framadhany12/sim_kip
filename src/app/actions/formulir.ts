@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { pendaftaran, riwayatStatus } from "@/db/schema";
+import { pendaftaran, riwayatStatus, users } from "@/db/schema";
 import { requirePendaftar } from "@/lib/auth";
-import { MAX_UMUR } from "@/lib/constants";
+import { ALASAN_DESIL, DESIL_TIDAK_SESUAI, MAX_UMUR, PESAN_DESIL } from "@/lib/constants";
+import { kirimEmailPengumuman, urlAplikasi } from "@/lib/mail";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { belumDikirim, catatPerubahanPendaftar, cekKelengkapan, muatLengkap, PESAN_TERKUNCI, pendaftaranSaya, terkunci } from "@/lib/pendaftaran";
 import {
@@ -107,6 +108,31 @@ export async function kirimPendaftaran(_: FormState, fd: FormData): Promise<Form
       diubahOleh: user.id,
     });
   });
+  // Desil 5 atau 6-10 tanpa PIP tidak memenuhi ketentuan: langsung diumumkan tidak lolos Seleksi Administrasi.
+  const desil = lengkap!.diri?.desil;
+  if (desil && DESIL_TIDAK_SESUAI.includes(desil) && lengkap!.diri?.penerimaPip === false) {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(pendaftaran)
+        .set({ status: "ditolak", tahap: "administrasi", hasil: "ditolak", alasanDitolak: ALASAN_DESIL, catatanAdmin: PESAN_DESIL, updatedAt: new Date() })
+        .where(eq(pendaftaran.id, p.id));
+      await tx.insert(riwayatStatus).values({
+        pendaftaranId: p.id,
+        status: "tidak_lolos:administrasi",
+        catatan: `Tidak lolos Seleksi Administrasi (otomatis). Alasan: ${ALASAN_DESIL}.
+${PESAN_DESIL}`,
+        diubahOleh: user.id,
+      });
+    });
+    try {
+      const [akun] = await db.select({ email: users.email, nama: users.nama }).from(users).where(eq(users.id, user.id));
+      await kirimEmailPengumuman(akun.email, lengkap!.diri?.namaLengkap ?? akun.nama, { hasil: "administrasi", alasan: ALASAN_DESIL, catatan: PESAN_DESIL }, `${await urlAplikasi()}/status`);
+    } catch (err) {
+      console.error("[email] gagal mengirim pengumuman desil:", err);
+    }
+    revalidatePath("/", "layout");
+    redirect("/status");
+  }
   revalidatePath("/", "layout");
   redirect("/status?terkirim=1");
 }

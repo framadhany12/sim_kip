@@ -43,6 +43,11 @@ export const TAHAP_DESKRIPSI: Record<Tahap, string> = {
 
 /** Pilihan alasan bila pendaftar dinyatakan tidak lolos Seleksi Administrasi. Tambahkan alasan lain di sini. */
 export const ALASAN_TIDAK_LOLOS_ADMINISTRASI = ["Administrasi Tidak Lolos"] as const;
+/** Desil yang tidak memenuhi ketentuan bila pendaftar bukan penerima PIP: otomatis tidak lolos Seleksi Administrasi saat formulir dikirim. */
+export const DESIL_TIDAK_SESUAI: readonly string[] = ["5", "6-10"];
+export const ALASAN_DESIL = "Desil Tidak Sesuai Ketentuan";
+export const PESAN_DESIL =
+  "Mohon Maaf Desil Tidak Sesuai Dengan Ketentuan Kemendikristek, Silahkan Melakukan Penurunan Desil Terlebih Dahulu dan jika sudah turun bisa hubungi admin";
 /** Pilihan alasan bila hasil Pengumuman adalah tidak diterima. */
 export const ALASAN_TIDAK_DITERIMA = ["Ditetapkan PTS Lain", "Gagal Pengusulan", "Dicalonkan PTS Lain", "Mengundurkan Diri"] as const;
 
