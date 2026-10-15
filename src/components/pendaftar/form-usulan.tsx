@@ -8,7 +8,7 @@ function Isi() {
   const s = useFormErrors();
   const [jawab, setJawab] = useState(s?.values?.jawaban ?? "");
   const pilihan = [
-    { v: "bersedia", judul: "Ya, saya bersedia diusulkan", ket: "Status berubah menjadi Diusulkan, lalu tinggal menunggu pengumuman." },
+    { v: "bersedia", judul: "Ya, saya bersedia diusulkan", ket: "Status berubah menjadi Diusulkan, lalu tinggal menunggu pengumuman. Setelah diusulkan, Anda tidak dapat membatalkan atau mengubah jawaban ini." },
     { v: "tidak", judul: "Tidak, saya tidak bersedia", ket: "Pendaftaran Anda berhenti dan masuk daftar tidak diterima. Tidak dapat dibatalkan sendiri." },
   ];
   return (
@@ -46,7 +46,7 @@ export function FormUsulan() {
     <section className="rounded-xl border-2 border-blue-300 bg-blue-50 p-5 sm:p-6" aria-label="Kesediaan diusulkan">
       <p className="text-xs font-semibold uppercase tracking-wider text-blue-800">Perlu jawaban Anda</p>
       <h2 className="mt-1 text-lg font-bold text-slate-900">Apakah Anda bersedia diusulkan sebagai penerima KIP Kuliah?</h2>
-      <p className="mt-1 text-sm text-slate-700">Jawaban hanya bisa diberikan satu kali. Jawab dengan teliti.</p>
+      <p className="mt-1 text-sm text-slate-700">Jawaban hanya bisa diberikan satu kali dan tidak dapat dibatalkan. Jawab dengan teliti.</p>
       <div className="mt-4">
         <ActionForm action={jawabPengusulan} className="space-y-4">
           <Isi />
