@@ -3,7 +3,7 @@ import { Megaphone } from "lucide-react";
 import { umumkanMassal } from "@/app/actions/admin";
 import { FormPengumuman } from "@/components/admin/form-pengumuman";
 import { Alert, PageHeader } from "@/components/ui";
-import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
+import { ALASAN_TIDAK_DITERIMA, TAHAP_LABEL } from "@/lib/constants";
 import { daftarTahun } from "@/lib/admin-query";
 import { BATAS_KANDIDAT, JENIS_LANJUT, JENIS_PENGUMUMAN, kandidatPengumuman, TAHAP_BAWAAN, type JenisPengumuman } from "@/lib/pengumuman";
 import { inputCls } from "@/lib/styles";
@@ -26,10 +26,6 @@ const MODE: Record<JenisPengumuman, { judul: string; deskripsi: string }> = {
   selesai_wawancara: {
     judul: "Sudah wawancara",
     deskripsi: "Pendaftar yang sedang di Seleksi Wawancara dan sudah mengikuti wawancara. Mereka otomatis masuk tahap Pengusulan.",
-  },
-  administrasi: {
-    judul: "Tidak lolos administrasi",
-    deskripsi: "Pendaftar yang masih di Seleksi Administrasi dan dinyatakan tidak lolos. Proses seleksi mereka berhenti di tahap ini.",
   },
   ditolak: {
     judul: "Tidak diterima",
@@ -108,10 +104,10 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
           </label>
           <input id="q" name="q" defaultValue={sp.q} placeholder="mis. Siti / SMKN 1" className={inputCls} />
         </div>
-        {JENIS_LANJUT[jenis] || jenis === "administrasi" ? (
+        {JENIS_LANJUT[jenis] ? (
           <div className="self-end pb-2 text-xs text-slate-500">
             Tahap: {TAHAP_LABEL[JENIS_LANJUT[jenis]?.dari ?? "administrasi"]}
-            {jenis === "administrasi" || jenis === "lolos_administrasi" ? " (belum diputuskan)" : ""}
+            {jenis === "lolos_administrasi" ? " (belum diputuskan)" : ""}
           </div>
         ) : (
           <div>
@@ -174,7 +170,7 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
           jurusan2Id: r.jurusan2Id,
           jurusan2: r.jurusan2,
         }))}
-        opsiAlasan={jenis === "administrasi" ? [...ALASAN_TIDAK_LOLOS_ADMINISTRASI] : jenis === "ditolak" ? [...ALASAN_TIDAK_DITERIMA] : []}
+        opsiAlasan={jenis === "ditolak" ? [...ALASAN_TIDAK_DITERIMA] : []}
         beasiswa={beasiswa}
         action={umumkanMassal.bind(null, jenis)}
       />

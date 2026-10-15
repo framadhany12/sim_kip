@@ -8,9 +8,9 @@ import { parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
 /**
  * Jenis pengumuman massal.
  * - Meloloskan ke tahap berikutnya: lolos_administrasi, selesai_ujian, selesai_wawancara.
- * - Hasil negatif/akhir: administrasi (tidak lolos administrasi), ditolak, diterima.
+ * - Hasil akhir: ditolak, diterima. Tidak lolos administrasi tidak ada di sini: desil 5/6-10 tanpa PIP otomatis ditolak saat kirim (lihat kirimPendaftaran).
  */
-export const JENIS_PENGUMUMAN = ["lolos_administrasi", "selesai_ujian", "selesai_wawancara", "administrasi", "ditolak", "diterima"] as const;
+export const JENIS_PENGUMUMAN = ["lolos_administrasi", "selesai_ujian", "selesai_wawancara", "ditolak", "diterima"] as const;
 export type JenisPengumuman = (typeof JENIS_PENGUMUMAN)[number];
 
 /** Jenis yang hanya memajukan pendaftar dari satu tahap ke tahap berikutnya (tanpa alasan). */
@@ -33,7 +33,7 @@ export const TAHAP_BAWAAN: Tahap = "pengusulan";
 
 /**
  * Pendaftar yang masih dalam proses seleksi dan bisa diumumkan.
- * - lolos_administrasi / administrasi: yang masih di Seleksi Administrasi (belum diputuskan).
+ * - lolos_administrasi: yang masih di Seleksi Administrasi (belum diputuskan).
  * - selesai_ujian / selesai_wawancara: yang sedang di Seleksi Ujian / Seleksi Wawancara.
  * - ditolak / diterima: yang masih berproses, disaring per tahap (bawaan Pengusulan; "semua" = termasuk Seleksi Administrasi).
  */
@@ -44,8 +44,6 @@ export async function kandidatPengumuman(f: FilterKandidat) {
   const lanjut = JENIS_LANJUT[f.jenis];
   if (lanjut) {
     c.push(lanjut.dari === "administrasi" ? or(eq(pendaftaran.tahap, "administrasi"), isNull(pendaftaran.tahap))! : eq(pendaftaran.tahap, lanjut.dari));
-  } else if (f.jenis === "administrasi") {
-    c.push(or(eq(pendaftaran.tahap, "administrasi"), isNull(pendaftaran.tahap))!);
   } else {
     const t = f.tahap ?? TAHAP_BAWAAN;
     if (t !== "semua" && (TAHAP as readonly string[]).includes(t) && t !== "pengumuman") c.push(eq(pendaftaran.tahap, t as Tahap));

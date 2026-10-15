@@ -339,7 +339,6 @@ export async function ubahJurusanPendaftar(pendaftaranId: string, _: FormState, 
 /**
  * Mengumumkan banyak pendaftar sekaligus (satu transaksi: semua berhasil atau tidak sama sekali).
  * - lolos_administrasi / selesai_ujian / selesai_wawancara: dimajukan ke tahap berikutnya (Ujian / Wawancara / Pengusulan), tanpa alasan.
- * - administrasi: Tidak lolos Seleksi Administrasi + alasan.
  * - ditolak: Pengumuman "Tidak diterima" + alasan.
  * - diterima: Pengumuman "Diterima"; tiap pendaftar wajib punya jurusan (Jurusan 1 atau 2 pilihannya), dikirim sebagai `jurusan:<id>`.
  * Pendaftar yang statusnya sudah berubah sejak daftar dimuat (mis. diputuskan admin lain) dilewati dan dilaporkan.
@@ -352,7 +351,7 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
   const alasan = String(fd.get("alasan") ?? "");
   if (!ids.length) return { message: "Pilih minimal satu pendaftar yang akan diumumkan." };
   if (catatan.length > 2000) return { message: "Catatan maksimal 2000 karakter." };
-  const opsiAlasan: readonly string[] = jenis === "administrasi" ? ALASAN_TIDAK_LOLOS_ADMINISTRASI : jenis === "ditolak" ? ALASAN_TIDAK_DITERIMA : [];
+  const opsiAlasan: readonly string[] = jenis === "ditolak" ? ALASAN_TIDAK_DITERIMA : [];
   const lanjut = JENIS_LANJUT[jenis];
   if (jenis !== "diterima" && !lanjut && !opsiAlasan.includes(alasan)) return { errors: { alasan: "Pilih alasan." }, values: { catatan } };
 
@@ -367,7 +366,7 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
   const layak = rows.filter(
     (r) =>
       (r.p.status === "terkirim" || r.p.status === "diperiksa") &&
-      (lanjut ? (r.p.tahap ?? "administrasi") === lanjut.dari : jenis !== "administrasi" || (r.p.tahap ?? "administrasi") === "administrasi"),
+      (lanjut ? (r.p.tahap ?? "administrasi") === lanjut.dari : true),
   );
   if (!layak.length) return { message: "Tidak ada pendaftar yang bisa diumumkan: statusnya sudah berubah. Muat ulang halaman." };
 
@@ -408,10 +407,6 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
             : jenis === "selesai_ujian"
               ? "Anda telah mengikuti Seleksi Ujian dan lanjut ke Seleksi Wawancara."
               : "Anda telah mengikuti Seleksi Wawancara dan lanjut ke tahap Pengusulan.";
-      } else if (jenis === "administrasi") {
-        set = { tahap: "administrasi", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: alasan };
-        statusRiwayat = "tidak_lolos:administrasi";
-        bawaan = `Tidak lolos Seleksi Administrasi. Alasan: ${alasan}.`;
       } else if (jenis === "ditolak") {
         set = { tahap: "pengumuman", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: alasan };
         statusRiwayat = "ditolak";
@@ -444,7 +439,7 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
   let infoEmail = "";
   if (!lanjut && fd.get("kirimEmail") === "on") {
     const url = `${await urlAplikasi()}/status`;
-    const hasil = jenis as "diterima" | "ditolak" | "administrasi";
+    const hasil = jenis as "diterima" | "ditolak";
     let berhasil = 0;
     const gagal: string[] = [];
     const antrean = [...layak];

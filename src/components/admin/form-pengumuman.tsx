@@ -23,7 +23,6 @@ const TEKS: Record<JenisPengumuman, { tombol: string; ringkas: string; gaya: str
   lolos_administrasi: { tombol: "Umumkan Lolos Administrasi", ringkas: "diumumkan LOLOS Seleksi Administrasi dan masuk Seleksi Ujian", gaya: "primary" },
   selesai_ujian: { tombol: "Tandai Sudah Ujian", ringkas: "ditandai SUDAH MENGIKUTI Seleksi Ujian dan masuk Seleksi Wawancara", gaya: "primary" },
   selesai_wawancara: { tombol: "Tandai Sudah Wawancara", ringkas: "ditandai SUDAH MENGIKUTI Seleksi Wawancara dan masuk tahap Pengusulan", gaya: "primary" },
-  administrasi: { tombol: "Umumkan Tidak Lolos", ringkas: "dinyatakan TIDAK LOLOS Seleksi Administrasi", gaya: "danger" },
   ditolak: { tombol: "Umumkan Tidak Diterima", ringkas: "diumumkan TIDAK DITERIMA", gaya: "danger" },
   diterima: { tombol: "Umumkan Diterima", ringkas: "diumumkan DITERIMA", gaya: "success" },
 };
@@ -66,7 +65,7 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
   const t = TEKS[jenis];
   const butuhAlasan = opsiAlasan.length > 0;
   // Hanya hasil akhir (diterima / tidak diterima / tidak lolos administrasi) yang bisa dikirim lewat email.
-  const bisaEmail = jenis === "diterima" || jenis === "ditolak" || jenis === "administrasi";
+  const bisaEmail = jenis === "diterima" || jenis === "ditolak";
   const [kirimEmail, setKirimEmail] = useState(true);
 
   return (
@@ -150,7 +149,7 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
           {butuhAlasan && (
             <FieldShell
               name="alasan"
-              label={jenis === "administrasi" ? "Alasan tidak lolos" : "Alasan tidak diterima"}
+              label="Alasan tidak diterima"
               required
               error={state?.errors?.alasan}
               hint="Berlaku untuk semua pendaftar yang dipilih."
