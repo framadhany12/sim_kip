@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
   AGAMA,
@@ -14,6 +14,7 @@ import {
   pilihanJurusan,
   rekomendasi,
   sumberRekomendasi,
+  users,
   wilayahKecamatan,
 } from "@/db/schema";
 import { TAHUN_LULUS, hitungUmur, normalHp } from "./constants";
@@ -33,7 +34,8 @@ const wajib = (v: Nilai, e: Record<string, string>, fields: [string, string][]) 
 };
 const gagal = (e: Record<string, string>, v: Nilai): HasilSimpan => ({ galat: { errors: e, values: v, message: "Masih ada isian yang perlu diperbaiki." } });
 
-export async function simpanDataDiriCore(pendaftaranId: string, v: Nilai): Promise<HasilSimpan> {
+/** `ubahNik` hanya untuk admin: pendaftar tidak boleh mengganti NIK yang didaftarkan saat registrasi. */
+export async function simpanDataDiriCore(pendaftaranId: string, v: Nilai, opsi: { ubahNik?: boolean } = {}): Promise<HasilSimpan> {
   const e: Record<string, string> = {};
   wajib(v, e, [
     ["namaLengkap", "Nama lengkap wajib diisi."],
@@ -45,8 +47,32 @@ export async function simpanDataDiriCore(pendaftaranId: string, v: Nilai): Promi
     ["kabupatenId", "Pilih kabupaten/kota."],
     ["kecamatanId", "Pilih kecamatan."],
   ]);
-  const nik = angka(v.nik);
+  const db = await getDb();
+  const [pemilik] = await db
+    .select({ id: users.id, nik: users.nik })
+    .from(pendaftaran)
+    .innerJoin(users, eq(users.id, pendaftaran.userId))
+    .where(eq(pendaftaran.id, pendaftaranId));
+  let nik = angka(v.nik);
+  if (pemilik?.nik && !opsi.ubahNik) nik = pemilik.nik; // NIK akun dikunci
   if (nik.length !== 16) e.nik = "NIK harus 16 digit angka (lihat KTP atau KK).";
+  else if (pemilik && pemilik.nik !== nik) {
+    // NIK baru/berubah (akun lama tanpa NIK, atau koreksi admin): tidak boleh dipakai akun atau pendaftaran lain.
+    const [dipakai] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.nik, nik), ne(users.id, pemilik.id)))
+      .limit(1);
+    const [dipakaiData] = dipakai
+      ? [dipakai]
+      : await db
+          .select({ id: dataDiri.id })
+          .from(dataDiri)
+          .innerJoin(pendaftaran, eq(pendaftaran.id, dataDiri.pendaftaranId))
+          .where(and(eq(dataDiri.nik, nik), ne(pendaftaran.userId, pemilik.id)))
+          .limit(1);
+    if (dipakaiData) e.nik = "NIK ini sudah terdaftar pada pendaftar lain. Satu NIK hanya dapat mendaftar satu kali.";
+  }
   const rt = angka(v.rt), rw = angka(v.rw);
   if (!rt || rt.length > 3) e.rt = "Isi nomor RT (1–3 digit).";
   if (!rw || rw.length > 3) e.rw = "Isi nomor RW (1–3 digit).";
@@ -65,7 +91,6 @@ export async function simpanDataDiriCore(pendaftaranId: string, v: Nilai): Promi
     if (isNaN(+lahir) || lahir > new Date() || lahir.getFullYear() < 1950) e.tanggalLahir = "Tanggal lahir tidak valid.";
   }
   if (v.jenisKelamin && !["L", "P"].includes(v.jenisKelamin)) e.jenisKelamin = "Pilih jenis kelamin.";
-  const db = await getDb();
   if (v.kecamatanId && v.kabupatenId) {
     const [kec] = await db
       .select({ id: wilayahKecamatan.id })
@@ -96,6 +121,7 @@ export async function simpanDataDiriCore(pendaftaranId: string, v: Nilai): Promi
     statusPernikahan: v.statusPernikahan as "belum_menikah" | "menikah",
   };
   await db.insert(dataDiri).values({ pendaftaranId, ...data }).onDuplicateKeyUpdate({ set: data });
+  if (pemilik && pemilik.nik !== nik) await db.update(users).set({ nik }).where(eq(users.id, pemilik.id));
   // Umur > 21 tetap disimpan (agar tidak kehilangan isian) tetapi pengiriman akan diblokir & diperingatkan.
   return { umur: hitungUmur(data.tanggalLahir) };
 }

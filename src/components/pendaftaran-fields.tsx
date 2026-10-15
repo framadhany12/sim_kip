@@ -21,9 +21,10 @@ function Subjudul({ children }: { children: React.ReactNode }) {
 export function FieldsDataDiri({
   x,
   namaBawaan,
+  nikAkun,
   kabupaten,
   admin,
-}: { x: Maybe<PendaftaranLengkap["diri"]>; namaBawaan?: string; kabupaten: { id: string; nama: string; provinsi: string }[] } & Konteks) {
+}: { x: Maybe<PendaftaranLengkap["diri"]>; namaBawaan?: string; nikAkun?: string | null; kabupaten: { id: string; nama: string; provinsi: string }[] } & Konteks) {
   return (
     <>
       <Subjudul>Data KIP Kuliah</Subjudul>
@@ -61,7 +62,7 @@ export function FieldsDataDiri({
       <Subjudul>Identitas</Subjudul>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field name="namaLengkap" label="Nama lengkap" required defaultValue={x?.namaLengkap ?? namaBawaan} hint="Tulis persis seperti di Akta Kelahiran/KTP, tanpa gelar." contoh="Siti Nurhaliza" />
-        <Field name="nik" label="NIK" required inputMode="numeric" maxLength={16} defaultValue={x?.nik} hint="16 digit, ada di KTP atau Kartu Keluarga." contoh="3277011201060001" />
+        <Field name="nik" label="NIK" required inputMode="numeric" maxLength={16} defaultValue={nikAkun ?? x?.nik} readOnly={!!nikAkun} hint={nikAkun ? "Sesuai NIK saat registrasi akun, tidak dapat diubah. Hubungi admin bila salah." : "16 digit, ada di KTP atau Kartu Keluarga."} contoh="3277011201060001" />
         <Field name="nisn" label="NISN" required inputMode="numeric" maxLength={10} defaultValue={x?.nisn} hint="10 digit, ada di rapor/ijazah atau nisn.data.kemdikbud.go.id." contoh="0061234567" />
         <Field name="tempatLahir" label="Tempat lahir" required defaultValue={x?.tempatLahir} contoh="Cimahi" />
         <Field name="tanggalLahir" label="Tanggal lahir" type="date" required defaultValue={x?.tanggalLahir} hint={`Dipakai untuk memeriksa syarat umur maksimal ${MAX_UMUR} tahun.`} />

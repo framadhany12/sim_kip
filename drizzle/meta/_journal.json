@@ -71,6 +71,13 @@
       "when": 1792034526843,
       "tag": "0009_pengaturan_landing",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1792049339886,
+      "tag": "0010_typical_carmella_unuscione",
+      "breakpoints": true
     }
   ]
 }

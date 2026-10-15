@@ -10,6 +10,8 @@ export const users = mysqlTable("users", {
   id: id(),
   nama: varchar("nama", { length: 150 }).notNull(),
   email: varchar("email", { length: 191 }).notNull().unique(),
+  /** NIK 16 digit saat registrasi; unik, sehingga satu NIK hanya bisa punya satu akun pendaftar. Null untuk admin/akun lama. */
+  nik: varchar("nik", { length: 16 }).unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
   role: mysqlEnum("role", ["pendaftar", "admin"]).notNull().default("pendaftar"),
   /** Null = email belum diverifikasi; akun pendaftar belum bisa masuk. */

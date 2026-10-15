@@ -30,7 +30,7 @@ export default async function DataDiriPage({ searchParams }: { searchParams: Pro
         </div>
       )}
       <ActionForm action={simpanDataDiri} disabled={terkunci}>
-        <FieldsDataDiri x={x} namaBawaan={d.user.nama} kabupaten={kabupaten} />
+        <FieldsDataDiri x={x} namaBawaan={d.user.nama} nikAkun={d.user.nik} kabupaten={kabupaten} />
         <FormFooter sudahDikirim={sudahDikirim} terkunci={terkunci} />
       </ActionForm>
     </Card>

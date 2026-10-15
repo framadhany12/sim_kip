@@ -65,7 +65,7 @@ export async function simpanBagianPendaftar(bagian: BagianEdit, userId: string, 
   const v = nilaiForm(fd);
 
   let hasil: HasilSimpan;
-  if (bagian === "diri") hasil = await simpanDataDiriCore(p.id, v);
+  if (bagian === "diri") hasil = await simpanDataDiriCore(p.id, v, { ubahNik: true });
   else if (bagian === "keluarga") hasil = await simpanKeluargaCore(p.id, v);
   else if (bagian === "ekonomi") hasil = await simpanEkonomiCore(p.id, v);
   else if (bagian === "sekolah") hasil = await simpanSekolahCore(p.id, v, "admin");

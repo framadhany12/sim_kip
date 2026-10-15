@@ -18,6 +18,7 @@ export default async function DaftarPage() {
       <div className="mt-6">
         <ActionForm action={daftar}>
           <Field name="nama" label="Nama lengkap" required autoComplete="name" hint="Sesuai KTP/Akta Kelahiran." contoh="Siti Nurhaliza" />
+          <Field name="nik" label="NIK" required inputMode="numeric" maxLength={16} autoComplete="off" hint="16 digit, ada di KTP atau Kartu Keluarga. Satu NIK hanya dapat mendaftar satu kali." contoh="3277011201060001" />
           <Field
             name="email"
             type="email"

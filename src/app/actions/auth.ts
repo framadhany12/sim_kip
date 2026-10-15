@@ -3,9 +3,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { and, eq, gt, ne } from "drizzle-orm";
+import { and, eq, gt, isNull, lt, ne } from "drizzle-orm";
 import { getDb } from "@/db";
-import { emailVerifications, passwordResets, sessions, users } from "@/db/schema";
+import { dataDiri, emailVerifications, passwordResets, pendaftaran, sessions, users } from "@/db/schema";
 import { createSession, destroySession, getCurrentUser, newToken, requireUser, sha256 } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { nilaiForm, type FormState } from "@/lib/form-state";
@@ -18,6 +18,10 @@ const COOKIE_VERIF = "kip_verif_email";
 /** Hanya di mode pengembangan tanpa SMTP: tautan verifikasi ditampilkan di layar agar bisa diuji. */
 const COOKIE_DEV_LINK = "kip_dev_link";
 const VERIF_JAM = 24;
+
+const NIK_TERDAFTAR = "NIK ini sudah terdaftar. Satu NIK hanya dapat mendaftar satu kali; silakan masuk atau hubungi admin bila Anda belum pernah mendaftar.";
+const normalNik = (raw: string | undefined) => (raw ?? "").replace(/\D/g, "");
+const galatNik = (e: unknown) => /nik/i.test(String((e as { cause?: { message?: string }; message?: string })?.cause?.message ?? (e as Error)?.message ?? ""));
 
 const normalEmail = (raw: string | undefined) => (raw ?? "").trim().toLowerCase();
 
@@ -53,6 +57,8 @@ export async function daftar(_: FormState, fd: FormData): Promise<FormState> {
 
   const errors: Record<string, string> = {};
   if (v.nama.length < 3) errors.nama = "Isi nama lengkap sesuai KTP/Akta.";
+  const nik = normalNik(v.nik);
+  if (nik.length !== 16) errors.nik = "NIK harus 16 digit angka (lihat KTP atau Kartu Keluarga).";
   const email = normalEmail(v.email);
   const emailErr = await cekEmailAktif(email);
   if (emailErr) errors.email = emailErr;
@@ -63,21 +69,32 @@ export async function daftar(_: FormState, fd: FormData): Promise<FormState> {
   if (Object.keys(errors).length) return { errors, values: v };
 
   const db = await getDb();
+  // Satu NIK = satu akun. Akun yang belum terverifikasi lebih dari batas waktu verifikasi dianggap kedaluwarsa dan melepas NIK-nya.
+  await db.delete(users).where(and(eq(users.nik, nik), eq(users.role, "pendaftar"), isNull(users.emailVerifiedAt), lt(users.createdAt, new Date(Date.now() - VERIF_JAM * 3600e3))));
   const [ada] = await db.select().from(users).where(eq(users.email, email));
+  const [pemilikNik] = await db.select({ id: users.id }).from(users).where(eq(users.nik, nik));
+  if (pemilikNik && pemilikNik.id !== ada?.id) return { errors: { nik: NIK_TERDAFTAR }, values: v };
+  const [dataNik] = await db
+    .select({ id: dataDiri.id })
+    .from(dataDiri)
+    .innerJoin(pendaftaran, eq(pendaftaran.id, dataDiri.pendaftaranId))
+    .where(and(eq(dataDiri.nik, nik), ada ? ne(pendaftaran.userId, ada.id) : undefined))
+    .limit(1);
+  if (dataNik) return { errors: { nik: NIK_TERDAFTAR }, values: v };
   if (ada?.emailVerifiedAt || ada?.role === "admin") return { errors: { email: "Email ini sudah terdaftar. Silakan masuk." }, values: v };
 
   const passwordHash = await hashPassword(pw);
   let user: { id: string; nama: string; email: string };
   if (ada) {
     // Akun belum terverifikasi: perbarui datanya dan kirim tautan baru. Hanya pemilik kotak masuk yang bisa mengaktifkannya.
-    await db.update(users).set({ nama: v.nama, passwordHash }).where(eq(users.id, ada.id));
+    await db.update(users).set({ nama: v.nama, passwordHash, nik }).where(eq(users.id, ada.id));
     user = { id: ada.id, nama: v.nama, email };
   } else {
     const id = crypto.randomUUID();
     try {
-      await db.insert(users).values({ id, nama: v.nama, email, passwordHash });
+      await db.insert(users).values({ id, nama: v.nama, email, nik, passwordHash });
     } catch (e) {
-      if (isDuplikat(e)) return { errors: { email: "Email ini sudah terdaftar. Silakan masuk." }, values: v };
+      if (isDuplikat(e)) return { errors: galatNik(e) ? { nik: NIK_TERDAFTAR } : { email: "Email ini sudah terdaftar. Silakan masuk." }, values: v };
       throw e;
     }
     user = { id, nama: v.nama, email };
@@ -116,13 +133,15 @@ export async function kirimUlangVerifikasi(_: FormState, fd: FormData): Promise<
 export async function masuk(_: FormState, fd: FormData): Promise<FormState> {
   const v = nilaiForm(fd);
   delete v.password;
-  const email = normalEmail(v.email);
+  const idn = normalEmail(v.email);
+  const lewatNik = /^\d{16}$/.test(idn);
+  const email = idn;
   const pw = String(fd.get("password") ?? "");
-  const gagal = { message: "Email atau kata sandi salah.", values: v };
+  const gagal = { message: "Email/NIK atau kata sandi salah.", values: v };
   if (!email || !pw) return gagal;
   if (!bolehCoba(`masuk:${email}`, 10, 15 * 60e3)) return { message: "Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit.", values: v };
   const db = await getDb();
-  const [u] = await db.select().from(users).where(eq(users.email, email));
+  const [u] = await db.select().from(users).where(lewatNik ? eq(users.nik, idn) : eq(users.email, email));
   if (!u || !(await verifyPassword(pw, u.passwordHash))) return gagal;
   if (!u.aktif) return { message: "Akun Anda dinonaktifkan. Hubungi admin untuk mengaktifkannya kembali.", values: v };
   if (u.role === "pendaftar" && !u.emailVerifiedAt) {

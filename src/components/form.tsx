@@ -97,8 +97,10 @@ export function Field({
   placeholder,
   maxLength,
   autoComplete,
+  readOnly,
   ...c
 }: Common & {
+  readOnly?: boolean;
   defaultValue?: string | number | null;
   type?: string;
   inputMode?: "numeric" | "tel" | "email" | "text";
@@ -117,10 +119,11 @@ export function Field({
         placeholder={placeholder}
         maxLength={maxLength}
         autoComplete={autoComplete}
+        readOnly={readOnly}
         defaultValue={f.value}
         aria-invalid={!!f.error}
         aria-describedby={f.error ? `${c.name}-err` : undefined}
-        className={inputCls}
+        className={readOnly ? `${inputCls} cursor-not-allowed bg-slate-100 text-slate-600` : inputCls}
       />
     </FieldShell>
   );

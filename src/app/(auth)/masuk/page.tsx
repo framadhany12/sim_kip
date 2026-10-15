@@ -18,7 +18,7 @@ export default async function MasukPage({ searchParams }: { searchParams: Promis
           </div>
         )}
         <ActionForm action={masuk}>
-          <Field name="email" type="email" inputMode="email" label="Email" required autoComplete="username" placeholder="nama@gmail.com" />
+          <Field name="email" label="Email atau NIK" required autoComplete="username" placeholder="nama@gmail.com atau 16 digit NIK" />
           <Field name="password" type="password" label="Kata sandi" required autoComplete="current-password" />
           <div className="flex items-center justify-between gap-3">
             <Link href="/lupa-sandi" className="text-sm font-medium text-blue-700 hover:underline">
