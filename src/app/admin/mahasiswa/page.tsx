@@ -22,7 +22,7 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
         desc="Seluruh akun pendaftar, termasuk yang belum mengisi formulir. Buka satu akun untuk melihat data lengkap, mengedit data, dan mengatur ulang kata sandi."
       />
       <Card>
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
+        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
               Cari nama, email, NIK, NISN, No. Pendaftaran KIP, atau sekolah
@@ -52,6 +52,16 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
               <option value="belum">Belum terverifikasi</option>
             </select>
           </div>
+          <div>
+            <label htmlFor="akun" className="mb-1 block text-xs font-medium text-slate-600">
+              Status akun
+            </label>
+            <select id="akun" name="akun" defaultValue={f.akun ?? ""} className={inputCls}>
+              <option value="">Semua</option>
+              <option value="aktif">Aktif</option>
+              <option value="nonaktif">Nonaktif</option>
+            </select>
+          </div>
           <div className="flex items-end gap-2">
             <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href="/admin/mahasiswa" className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
@@ -71,12 +81,13 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
               <th className="px-4 py-3 font-semibold">Asal sekolah</th>
               <th className="px-4 py-3 font-semibold">Mendaftar</th>
               <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold">Akun</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
                   Tidak ada akun yang cocok dengan filter.
                 </td>
               </tr>
@@ -114,6 +125,7 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
                     <span className="text-xs text-slate-400">Belum membuka formulir</span>
                   )}
                 </td>
+                <td className="px-4 py-3">{r.aktif ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-300">Aktif</span> : <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 ring-1 ring-rose-300">Nonaktif</span>}</td>
               </tr>
             ))}
           </tbody>

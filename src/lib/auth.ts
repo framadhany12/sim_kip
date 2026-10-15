@@ -45,13 +45,13 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!token) return null;
   const db = await getDb();
   const [row] = await db
-    .select({ id: users.id, nama: users.nama, email: users.email, role: users.role, verified: users.emailVerifiedAt })
+    .select({ id: users.id, nama: users.nama, email: users.email, role: users.role, verified: users.emailVerifiedAt, aktif: users.aktif })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.id, sha256(token)), gt(sessions.expiresAt, new Date())))
     .limit(1);
   // Pendaftar yang emailnya belum diverifikasi tidak dianggap login.
-  if (!row || (row.role === "pendaftar" && !row.verified)) return null;
+  if (!row || !row.aktif || (row.role === "pendaftar" && !row.verified)) return null;
   return { id: row.id, nama: row.nama, email: row.email, role: row.role };
 });
 

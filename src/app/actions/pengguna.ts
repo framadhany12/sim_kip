@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { passwordResets, profilAdmin, sessions, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
@@ -120,4 +120,26 @@ export async function simpanProfilAdmin(userId: string, _: FormState, fd: FormDa
   await db.insert(profilAdmin).values({ userId, ...data }).onDuplicateKeyUpdate({ set: data });
   revalidatePath("/", "layout");
   return { ok: true, message: tampil ? "Profil tersimpan dan tampil di halaman Bantuan." : "Profil tersimpan (tidak ditampilkan di halaman Bantuan)." };
+}
+
+/** Mengaktifkan/menonaktifkan akun (admin atau pendaftar). Menonaktifkan mencabut semua sesinya; data tidak dihapus. */
+export async function aturAktifAkun(userId: string, _: FormState, fd: FormData): Promise<FormState> {
+  const aktor = await requireAdmin();
+  const aktif = fd.get("aktif") === "1";
+  if (aktor.id === userId) return { message: "Anda tidak bisa menonaktifkan akun Anda sendiri." };
+  const db = await getDb();
+  const [u] = await db.select().from(users).where(eq(users.id, userId));
+  if (!u) return { message: "Akun tidak ditemukan." };
+  if (!aktif && u.role === "admin") {
+    const [lain] = await db.select({ id: users.id }).from(users).where(and(eq(users.role, "admin"), eq(users.aktif, true), ne(users.id, userId))).limit(1);
+    if (!lain) return { message: "Tidak bisa menonaktifkan: harus tersisa minimal satu admin aktif." };
+  }
+  await db.transaction(async (tx) => {
+    await tx.update(users).set({ aktif }).where(eq(users.id, userId));
+    if (!aktif) await tx.delete(sessions).where(eq(sessions.userId, userId));
+  });
+  revalidatePath("/admin/user");
+  revalidatePath("/admin/mahasiswa");
+  revalidatePath("/", "layout");
+  return { ok: true, message: aktif ? `Akun ${u.nama} diaktifkan kembali.` : `Akun ${u.nama} dinonaktifkan dan dikeluarkan dari semua perangkat.` };
 }

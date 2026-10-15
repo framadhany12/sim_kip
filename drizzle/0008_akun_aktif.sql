@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `aktif` boolean DEFAULT true NOT NULL;

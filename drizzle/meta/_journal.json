@@ -57,6 +57,13 @@
       "when": 1791992380341,
       "tag": "0007_profil_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1792032012382,
+      "tag": "0008_akun_aktif",
+      "breakpoints": true
     }
   ]
 }

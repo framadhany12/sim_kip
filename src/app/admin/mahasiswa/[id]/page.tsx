@@ -4,6 +4,8 @@ import { and, asc, eq } from "drizzle-orm";
 import { ArrowLeft, CheckCircle2, ExternalLink, MailWarning } from "lucide-react";
 import { getDb } from "@/db";
 import { jurusan, sumberRekomendasi, users, wilayahKabupaten } from "@/db/schema";
+import { aturAktifAkun } from "@/app/actions/pengguna";
+import { FormAktif } from "@/components/admin/form-aktif";
 import { aturSandiPendaftar, simpanAkunPendaftar, simpanBagianPendaftar, type BagianEdit } from "@/app/actions/mahasiswa";
 import { ActionForm, Field, SubmitButton } from "@/components/form";
 import { FormSandi } from "@/components/admin/form-sandi";
@@ -26,6 +28,7 @@ const TAB = [
   ["sekolah", "Sekolah & Jurusan"],
   ["rekomendasi", "Rekomendasi"],
   ["sandi", "Kata Sandi"],
+  ["status", "Status Akun"],
 ] as const;
 type SlugTab = (typeof TAB)[number][0];
 
@@ -70,6 +73,7 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
               </span>
             )}
             <span>Mendaftar {tanggal(u.createdAt)}</span>
+            {!u.aktif && <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 ring-1 ring-rose-300">Akun nonaktif</span>}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -203,6 +207,12 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
             </Card>
           );
         })())}
+
+      {tab === "status" && (
+        <Card title="Status akun">
+          <FormAktif nama={d?.diri?.namaLengkap ?? u.nama} aktif={u.aktif} action={aturAktifAkun.bind(null, id)} />
+        </Card>
+      )}
 
       {tab === "sandi" && (
         <Card title="Kata sandi">

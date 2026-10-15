@@ -14,6 +14,8 @@ export const users = mysqlTable("users", {
   role: mysqlEnum("role", ["pendaftar", "admin"]).notNull().default("pendaftar"),
   /** Null = email belum diverifikasi; akun pendaftar belum bisa masuk. */
   emailVerifiedAt: ts("email_verified_at"),
+  /** False = akun dinonaktifkan admin: tidak bisa masuk dan sesinya dicabut. Data tetap tersimpan. */
+  aktif: boolean("aktif").notNull().default(true),
   createdAt: now("created_at"),
 });
 

@@ -4,7 +4,7 @@ import { getDb } from "@/db";
 import { dataDiri, dataSekolah, pendaftaran, users } from "@/db/schema";
 import { parseTahun, rentangTahun } from "./tahun";
 
-export type FilterMahasiswa = { q?: string; tahun?: string; verifikasi?: string; page?: string };
+export type FilterMahasiswa = { q?: string; tahun?: string; verifikasi?: string; akun?: string; page?: string };
 export const PER_HALAMAN_MHS = 25;
 
 /** Semua akun pendaftar (termasuk yang belum mengisi formulir). Bawaannya semua tahun; filter tahun memakai waktu akun dibuat (WIB). */
@@ -18,6 +18,8 @@ export async function daftarMahasiswa(f: FilterMahasiswa) {
   }
   if (f.verifikasi === "terverifikasi") c.push(isNotNull(users.emailVerifiedAt));
   if (f.verifikasi === "belum") c.push(isNull(users.emailVerifiedAt));
+  if (f.akun === "aktif") c.push(eq(users.aktif, true));
+  if (f.akun === "nonaktif") c.push(eq(users.aktif, false));
   const q = f.q?.trim();
   if (q) {
     const pola = `%${q}%`;
@@ -45,6 +47,7 @@ export async function daftarMahasiswa(f: FilterMahasiswa) {
         nama: users.nama,
         email: users.email,
         terverifikasi: users.emailVerifiedAt,
+        aktif: users.aktif,
         daftarPada: users.createdAt,
         pendaftaranId: pendaftaran.id,
         status: pendaftaran.status,

@@ -124,6 +124,7 @@ export async function masuk(_: FormState, fd: FormData): Promise<FormState> {
   const db = await getDb();
   const [u] = await db.select().from(users).where(eq(users.email, email));
   if (!u || !(await verifyPassword(pw, u.passwordHash))) return gagal;
+  if (!u.aktif) return { message: "Akun Anda dinonaktifkan. Hubungi admin untuk mengaktifkannya kembali.", values: v };
   if (u.role === "pendaftar" && !u.emailVerifiedAt) {
     (await cookies()).set(COOKIE_VERIF, u.email, { httpOnly: true, sameSite: "lax", path: "/", maxAge: VERIF_JAM * 3600 });
     redirect("/verifikasi-email?belum=1");

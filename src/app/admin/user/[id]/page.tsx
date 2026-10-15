@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { profilAdmin, users } from "@/db/schema";
-import { aturSandiAdmin } from "@/app/actions/pengguna";
+import { aturAktifAkun, aturSandiAdmin } from "@/app/actions/pengguna";
+import { FormAktif } from "@/components/admin/form-aktif";
 import { FormProfilAdmin } from "@/components/admin/form-profil-admin";
 import { FormSandi } from "@/components/admin/form-sandi";
 import { Card } from "@/components/ui";
@@ -33,6 +34,9 @@ export default async function KelolaAdminPage({ params }: { params: Promise<{ id
           {diriSendiri && " · akun Anda"}
         </p>
       </div>
+      <Card title="Status akun">
+        <FormAktif nama={u.nama} aktif={u.aktif} action={aturAktifAkun.bind(null, u.id)} dilarang={diriSendiri ? "Anda tidak bisa menonaktifkan akun Anda sendiri." : undefined} />
+      </Card>
       <Card title="Profil untuk calon mahasiswa">
         <FormProfilAdmin userId={u.id} profil={profil} />
       </Card>

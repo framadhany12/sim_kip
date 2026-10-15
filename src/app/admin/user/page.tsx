@@ -13,7 +13,7 @@ export default async function ManajemenUserPage() {
   const saya = await requireAdmin();
   const db = await getDb();
   const rows = await db
-    .select({ id: users.id, nama: users.nama, email: users.email, createdAt: users.createdAt, jabatan: profilAdmin.jabatan, whatsapp: profilAdmin.whatsapp, tampil: profilAdmin.tampil })
+    .select({ id: users.id, nama: users.nama, email: users.email, createdAt: users.createdAt, aktif: users.aktif, jabatan: profilAdmin.jabatan, whatsapp: profilAdmin.whatsapp, tampil: profilAdmin.tampil })
     .from(users)
     .leftJoin(profilAdmin, eq(profilAdmin.userId, users.id))
     .where(eq(users.role, "admin"))
@@ -23,13 +23,14 @@ export default async function ManajemenUserPage() {
     <div className="space-y-6">
       <PageHeader
         title="Manajemen User"
-        desc="Kelola akun admin: tambah admin baru, atur ulang kata sandi admin, dan lengkapi profil yang ditampilkan ke calon mahasiswa di halaman Bantuan."
+        desc="Kelola akun admin: tambah admin baru, aktifkan/nonaktifkan akun, atur ulang kata sandi admin, dan lengkapi profil yang ditampilkan ke calon mahasiswa di halaman Bantuan."
       />
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold">Admin</th>
+              <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Jabatan</th>
               <th className="px-4 py-3 font-semibold">Di halaman Bantuan</th>
               <th className="px-4 py-3 font-semibold">Dibuat</th>
@@ -45,6 +46,7 @@ export default async function ManajemenUserPage() {
                   </p>
                   <p className="text-slate-500">{r.email}</p>
                 </td>
+                <td className="px-4 py-3">{r.aktif ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-300">Aktif</span> : <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 ring-1 ring-rose-300">Nonaktif</span>}</td>
                 <td className="px-4 py-3 text-slate-700">{r.jabatan || <span className="text-slate-400">Belum diisi</span>}</td>
                 <td className="px-4 py-3">
                   {r.tampil ? (
