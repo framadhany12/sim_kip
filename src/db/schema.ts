@@ -21,6 +21,14 @@ export const users = mysqlTable("users", {
   createdAt: now("created_at"),
 });
 
+/** Master jenis beasiswa (mis. LLDIKTI); dikelola admin dan ditetapkan per mahasiswa saat pengumuman diterima. */
+export const jenisBeasiswa = mysqlTable("jenis_beasiswa", {
+  id: id(),
+  nama: varchar("nama", { length: 100 }).notNull().unique(),
+  aktif: boolean("aktif").notNull().default(true),
+  urutan: int("urutan").notNull().default(0),
+});
+
 /** Profil sederhana pengelola (admin) yang bisa ditampilkan ke calon mahasiswa di halaman Bantuan. */
 export const profilAdmin = mysqlTable("profil_admin", {
   userId: ref("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
@@ -73,6 +81,8 @@ export const pendaftaran = mysqlTable(
     hasil: mysqlEnum("hasil", ["diterima", "ditolak"]),
     /** Jurusan tempat pendaftar diterima — salah satu dari Jurusan 1/2 pilihannya. */
     jurusanDiterimaId: varchar("jurusan_diterima_id", { length: 36 }).references(() => jurusan.id),
+    /** Jenis beasiswa yang ditetapkan admin saat pengumuman diterima. Khusus admin, tidak ditampilkan ke pendaftar. */
+    jenisBeasiswaId: varchar("jenis_beasiswa_id", { length: 36 }).references(() => jenisBeasiswa.id),
     /** Alasan tidak lolos Seleksi Administrasi atau tidak diterima saat Pengumuman. */
     alasanDitolak: varchar("alasan_ditolak", { length: 150 }),
     catatanAdmin: text("catatan_admin"),

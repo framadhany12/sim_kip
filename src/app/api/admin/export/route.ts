@@ -9,6 +9,7 @@ const KOLOM: [string, (r: Awaited<ReturnType<typeof cariPendaftar>>["rows"][numb
   ["Status / Tahap", (r) => labelProses(r.status, r.tahap)],
   ["Hasil", (r) => (r.hasil === "diterima" ? "Diterima" : r.hasil === "ditolak" ? "Tidak diterima" : "")],
   ["Jurusan Diterima", (r) => r.jurusanDiterima],
+  ["Jenis Beasiswa", (r) => r.jenisBeasiswa],
   ["Alasan Tidak Lolos/Tidak Diterima", (r) => r.alasanDitolak],
   ["Tanggal Kirim", (r) => r.submittedAt?.toISOString() ?? ""],
   ["No. Pendaftaran KIP Kuliah", (r) => r.nomorKip],

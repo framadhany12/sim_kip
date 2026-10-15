@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, count, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { berkas, dataDiri, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi, TAHAP, users, type Tahap } from "@/db/schema";
+import { berkas, dataDiri, faq, jenisBeasiswa, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi, TAHAP, users, type Tahap } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { kirimEmailPengumuman, smtpAktif, urlAplikasi } from "@/lib/mail";
 import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
@@ -48,6 +48,12 @@ export async function perbaruiTahap(pendaftaranId: string, _: FormState, fd: For
   const jurusanDiterimaId = hasil === "diterima" ? v.jurusanDiterimaId : null;
   if (hasil === "diterima" && (!pil || (jurusanDiterimaId !== pil.jurusan1Id && jurusanDiterimaId !== pil.jurusan2Id)))
     e.jurusanDiterimaId = "Pilih jurusan yang diterima (Jurusan 1 atau Jurusan 2 pilihan pendaftar).";
+  const jenisBeasiswaId = hasil === "diterima" ? v.jenisBeasiswaId : null;
+  if (hasil === "diterima") {
+    const [b] = jenisBeasiswaId ? await db.select({ id: jenisBeasiswa.id, aktif: jenisBeasiswa.aktif }).from(jenisBeasiswa).where(eq(jenisBeasiswa.id, jenisBeasiswaId)) : [];
+    // Jenis beasiswa nonaktif hanya boleh dipertahankan bila memang sudah tertera pada pendaftar ini.
+    if (!b || (!b.aktif && p.jenisBeasiswaId !== b.id)) e.jenisBeasiswaId = "Pilih jenis beasiswa yang ditetapkan.";
+  }
   if (Object.keys(e).length) return { errors: e, values: v };
 
   const [j] = jurusanDiterimaId ? await db.select({ nama: jurusan.nama }).from(jurusan).where(eq(jurusan.id, jurusanDiterimaId)) : [];
@@ -80,6 +86,7 @@ export async function perbaruiTahap(pendaftaranId: string, _: FormState, fd: For
         status: hasil ?? "diperiksa",
         hasil,
         jurusanDiterimaId,
+        jenisBeasiswaId,
         alasanDitolak: alasan,
         catatanAdmin: catatan || null,
         updatedAt: new Date(),
@@ -237,6 +244,51 @@ export async function hapusSumberRekomendasi(fd: FormData) {
   revalidatePath("/admin/rekomendasi");
 }
 
+// ---------- Master jenis beasiswa ----------
+
+export async function simpanJenisBeasiswa(_: FormState, fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  const v = nilaiForm(fd);
+  const id = v.id || null;
+  const e: Record<string, string> = {};
+  if (v.nama.length < 2 || v.nama.length > 100) e.nama = "Nama jenis beasiswa 2–100 karakter.";
+  const db = await getDb();
+  if (!e.nama) {
+    const [dup] = await db
+      .select({ id: jenisBeasiswa.id })
+      .from(jenisBeasiswa)
+      .where(id ? and(eq(jenisBeasiswa.nama, v.nama), ne(jenisBeasiswa.id, id)) : eq(jenisBeasiswa.nama, v.nama));
+    if (dup) e.nama = "Jenis beasiswa dengan nama ini sudah ada.";
+  }
+  if (Object.keys(e).length) return { errors: e, values: v };
+  const data = { nama: v.nama, urutan: Number(v.urutan) || 0, aktif: fd.get("aktif") === "on" };
+  if (id) await db.update(jenisBeasiswa).set(data).where(eq(jenisBeasiswa.id, id));
+  else await db.insert(jenisBeasiswa).values(data);
+  revalidatePath("/admin", "layout");
+  return { ok: true, message: id ? "Jenis beasiswa diperbarui." : "Jenis beasiswa ditambahkan." };
+}
+
+export async function toggleJenisBeasiswa(fd: FormData) {
+  await requireAdmin();
+  const id = String(fd.get("id"));
+  const db = await getDb();
+  const [b] = await db.select().from(jenisBeasiswa).where(eq(jenisBeasiswa.id, id));
+  if (!b) return;
+  await db.update(jenisBeasiswa).set({ aktif: !b.aktif }).where(eq(jenisBeasiswa.id, id));
+  revalidatePath("/admin", "layout");
+}
+
+/** Hapus hanya bila belum ditetapkan ke mahasiswa; selain itu cukup dinonaktifkan. */
+export async function hapusJenisBeasiswa(fd: FormData) {
+  await requireAdmin();
+  const id = String(fd.get("id"));
+  const db = await getDb();
+  const [{ n }] = await db.select({ n: count() }).from(pendaftaran).where(eq(pendaftaran.jenisBeasiswaId, id));
+  if (n > 0) await db.update(jenisBeasiswa).set({ aktif: false }).where(eq(jenisBeasiswa.id, id));
+  else await db.delete(jenisBeasiswa).where(eq(jenisBeasiswa.id, id));
+  revalidatePath("/admin", "layout");
+}
+
 // ---------- Ubah pilihan jurusan pendaftar (khusus admin) ----------
 
 export async function ubahJurusanPendaftar(pendaftaranId: string, _: FormState, fd: FormData): Promise<FormState> {
@@ -335,13 +387,20 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
       };
   }
 
+  let beasiswaId: string | null = null;
+  if (jenis === "diterima") {
+    beasiswaId = String(fd.get("jenisBeasiswaId") ?? "");
+    const [b] = await db.select({ aktif: jenisBeasiswa.aktif }).from(jenisBeasiswa).where(eq(jenisBeasiswa.id, beasiswaId));
+    if (!b?.aktif) return { errors: { jenisBeasiswaId: "Pilih jenis beasiswa yang ditetapkan." }, values: { catatan } };
+  }
+
   await db.transaction(async (tx) => {
     for (const r of layak) {
       let set: Partial<typeof pendaftaran.$inferInsert>;
       let statusRiwayat: string;
       let bawaan: string;
       if (lanjut) {
-        set = { tahap: lanjut.ke, status: "diperiksa", hasil: null, jurusanDiterimaId: null, alasanDitolak: null };
+        set = { tahap: lanjut.ke, status: "diperiksa", hasil: null, jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: null };
         statusRiwayat = lanjut.ke;
         bawaan =
           jenis === "lolos_administrasi"
@@ -350,16 +409,16 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
               ? "Anda telah mengikuti Seleksi Ujian dan lanjut ke Seleksi Wawancara."
               : "Anda telah mengikuti Seleksi Wawancara dan lanjut ke tahap Pengusulan.";
       } else if (jenis === "administrasi") {
-        set = { tahap: "administrasi", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, alasanDitolak: alasan };
+        set = { tahap: "administrasi", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: alasan };
         statusRiwayat = "tidak_lolos:administrasi";
         bawaan = `Tidak lolos Seleksi Administrasi. Alasan: ${alasan}.`;
       } else if (jenis === "ditolak") {
-        set = { tahap: "pengumuman", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, alasanDitolak: alasan };
+        set = { tahap: "pengumuman", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: alasan };
         statusRiwayat = "ditolak";
         bawaan = `Pendaftaran tidak diterima. Alasan: ${alasan}.`;
       } else {
         const jid = pilihan.get(r.p.id)!;
-        set = { tahap: "pengumuman", status: "diterima", hasil: "diterima", jurusanDiterimaId: jid, alasanDitolak: null };
+        set = { tahap: "pengumuman", status: "diterima", hasil: "diterima", jurusanDiterimaId: jid, jenisBeasiswaId: beasiswaId, alasanDitolak: null };
         statusRiwayat = "diterima";
         bawaan = `Selamat, Anda diterima sebagai penerima KIP Kuliah di program studi ${namaJurusan.get(jid) ?? "-"}.`;
       }

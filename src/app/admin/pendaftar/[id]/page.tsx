@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { jurusan } from "@/db/schema";
+import { jenisBeasiswa, jurusan } from "@/db/schema";
 import { perbaruiTahap, ubahJurusanPendaftar, verifikasiBerkas } from "@/app/actions/admin";
 import { ActionForm, Select, SubmitButton } from "@/components/form";
 import { FormTahapFields } from "@/components/form-tahap";
@@ -21,14 +21,17 @@ const VERIF_BTN = [
 
 export default async function DetailPendaftar({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [d, daftarJurusan] = await Promise.all([
+  const [d, daftarJurusan, daftarBeasiswa] = await Promise.all([
     muatLengkap(id),
     getDb().then((db) => db.select({ id: jurusan.id, nama: jurusan.nama }).from(jurusan).where(eq(jurusan.aktif, true)).orderBy(asc(jurusan.nama))),
+    getDb().then((db) => db.select().from(jenisBeasiswa).orderBy(asc(jenisBeasiswa.urutan), asc(jenisBeasiswa.nama))),
   ]);
   if (!d) notFound();
   const cek = cekKelengkapan(d);
   const umur = d.diri ? hitungUmur(d.diri.tanggalLahir) : null;
   const dikirim = d.status !== "draft";
+  const namaBeasiswa = daftarBeasiswa.find((b) => b.id === d.jenisBeasiswaId)?.nama;
+  const pilihanBeasiswa = daftarBeasiswa.filter((b) => b.aktif || b.id === d.jenisBeasiswaId).map((b) => ({ id: b.id, nama: b.nama }));
 
   const berkasSlot = (
     <ul className="grid gap-3 sm:grid-cols-2">
@@ -114,6 +117,7 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
                 ["Mendaftar", tanggal(d.user.createdAt)],
                 ["Dikirim", tanggal(d.submittedAt)],
                 ...(d.jurusanDiterima ? ([["Diterima di", d.jurusanDiterima]] as [string, string][]) : []),
+                ...(namaBeasiswa ? ([["Jenis beasiswa", namaBeasiswa]] as [string, string][]) : []),
                 ...(d.alasanDitolak
                   ? ([[d.tahap === "pengumuman" ? "Alasan tidak diterima" : "Alasan tidak lolos", d.alasanDitolak]] as [string, string][])
                   : []),
@@ -130,6 +134,8 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
                     tahapSaatIni={d.tahap}
                     hasilSaatIni={d.hasil}
                     jurusanDiterimaId={d.jurusanDiterimaId}
+                    jenisBeasiswaId={d.jenisBeasiswaId}
+                    beasiswa={pilihanBeasiswa}
                     catatanSaatIni={d.catatanAdmin}
                     alasanSaatIni={d.alasanDitolak}
                     pilihan={

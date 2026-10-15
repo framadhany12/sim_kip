@@ -10,6 +10,8 @@ export function FormTahapFields({
   tahapSaatIni,
   hasilSaatIni,
   jurusanDiterimaId,
+  jenisBeasiswaId,
+  beasiswa,
   pilihan,
   catatanSaatIni,
   alasanSaatIni,
@@ -17,6 +19,9 @@ export function FormTahapFields({
   tahapSaatIni: Tahap | null;
   hasilSaatIni: "diterima" | "ditolak" | null;
   jurusanDiterimaId: string | null;
+  jenisBeasiswaId: string | null;
+  /** Pilihan jenis beasiswa (aktif, ditambah yang sedang tertera pada pendaftar). */
+  beasiswa: { id: string; nama: string }[];
   pilihan: { id: string; label: string }[];
   catatanSaatIni: string | null;
   alasanSaatIni: string | null;
@@ -34,6 +39,7 @@ export function FormTahapFields({
   const [alasanPengumuman, setAlasanPengumuman] = useState(
     state?.values?.alasanPengumuman ?? (tahapSaatIni === "pengumuman" ? alasanSaatIni : null) ?? "",
   );
+  const [jenisBeasiswa, setJenisBeasiswa] = useState(state?.values?.jenisBeasiswaId ?? jenisBeasiswaId ?? beasiswa[0]?.id ?? "");
   const [jurusan, setJurusan] = useState(state?.values?.jurusanDiterimaId ?? jurusanDiterimaId ?? pilihan[0]?.id ?? "");
 
   return (
@@ -110,6 +116,17 @@ export function FormTahapFields({
                 {pilihan.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.label}
+                  </option>
+                ))}
+              </select>
+            </FieldShell>
+          )}
+          {hasil === "diterima" && (
+            <FieldShell name="jenisBeasiswaId" label="Jenis beasiswa" required error={err?.jenisBeasiswaId} hint="Hanya untuk catatan admin, tidak ditampilkan ke pendaftar.">
+              <select id="jenisBeasiswaId" name="jenisBeasiswaId" value={jenisBeasiswa} onChange={(e) => setJenisBeasiswa(e.target.value)} className={inputCls}>
+                {beasiswa.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.nama}
                   </option>
                 ))}
               </select>

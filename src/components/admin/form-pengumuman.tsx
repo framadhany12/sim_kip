@@ -29,12 +29,13 @@ const TEKS: Record<JenisPengumuman, { tombol: string; ringkas: string; gaya: str
 };
 
 /** Isian & daftar pilih-banyak; harus berada di dalam <ActionForm>. */
-function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisKandidat[]; opsiAlasan: string[] }) {
+function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; rows: BarisKandidat[]; opsiAlasan: string[]; beasiswa: { id: string; nama: string }[] }) {
   const state = useFormErrors();
   const [dipilih, setDipilih] = useState<Set<string>>(new Set());
   const [jurusan, setJurusan] = useState<Record<string, string>>({});
   const [alasan, setAlasan] = useState(state?.values?.alasan ?? "");
   const [konfirmasi, setKonfirmasi] = useState(false);
+  const [jenisBeasiswa, setJenisBeasiswa] = useState(beasiswa[0]?.id ?? "");
   const semuaRef = useRef<HTMLInputElement>(null);
 
   // Baris yang sudah diumumkan (hilang dari daftar setelah dimuat ulang) otomatis keluar dari pilihan.
@@ -164,6 +165,18 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
               </select>
             </FieldShell>
           )}
+          {jenis === "diterima" && (
+            <FieldShell name="jenisBeasiswaId" label="Jenis beasiswa" required error={state?.errors?.jenisBeasiswaId} hint="Berlaku untuk semua pendaftar yang dipilih. Hanya terlihat oleh admin, tidak ditampilkan ke pendaftar.">
+              <select id="jenisBeasiswaId" name="jenisBeasiswaId" value={jenisBeasiswa} onChange={(e) => setJenisBeasiswa(e.target.value)} className={inputCls}>
+                {beasiswa.length === 0 && <option value="">— Belum ada jenis beasiswa aktif —</option>}
+                {beasiswa.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.nama}
+                  </option>
+                ))}
+              </select>
+            </FieldShell>
+          )}
           <TextArea
             name="catatan"
             label="Catatan untuk pendaftar"
@@ -237,10 +250,10 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
   );
 }
 
-export function FormPengumuman({ jenis, rows, opsiAlasan, action }: { jenis: JenisPengumuman; rows: BarisKandidat[]; opsiAlasan: string[]; action: FormAction }) {
+export function FormPengumuman({ jenis, rows, opsiAlasan, beasiswa, action }: { jenis: JenisPengumuman; rows: BarisKandidat[]; opsiAlasan: string[]; beasiswa: { id: string; nama: string }[]; action: FormAction }) {
   return (
     <ActionForm action={action} className="space-y-4">
-      <Isi jenis={jenis} rows={rows} opsiAlasan={opsiAlasan} />
+      <Isi jenis={jenis} rows={rows} opsiAlasan={opsiAlasan} beasiswa={beasiswa} />
     </ActionForm>
   );
 }

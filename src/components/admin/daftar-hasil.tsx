@@ -114,7 +114,10 @@ export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak";
                 <td className="px-4 py-3 text-slate-700">{r.sekolah ?? "-"}</td>
                 <td className="px-4 py-3 text-slate-700">
                   {diterima ? (
-                    <span className="font-semibold text-emerald-800">{r.jurusanDiterima ?? "-"}</span>
+                    <>
+                      <span className="font-semibold text-emerald-800">{r.jurusanDiterima ?? "-"}</span>
+                      {r.jenisBeasiswa && <span className="block text-xs text-slate-500">Beasiswa: {r.jenisBeasiswa}</span>}
+                    </>
                   ) : (
                     <>
                       {r.jurusan1 ?? "-"}

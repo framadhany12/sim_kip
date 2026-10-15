@@ -8,7 +8,9 @@ import { daftarTahun } from "@/lib/admin-query";
 import { BATAS_KANDIDAT, JENIS_LANJUT, JENIS_PENGUMUMAN, kandidatPengumuman, TAHAP_BAWAAN, type JenisPengumuman } from "@/lib/pengumuman";
 import { inputCls } from "@/lib/styles";
 import { parseTahun, SEMUA_TAHUN, tahunBerjalan } from "@/lib/tahun";
-import { TAHAP } from "@/db/schema";
+import { getDb } from "@/db";
+import { jenisBeasiswa, TAHAP } from "@/db/schema";
+import { asc, eq } from "drizzle-orm";
 
 export const metadata = { title: "Pengumuman" };
 
@@ -44,7 +46,17 @@ type Params = { jenis?: string; tahap?: string; tahun?: string; q?: string };
 export default async function PengumumanPage({ searchParams }: { searchParams: Promise<Params> }) {
   const sp = await searchParams;
   const jenis = (JENIS_PENGUMUMAN as readonly string[]).includes(sp.jenis ?? "") ? (sp.jenis as JenisPengumuman) : "lolos_administrasi";
-  const [{ rows, terpotong }, pilihanTahun] = await Promise.all([kandidatPengumuman({ jenis, tahap: sp.tahap, tahun: sp.tahun, q: sp.q }), daftarTahun()]);
+  const [{ rows, terpotong }, pilihanTahun, beasiswa] = await Promise.all([
+    kandidatPengumuman({ jenis, tahap: sp.tahap, tahun: sp.tahun, q: sp.q }),
+    daftarTahun(),
+    getDb().then((db) =>
+      db
+        .select({ id: jenisBeasiswa.id, nama: jenisBeasiswa.nama })
+        .from(jenisBeasiswa)
+        .where(eq(jenisBeasiswa.aktif, true))
+        .orderBy(asc(jenisBeasiswa.urutan), asc(jenisBeasiswa.nama)),
+    ),
+  ]);
   const tahapDipilih = sp.tahap ?? TAHAP_BAWAAN;
   const tahunDipilih = sp.tahun ?? String(tahunBerjalan());
   const keTab = (j: JenisPengumuman) => {
@@ -163,6 +175,7 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
           jurusan2: r.jurusan2,
         }))}
         opsiAlasan={jenis === "administrasi" ? [...ALASAN_TIDAK_LOLOS_ADMINISTRASI] : jenis === "ditolak" ? [...ALASAN_TIDAK_DITERIMA] : []}
+        beasiswa={beasiswa}
         action={umumkanMassal.bind(null, jenis)}
       />
     </div>

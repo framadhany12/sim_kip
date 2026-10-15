@@ -98,7 +98,7 @@ export async function kirimPendaftaran(_: FormState, fd: FormData): Promise<Form
     // Setelah dikirim, pendaftar otomatis masuk tahap pertama: Seleksi Administrasi.
     await tx
       .update(pendaftaran)
-      .set({ status: "terkirim", tahap: "administrasi", hasil: null, jurusanDiterimaId: null, alasanDitolak: null, submittedAt: new Date(), updatedAt: new Date() })
+      .set({ status: "terkirim", tahap: "administrasi", hasil: null, jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: null, submittedAt: new Date(), updatedAt: new Date() })
       .where(eq(pendaftaran.id, p.id));
     await tx.insert(riwayatStatus).values({
       pendaftaranId: p.id,

@@ -7,6 +7,7 @@ import {
   dataKeluarga,
   dataSekolah,
   ekonomiOrangtua,
+  jenisBeasiswa,
   jurusan,
   pendaftaran,
   pilihanJurusan,
@@ -81,6 +82,7 @@ function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
       tahap: pendaftaran.tahap,
       hasil: pendaftaran.hasil,
       jurusanDiterima: jDiterima.nama,
+      jenisBeasiswa: jenisBeasiswa.nama,
       alasanDitolak: pendaftaran.alasanDitolak,
       daftarPada: users.createdAt,
       submittedAt: pendaftaran.submittedAt,
@@ -138,6 +140,7 @@ function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
     .leftJoin(j1, eq(j1.id, pilihanJurusan.jurusan1Id))
     .leftJoin(j2, eq(j2.id, pilihanJurusan.jurusan2Id))
     .leftJoin(jDiterima, eq(jDiterima.id, pendaftaran.jurusanDiterimaId))
+    .leftJoin(jenisBeasiswa, eq(jenisBeasiswa.id, pendaftaran.jenisBeasiswaId))
     .leftJoin(rekomendasi, eq(rekomendasi.pendaftaranId, pendaftaran.id))
     .leftJoin(sumberRekomendasi, eq(sumberRekomendasi.id, rekomendasi.sumberId));
 }
