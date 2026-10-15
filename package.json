@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.44.5",
+    "exceljs": "^4.4.0",
     "lucide-react": "^1.48.0",
     "mysql2": "^3.14.3",
     "next": "15.5.4",

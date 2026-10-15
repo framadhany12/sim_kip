@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TombolUnduh } from "@/components/admin/tombol-unduh";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import { inputCls } from "@/lib/styles";
 import { TAHAP_LABEL } from "@/lib/constants";
@@ -38,24 +39,22 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
           </>
         }
         action={
-          <a href={`/api/admin/export?${exportQs}`} className="rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">
-            ⬇ Unduh CSV ({total})
-          </a>
+          <TombolUnduh qs={exportQs} total={total} />
         }
       />
       <Card>
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]">
-          <div>
+        <form className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))_auto]">
+          <div className="sm:col-span-2 lg:col-span-3 xl:col-span-1">
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
-              Cari nama, NIK, NISN, No. Pendaftaran KIP, sekolah, atau email
+              Cari pendaftar
             </label>
-            <input id="q" name="q" defaultValue={f.q} placeholder="mis. Siti / 3277… / SMKN 1" className={inputCls} />
+            <input id="q" name="q" defaultValue={f.q} placeholder="Nama, NIK, NISN, No. KIP, sekolah, email" className={inputCls} />
           </div>
           <div>
             <label htmlFor="status" className="mb-1 block text-xs font-medium text-slate-600">
               Status
             </label>
-            <select id="status" name="status" defaultValue={f.status ?? "masuk"} className={inputCls}>
+            <select id="status" name="status" defaultValue={f.status ?? "semua"} className={inputCls}>
               {FILTER_STATUS.map((s) => (
                 <option key={s} value={s}>
                   {LABEL_FILTER[s]}
@@ -78,17 +77,17 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
           </div>
           <div>
             <label htmlFor="dari" className="mb-1 block text-xs font-medium text-slate-600">
-              Daftar dari tanggal
+              Dari tanggal
             </label>
             <input id="dari" name="dari" type="date" defaultValue={f.dari} className={inputCls} />
           </div>
           <div>
             <label htmlFor="sampai" className="mb-1 block text-xs font-medium text-slate-600">
-              Daftar sampai tanggal
+              Sampai tanggal
             </label>
             <input id="sampai" name="sampai" type="date" defaultValue={f.sampai} className={inputCls} />
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex items-center gap-2">
             <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href="/admin/pendaftar" className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
               Reset
@@ -98,7 +97,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
       </Card>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[900px] text-left text-sm">
+        <table className="w-full min-w-[980px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold">Pendaftar</th>
@@ -107,13 +106,14 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
               <th className="px-4 py-3 font-semibold">Asal sekolah</th>
               <th className="px-4 py-3 font-semibold">Jurusan 1 / 2</th>
               <th className="px-4 py-3 font-semibold">NISN</th>
+              <th className="px-4 py-3 font-semibold">Penerima PIP</th>
               <th className="px-4 py-3 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                   Tidak ada pendaftar yang cocok dengan filter.
                 </td>
               </tr>
@@ -137,6 +137,15 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
                   <span className="block text-xs text-slate-500">{r.jurusan2 ?? ""}</span>
                 </td>
                 <td className="px-4 py-3 font-mono text-[13px] text-slate-700">{r.nisn ?? <span className="font-sans text-amber-700">Belum diisi</span>}</td>
+                <td className="px-4 py-3">
+                  {r.penerimaPip == null ? (
+                    <span className="text-slate-400">-</span>
+                  ) : r.penerimaPip ? (
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-300">Ya</span>
+                  ) : (
+                    <span className="rounded-full bg-slate-50 px-2.5 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-300">Tidak</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={r.status as Status} tahap={r.tahap} />
                   {r.hasil === "diterima" && r.jurusanDiterima && <span className="mt-1 block text-xs text-emerald-800">{r.jurusanDiterima}</span>}

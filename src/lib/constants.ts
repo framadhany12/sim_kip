@@ -2,7 +2,7 @@ import type { JenisBerkas, Status, Tahap } from "@/db/schema";
 
 export const TAHUN_LULUS = [2024, 2025, 2026] as const;
 export const MAX_UMUR = 21;
-export const MAX_FILE_MB = 5;
+export const MAX_FILE_MB = 2;
 export const MIME_DIIZINKAN = ["application/pdf", "image/jpeg", "image/png"];
 export const LINK_FORMAT_SURAT = "https://s.id/permohonandirektur-kiptedc";
 
@@ -44,7 +44,7 @@ export const TAHAP_DESKRIPSI: Record<Tahap, string> = {
 /** Pilihan alasan bila pendaftar dinyatakan tidak lolos Seleksi Administrasi. Tambahkan alasan lain di sini. */
 export const ALASAN_TIDAK_LOLOS_ADMINISTRASI = ["Administrasi Tidak Lolos"] as const;
 /** Pilihan alasan bila hasil Pengumuman adalah tidak diterima. */
-export const ALASAN_TIDAK_DITERIMA = ["Ditetapkan PTS Lain", "Gagal Pengusulan", "Dicalonkan PTS Lain"] as const;
+export const ALASAN_TIDAK_DITERIMA = ["Ditetapkan PTS Lain", "Gagal Pengusulan", "Dicalonkan PTS Lain", "Mengundurkan Diri"] as const;
 
 /** Label proses yang dilihat pendaftar & admin: tahap seleksi bila sedang berjalan, hasil bila sudah diputuskan. */
 export function labelProses(status: Status, tahap: Tahap | null | undefined) {

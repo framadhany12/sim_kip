@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, decimal, boolean, datetime, mysqlEnum, index, uniqueIndex } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, longtext, int, decimal, boolean, datetime, mysqlEnum, index, uniqueIndex } from "drizzle-orm/mysql-core";
 
 const id = () => varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID());
 const ref = (name: string) => varchar(name, { length: 36 });
@@ -240,4 +240,12 @@ export const pertanyaan = mysqlTable("pertanyaan", {
   dijawabOleh: ref("dijawab_oleh").references(() => users.id, { onDelete: "set null" }),
   createdAt: now("created_at"),
   answeredAt: ts("answered_at"),
+});
+
+/** Pengaturan dinamis berupa pasangan kunci–JSON, mis. kunci "landing" untuk isi landing page yang dikelola admin. */
+export const pengaturan = mysqlTable("pengaturan", {
+  kunci: varchar("kunci", { length: 64 }).primaryKey(),
+  nilai: longtext("nilai").notNull(),
+  diubahOleh: ref("diubah_oleh").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: now("updated_at"),
 });

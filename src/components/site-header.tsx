@@ -1,17 +1,9 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { keluar } from "@/app/actions/auth";
-import { BottomNav } from "./bottom-nav";
 import { NavLinks } from "./nav-links";
 import { LogoTedc } from "./logo";
 
-const NAV_PENDAFTAR = [
-  { href: "/dashboard", label: "Beranda" },
-  { href: "/formulir/data-diri", label: "Formulir", match: "/formulir" },
-  { href: "/status", label: "Status" },
-  { href: "/bantuan", label: "Bantuan" },
-  { href: "/akun", label: "Akun Saya" },
-];
 const NAV_ADMIN = [
   { href: "/admin", label: "Ringkasan", exact: true },
   { href: "/admin/pendaftar", label: "Pendaftar" },
@@ -30,7 +22,9 @@ const NAV_TAMU = [
 
 export async function SiteHeader() {
   const user = await getCurrentUser();
-  const links = !user ? NAV_TAMU : user.role === "admin" ? NAV_ADMIN : NAV_PENDAFTAR;
+  // Pendaftar memakai kerangka sendiri (sidebar + menu bawah), bukan header ini.
+  if (user?.role === "pendaftar") return null;
+  const links = !user ? NAV_TAMU : NAV_ADMIN;
   return (
     <>
     <header className="sticky top-0 z-30 border-b border-white/10 bg-gradient-to-r from-[#0d2a63] via-[#12378a] to-[#1d4fb8] text-white shadow-md shadow-blue-950/10">
@@ -42,7 +36,7 @@ export async function SiteHeader() {
             <span className="hidden text-xs text-blue-200/80 min-[420px]:block">{user?.role === "admin" ? "Panel Admin · Politeknik TEDC" : "Politeknik TEDC Bandung"}</span>
           </span>
         </Link>
-        <NavLinks links={links} hanyaDesktop={user?.role === "pendaftar"} />
+        <NavLinks links={links} />
         <div className="ml-auto flex items-center gap-2">
           {user ? (
             <>
@@ -67,8 +61,6 @@ export async function SiteHeader() {
         </div>
       </div>
     </header>
-      {/* Dirender di luar <header> agar elemen fixed tidak terkunci oleh efek visual header. */}
-      {user?.role === "pendaftar" && <BottomNav />}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import { getCurrentUser } from "@/lib/auth";
 import { cariPendaftar } from "@/lib/admin-query";
 import { DESIL_LABEL, STATUS_NIKAH_LABEL, labelProses, yaTidak } from "@/lib/constants";
@@ -59,17 +60,42 @@ function sel(v: unknown) {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
+/** Sel Excel berupa teks/angka biasa (bukan rumus): awalan = + - @ diberi tanda petik agar tidak dieksekusi. */
+function selExcel(v: unknown): string | number {
+  if (typeof v === "number") return v;
+  const s = v == null ? "" : String(v);
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+}
+
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") return new Response("Tidak diizinkan", { status: 403 });
   const f = Object.fromEntries(new URL(req.url).searchParams);
   const { rows } = await cariPendaftar(f, true);
+  const tgl = new Date().toISOString().slice(0, 10);
+
+  if (f.format === "xlsx") {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Pendaftar", { views: [{ state: "frozen", ySplit: 1 }] });
+    ws.columns = KOLOM.map(([h]) => ({ header: h, width: Math.max(14, h.length + 4) }));
+    // Nilai berupa string (NIK, NISN, No. HP) tetap teks, jadi angka panjangnya tidak berubah ke notasi ilmiah.
+    for (const r of rows) ws.addRow(KOLOM.map(([, fn]) => selExcel(fn(r))));
+    ws.getRow(1).font = { bold: true };
+    ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: KOLOM.length } };
+    const buf = await wb.xlsx.writeBuffer();
+    return new Response(buf as ArrayBuffer, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="pendaftar-kip-${tgl}.xlsx"`,
+      },
+    });
+  }
+
   const csv = [KOLOM.map(([h]) => sel(h)).join(";"), ...rows.map((r) => KOLOM.map(([, fn]) => sel(fn(r))).join(";"))].join("\r\n");
-  const nama = `pendaftar-kip-${new Date().toISOString().slice(0, 10)}.csv`;
   return new Response("﻿" + csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${nama}"`,
+      "Content-Disposition": `attachment; filename="pendaftar-kip-${tgl}.csv"`,
     },
   });
 }

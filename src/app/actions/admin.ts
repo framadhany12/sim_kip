@@ -5,6 +5,7 @@ import { and, count, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { berkas, dataDiri, faq, jurusan, pendaftaran, pertanyaan, pilihanJurusan, rekomendasi, riwayatStatus, sumberRekomendasi, TAHAP, users, type Tahap } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { kirimEmailPengumuman, smtpAktif, urlAplikasi } from "@/lib/mail";
 import { ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI, TAHAP_LABEL } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { JENIS_LANJUT, JENIS_PENGUMUMAN, type JenisPengumuman } from "@/lib/pengumuman";
@@ -305,7 +306,7 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
 
   const db = await getDb();
   const rows = await db
-    .select({ p: pendaftaran, pil: pilihanJurusan, nama: sql<string>`coalesce(${dataDiri.namaLengkap}, ${users.nama})` })
+    .select({ p: pendaftaran, pil: pilihanJurusan, email: users.email, nama: sql<string>`coalesce(${dataDiri.namaLengkap}, ${users.nama})` })
     .from(pendaftaran)
     .innerJoin(users, eq(users.id, pendaftaran.userId))
     .leftJoin(dataDiri, eq(dataDiri.pendaftaranId, pendaftaran.id))
@@ -379,8 +380,34 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
   });
   revalidatePath("/", "layout");
   const dilewati = ids.length - layak.length;
+
+  // Email hasil dikirim setelah data tersimpan; kegagalan email tidak membatalkan pengumuman.
+  let infoEmail = "";
+  if (!lanjut && fd.get("kirimEmail") === "on") {
+    const url = `${await urlAplikasi()}/status`;
+    const hasil = jenis as "diterima" | "ditolak" | "administrasi";
+    let berhasil = 0;
+    const gagal: string[] = [];
+    const antrean = [...layak];
+    // Beberapa pengiriman sekaligus agar tidak terlalu lama, tetapi tidak membanjiri server SMTP.
+    await Promise.all(
+      Array.from({ length: Math.min(5, antrean.length) }, async () => {
+        for (let r = antrean.shift(); r; r = antrean.shift()) {
+          try {
+            await kirimEmailPengumuman(r.email, r.nama, { hasil, jurusan: namaJurusan.get(pilihan.get(r.p.id) ?? ""), alasan: alasan || undefined, catatan: catatan || undefined }, url);
+            berhasil++;
+          } catch (err) {
+            console.error("[email] gagal mengirim pengumuman ke", r.email, err);
+            gagal.push(r.nama);
+          }
+        }
+      }),
+    );
+    infoEmail = ` Email pengumuman terkirim ke ${berhasil} pendaftar${smtpAktif() ? "" : " (SMTP belum diatur: isinya hanya dicetak ke log server)"}.`;
+    if (gagal.length) infoEmail += ` Gagal dikirim ke ${gagal.length} pendaftar: ${gagal.slice(0, 5).join(", ")}${gagal.length > 5 ? ", dan lainnya" : ""}. Hasilnya tetap terlihat di akun mereka.`;
+  }
   return {
     ok: true,
-    message: `${layak.length} pendaftar berhasil ${lanjut ? `dimajukan ke ${TAHAP_LABEL[lanjut.ke]}` : "diumumkan"} dan sudah terlihat oleh pendaftar.${dilewati ? ` ${dilewati} dilewati karena statusnya sudah berubah.` : ""}`,
+    message: `${layak.length} pendaftar berhasil ${lanjut ? `dimajukan ke ${TAHAP_LABEL[lanjut.ke]}` : "diumumkan"} dan sudah terlihat oleh pendaftar.${dilewati ? ` ${dilewati} dilewati karena statusnya sudah berubah.` : ""}${infoEmail}`,
   };
 }

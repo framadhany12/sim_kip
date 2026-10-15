@@ -23,23 +23,24 @@ import {
 import { parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
 import { daftarPilihanTahun } from "./tahun-ajaran";
 
-export type FilterPendaftar = { q?: string; status?: string; tahun?: string; dari?: string; sampai?: string; page?: string };
+export type FilterPendaftar = { q?: string; status?: string; tahun?: string; dari?: string; sampai?: string; alasan?: string; page?: string };
 
 /**
- * Pilihan filter daftar admin. "masuk" = semua yang sedang dalam proses seleksi (bawaan), "semua" = tanpa filter,
+ * Pilihan filter daftar admin. "semua" = tanpa filter (bawaan), "masuk" = semua yang sedang dalam proses seleksi,
  * "tahap:<x>" = sedang di tahap tertentu, "diterima"/"ditolak" = hasil pengumuman, "draft" = belum mengirim.
  */
-export const FILTER_STATUS = ["masuk", "semua", ...TAHAP.filter((t) => t !== "pengumuman").map((t) => `tahap:${t}` as const), "diterima", "ditolak", "draft"] as const;
+export const FILTER_STATUS = ["semua", "masuk", ...TAHAP.filter((t) => t !== "pengumuman").map((t) => `tahap:${t}` as const), "diterima", "ditolak", "draft"] as const;
 
 const DALAM_PROSES: Status[] = ["terkirim", "diperiksa"];
 
 function kondisi(f: FilterPendaftar): SQL | undefined {
   const c: (SQL | undefined)[] = [];
-  const st = f.status || "masuk";
+  const st = f.status || "semua";
   if (st === "masuk") c.push(inArray(pendaftaran.status, DALAM_PROSES));
   else if (st.startsWith("tahap:") && (TAHAP as readonly string[]).includes(st.slice(6)))
     c.push(and(inArray(pendaftaran.status, DALAM_PROSES), eq(pendaftaran.tahap, st.slice(6) as Tahap)));
   else if ((STATUS as readonly string[]).includes(st)) c.push(eq(pendaftaran.status, st as Status));
+  if (f.alasan) c.push(eq(pendaftaran.alasanDitolak, f.alasan));
   // Tahun & rentang tanggal memakai waktu pendaftar mendaftar (akun dibuat), zona WIB.
   // Tanpa pilihan tahun, bawaannya TAHUN BERJALAN: begitu masuk 1 Januari, data tahun lalu otomatis tidak tampil
   // (tetap bisa dibuka lewat filter tahun atau "Semua tahun").

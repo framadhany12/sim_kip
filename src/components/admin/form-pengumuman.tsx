@@ -64,6 +64,9 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
   const semua = (on: boolean) => setDipilih(on ? new Set(rows.map((r) => r.id)) : new Set());
   const t = TEKS[jenis];
   const butuhAlasan = opsiAlasan.length > 0;
+  // Hanya hasil akhir (diterima / tidak diterima / tidak lolos administrasi) yang bisa dikirim lewat email.
+  const bisaEmail = jenis === "diterima" || jenis === "ditolak" || jenis === "administrasi";
+  const [kirimEmail, setKirimEmail] = useState(true);
 
   return (
     <>
@@ -169,6 +172,20 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
             hint={jenis === "diterima" ? "Mis. petunjuk daftar ulang. Tampil di halaman Status semua yang diumumkan." : jenis === "lolos_administrasi" ? "Mis. jadwal dan lokasi ujian. Tampil di halaman Status semua yang diumumkan." : jenis === "selesai_ujian" ? "Mis. jadwal wawancara. Tampil di halaman Status semua yang diumumkan." : "Opsional. Tampil di halaman Status semua yang diumumkan."}
             className={butuhAlasan ? "" : "md:col-span-2"}
           />
+          {bisaEmail && (
+            <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 md:col-span-2">
+              <input type="checkbox" name="kirimEmail" checked={kirimEmail} onChange={(e) => setKirimEmail(e.target.checked)} className="mt-0.5 size-5 shrink-0 accent-blue-700" />
+              <span>
+                <b className="block text-slate-900">Kirim pengumuman ke email pendaftar</b>
+                {jenis === "diterima"
+                  ? "Email berisi hasil Diterima beserta program studi tujuannya."
+                  : jenis === "ditolak"
+                    ? "Email berisi hasil Tidak diterima beserta alasan yang dipilih."
+                    : "Email berisi hasil Tidak lolos Seleksi Administrasi beserta alasannya."}{" "}
+                Catatan di atas ikut disertakan.
+              </span>
+            </label>
+          )}
         </div>
       )}
 
@@ -196,7 +213,7 @@ function Isi({ jenis, rows, opsiAlasan }: { jenis: JenisPengumuman; rows: BarisK
             <div className="space-y-3" role="alertdialog" aria-label="Konfirmasi pengumuman">
               <p className="text-sm text-slate-800">
                 <b>{terpilih.length} pendaftar</b> akan {t.ringkas}
-                {butuhAlasan && alasan ? <> dengan alasan <b>{alasan}</b></> : null}. Hasil <b>langsung terlihat oleh pendaftar</b>.
+                {butuhAlasan && alasan ? <> dengan alasan <b>{alasan}</b></> : null}. Hasil <b>langsung terlihat oleh pendaftar</b>{bisaEmail && kirimEmail ? <> dan <b>dikirim ke email mereka</b></> : null}.
               </p>
               <ul className="max-h-28 overflow-y-auto rounded-lg bg-slate-50 px-3 py-2 text-[13px] text-slate-700">
                 {terpilih.map((r) => (

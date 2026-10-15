@@ -3,13 +3,16 @@ import { ProsesSeleksi } from "@/components/proses-seleksi";
 import { Hero, HeroStat } from "@/components/hero";
 import { Alert, ButtonLink, Card, StatusBadge } from "@/components/ui";
 import { LANGKAH, TAHAP_DESKRIPSI, TAHAP_LABEL, tanggal } from "@/lib/constants";
+import { StatistikSeleksi } from "@/components/pendaftar/statistik-seleksi";
 import { konteksPendaftar } from "@/lib/konteks";
+import { ambilStatistikPendaftar } from "@/lib/statistik-pendaftar";
 
 export const metadata = { title: "Beranda" };
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ terverifikasi?: string }> }) {
   const { user, d, cek, sudahDikirim, terkunci } = await konteksPendaftar();
   const { terverifikasi } = await searchParams;
+  const statistik = await ambilStatistikPendaftar();
   const berikutnya = LANGKAH.find((l) => !cek.langkah[l.slug]) ?? LANGKAH[LANGKAH.length - 1];
   // Pengumuman, atau gugur di tahap sebelumnya (mis. tidak lolos Seleksi Administrasi).
   const diumumkan = !!d.hasil;
@@ -133,6 +136,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </p>
         </Card>
       </div>
+
+      <StatistikSeleksi s={statistik} />
     </div>
   );
 }

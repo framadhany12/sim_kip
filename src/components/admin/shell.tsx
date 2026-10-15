@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BookOpenText,
+  BadgeCheck,
   CalendarDays,
   Contact,
   GraduationCap,
@@ -12,8 +13,10 @@ import {
   LogOut,
   Menu,
   Megaphone,
+  PanelsTopLeft,
   MessageCircleQuestion,
   Search,
+  UserX,
   Share2,
   ShieldCheck,
   UserCog,
@@ -50,6 +53,8 @@ export function AdminShell({
       item: [
         { href: "/admin/pendaftar", label: "Data Pendaftar", icon: Users },
         { href: "/admin/pengumuman", label: "Pengumuman", icon: Megaphone },
+        { href: "/admin/diterima", label: "Mahasiswa Diterima", icon: BadgeCheck },
+        { href: "/admin/ditolak", label: "Mahasiswa Ditolak", icon: UserX },
       ],
     },
     {
@@ -62,6 +67,7 @@ export function AdminShell({
         { href: "/admin/rekomendasi", label: "Sumber Rekomendasi", icon: Share2 },
       ],
     },
+    { judul: "Informasi", item: [{ href: "/admin/landing", label: "Landing Page", icon: PanelsTopLeft }] },
     {
       judul: "Layanan",
       item: [

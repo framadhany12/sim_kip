@@ -51,6 +51,11 @@ const TIPS: { bagian: string; kolom: [string, string, string][] }[] = [
   },
 ];
 
+// Pendaftar sudah punya wadah dari kerangka pendaftar, jadi tidak perlu <main> bersarang.
+function Pembungkus({ className, children }: { className: string; children: React.ReactNode }) {
+  return className.includes("max-w-5xl") ? <main className={className}>{children}</main> : <div className={className}>{children}</div>;
+}
+
 export default async function BantuanPage() {
   const db = await getDb();
   const user = await getCurrentUser();
@@ -65,7 +70,7 @@ export default async function BantuanPage() {
     user?.role === "pendaftar" ? await db.select().from(pertanyaan).where(eq(pertanyaan.userId, user.id)).orderBy(desc(pertanyaan.createdAt)) : [];
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+    <Pembungkus className={user?.role === "pendaftar" ? "space-y-8" : "mx-auto max-w-5xl space-y-8 px-4 py-8"}>
       <PageHeader
         title="Panduan & Bantuan"
         desc={`Syarat: lulusan SMA/SMK/MA atau sederajat tahun ${TAHUN_LULUS.join(", ")} dan berusia maksimal ${MAX_UMUR} tahun.`}
@@ -208,6 +213,6 @@ export default async function BantuanPage() {
           </p>
         )}
       </Card>
-    </main>
+    </Pembungkus>
   );
 }

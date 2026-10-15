@@ -1,7 +1,13 @@
+import { keluar } from "@/app/actions/auth";
+import { LogoTedc } from "@/components/logo";
+import { PendaftarShell } from "@/components/pendaftar/shell";
 import { requirePendaftar } from "@/lib/auth";
 
 export default async function PendaftarLayout({ children }: { children: React.ReactNode }) {
-  await requirePendaftar();
-  // pb-28: ruang untuk menu bawah (HP/tablet) beserta area aman perangkat.
-  return <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 sm:px-6 sm:pt-8 lg:pb-10">{children}</main>;
+  const user = await requirePendaftar();
+  return (
+    <PendaftarShell nama={user.nama} email={user.email} logo={<LogoTedc size={36} />} aksiKeluar={keluar}>
+      <main>{children}</main>
+    </PendaftarShell>
+  );
 }

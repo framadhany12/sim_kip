@@ -64,6 +64,13 @@
       "when": 1792032012382,
       "tag": "0008_akun_aktif",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1792034526843,
+      "tag": "0009_pengaturan_landing",
+      "breakpoints": true
     }
   ]
 }

@@ -75,7 +75,7 @@ Setiap perubahan dicatat di `riwayat_status`.
 - Nama ayah & ibu wajib; wali opsional. NIK 16 digit, NPSN 8 digit, nomor HP diawali 08.
 - Kecamatan harus milik kabupaten/kota yang dipilih.
 - Jurusan 1 ≠ Jurusan 2, dan hanya jurusan aktif yang dibuka admin untuk pilihan tersebut.
-- Berkas: PDF/JPG/PNG (dicek dari isi berkas, bukan ekstensi), maks. 5 MB; hanya pemilik & admin yang bisa melihat.
+- Berkas: PDF/JPG/PNG (dicek dari isi berkas, bukan ekstensi), maks. 2 MB; hanya pemilik & admin yang bisa melihat.
 - Data & berkas terkunci setelah dikirim, kecuali admin meminta perbaikan.
 
 ## Struktur

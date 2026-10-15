@@ -7,6 +7,7 @@ import { migrate } from "drizzle-orm/mysql2/migrator";
 import { count } from "drizzle-orm";
 import * as schema from "./schema";
 import { hashPassword } from "@/lib/password";
+import { MAX_FILE_MB } from "@/lib/constants";
 
 type DB = MySql2Database<typeof schema>;
 
@@ -122,7 +123,7 @@ async function seed(db: DB) {
       { urutan: 1, pertanyaan: "Siapa saja yang boleh mendaftar KIP Kuliah?", jawaban: "Lulusan SMA/SMK/MA atau sederajat tahun 2024, 2025, atau 2026 yang berusia paling tinggi 21 tahun dan berasal dari keluarga yang membutuhkan dukungan ekonomi." },
       { urutan: 2, pertanyaan: "Berkas apa saja yang harus diunggah?", jawaban: "Ijazah SMA/SMK/MA atau sederajat, Akta Kelahiran, Kartu Keluarga (KK), KTP, dan Surat Permohonan kepada Direktur. Surat Keterangan Kebutuhan Ekonomi dapat diunggah sebagai bukti pendukung." },
       { urutan: 3, pertanyaan: "Bagaimana membuat Surat Permohonan kepada Direktur?", jawaban: "Unduh format resminya di s.id/permohonandirektur-kiptedc, isi dan tanda tangani, lalu pindai atau foto dengan jelas dan unggah dalam bentuk PDF/JPG/PNG." },
-      { urutan: 4, pertanyaan: "Format dan ukuran berkas yang diterima?", jawaban: "PDF, JPG, atau PNG dengan ukuran maksimal 5 MB per berkas. Pastikan tulisan terbaca jelas dan tidak terpotong." },
+      { urutan: 4, pertanyaan: "Format dan ukuran berkas yang diterima?", jawaban: `PDF, JPG, atau PNG dengan ukuran maksimal ${MAX_FILE_MB} MB per berkas. Pastikan tulisan terbaca jelas dan tidak terpotong.` },
       { urutan: 5, pertanyaan: "Apakah data bisa diubah setelah dikirim?", jawaban: "Setelah dikirim, data dikunci selama diperiksa admin. Jika admin meminta perbaikan, formulir akan terbuka kembali dan Anda bisa mengirim ulang." },
       { urutan: 6, pertanyaan: "Bagaimana cara mengetahui hasil seleksi?", jawaban: "Buka menu Status Pendaftaran setelah masuk ke akun. Di sana tertera status terkini, catatan admin, riwayat, dan hasil akhir seleksi." },
     ]);

@@ -5,16 +5,8 @@ import { getDb } from "@/db";
 import { jurusan } from "@/db/schema";
 import { LogoTedc } from "@/components/logo";
 import { getCurrentUser } from "@/lib/auth";
-import { BERKAS_INFO, BERKAS_UTAMA, MAX_UMUR, TAHUN_LULUS } from "@/lib/constants";
+import { ambilLanding } from "@/lib/landing";
 import { KAMPUS, KIP } from "@/lib/profil";
-
-const ALUR = [
-  ["Buat akun", "Daftar dengan email aktif, lalu buka tautan verifikasi yang dikirim ke email Anda."],
-  ["Isi formulir", "Data diri, keluarga, ekonomi orang tua, sekolah, dan pilihan jurusan, dipandu di setiap kolom."],
-  ["Unggah berkas", "Ijazah, Akta Kelahiran, KK, KTP, dan Surat Permohonan kepada Direktur."],
-  ["Kirim pendaftaran", "Periksa ringkasan, lalu kirim dengan sekali klik."],
-  ["Pantau status", "Lihat catatan admin, riwayat, dan hasil akhir seleksi kapan saja."],
-];
 
 async function daftarJurusan() {
   try {
@@ -34,13 +26,20 @@ function Judul({ eyebrow, children, id }: { eyebrow: string; children: React.Rea
   );
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ pratinjau?: string }> }) {
   const user = await getCurrentUser();
-  if (user) redirect(user.role === "admin" ? "/admin" : "/dashboard");
-  const prodi = await daftarJurusan();
+  const { pratinjau } = await searchParams;
+  // Admin boleh melihat landing page lewat ?pratinjau=1 (dipakai tombol di Informasi → Landing Page).
+  if (user && !(user.role === "admin" && pratinjau)) redirect(user.role === "admin" ? "/admin" : "/dashboard");
+  const [prodi, { konten: k }] = await Promise.all([daftarJurusan(), ambilLanding()]);
 
   return (
     <main>
+      {k.banner.aktif && k.banner.teks && (
+        <div role="status" className="bg-[#f5c400] px-4 py-2.5 text-center text-sm font-semibold text-[#0d2a63]">
+          {k.banner.teks}
+        </div>
+      )}
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#0d2a63] text-white">
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-[#f5c400] via-[#f5c400] to-[#1e8e3e]" />
@@ -54,10 +53,10 @@ export default async function Home() {
               </div>
             </div>
             <h1 className="mt-8 text-3xl font-extrabold leading-[1.1] tracking-tight text-balance sm:text-5xl">
-              Kuliah vokasi di Politeknik TEDC, <span className="text-[#f5c400]">dibiayai KIP Kuliah.</span>
+              {k.hero.judul}{k.hero.sorot && <> <span className="text-[#f5c400]">{k.hero.sorot}</span></>}
             </h1>
             <p className="mt-5 max-w-xl text-lg text-blue-100">
-              Daftar KIP Kuliah secara daring: formulir terpandu di setiap kolom, unggah berkas dari HP, dan pantau status pendaftaran Anda sendiri.
+              {k.hero.deskripsi}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/daftar" className="rounded-lg bg-[#f5c400] px-6 py-3 font-bold text-[#0d2a63] shadow-sm hover:bg-[#ffd633]">
@@ -70,30 +69,23 @@ export default async function Home() {
           </div>
 
           <div className="rounded-2xl bg-white p-6 text-slate-800 shadow-xl">
-            <h2 className="font-bold text-slate-900">Siapa yang bisa mendaftar?</h2>
+            <h2 className="font-bold text-slate-900">{k.syarat.judul}</h2>
             <ul className="mt-3 space-y-2.5 text-[15px]">
-              <li className="flex gap-2.5">
-                <span className="font-bold text-emerald-600">✓</span> Lulusan SMA/SMK/MA atau sederajat tahun {TAHUN_LULUS.join(", ")}
-              </li>
-              <li className="flex gap-2.5">
-                <span className="font-bold text-emerald-600">✓</span> Berusia maksimal {MAX_UMUR} tahun
-              </li>
-              <li className="flex gap-2.5">
-                <span className="font-bold text-emerald-600">✓</span> Berasal dari keluarga dengan keterbatasan ekonomi
-              </li>
-            </ul>
-            <h2 className="mt-6 font-bold text-slate-900">Berkas yang disiapkan</h2>
-            <ul className="mt-3 space-y-1.5 text-[15px] text-slate-700">
-              {BERKAS_UTAMA.map((j) => (
-                <li key={j} className="flex gap-2.5">
-                  <span className="text-slate-400">•</span> {BERKAS_INFO[j].label}
+              {k.syarat.item.map((t) => (
+                <li key={t} className="flex gap-2.5">
+                  <span className="font-bold text-emerald-600">✓</span> {t}
                 </li>
               ))}
-              <li className="flex gap-2.5 text-slate-500">
-                <span className="text-slate-400">•</span> {BERKAS_INFO.surat_ekonomi.label} (opsional)
-              </li>
             </ul>
-            <p className="mt-4 text-xs text-slate-500">Format PDF, JPG, atau PNG, maksimal 5 MB per berkas.</p>
+            <h2 className="mt-6 font-bold text-slate-900">{k.berkas.judul}</h2>
+            <ul className="mt-3 space-y-1.5 text-[15px] text-slate-700">
+              {k.berkas.item.map((t) => (
+                <li key={t} className="flex gap-2.5">
+                  <span className="text-slate-400">•</span> {t}
+                </li>
+              ))}
+            </ul>
+            {k.berkas.catatan && <p className="mt-4 text-xs text-slate-500">{k.berkas.catatan}</p>}
           </div>
         </div>
       </section>
@@ -103,12 +95,12 @@ export default async function Home() {
         <div className="grid gap-10 lg:grid-cols-[1fr_1.35fr]">
           <div>
             <Judul eyebrow="Tentang KIP Kuliah" id="tentang-kip">
-              Bantuan pemerintah agar biaya tidak menghalangi kuliah
+              {k.kip.judul}
             </Judul>
-            <p className="mt-4 text-[16px] leading-relaxed text-slate-700">{KIP.ringkas}</p>
+            <p className="mt-4 text-[16px] leading-relaxed text-slate-700">{k.kip.ringkas}</p>
             <h3 className="mt-6 text-sm font-bold text-slate-900">Diperuntukkan bagi</h3>
             <ul className="mt-2 space-y-2 text-[15px] text-slate-700">
-              {KIP.sasaran.map((s) => (
+              {k.kip.sasaran.map((s) => (
                 <li key={s} className="flex gap-2.5">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-blue-700" />
                   {s}
@@ -123,7 +115,7 @@ export default async function Home() {
             </p>
           </div>
           <div className="grid content-start gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            {KIP.manfaat.map((m) => (
+            {k.kip.manfaat.map((m) => (
               <div key={m.judul} className="rounded-xl border border-slate-200 bg-white p-5">
                 <h3 className="font-bold text-slate-900">{m.judul}</h3>
                 <p className="mt-1.5 text-[15px] text-slate-600">{m.isi}</p>
@@ -144,7 +136,7 @@ export default async function Home() {
               <Judul eyebrow="Tentang Kampus" id="tentang-tedc">
                 {KAMPUS.nama}
               </Judul>
-              <p className="mt-4 max-w-3xl text-[16px] leading-relaxed text-slate-700">{KAMPUS.ringkas}</p>
+              <p className="mt-4 max-w-3xl text-[16px] leading-relaxed text-slate-700">{k.kampus.ringkas}</p>
               <dl className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
                 {[
                   ["Berdiri", KAMPUS.berdiri],
@@ -159,7 +151,7 @@ export default async function Home() {
                 ))}
                 <div className="border-l-2 border-[#f5c400] pl-3 sm:col-span-2">
                   <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Alamat kampus</dt>
-                  <dd className="mt-0.5 font-medium text-slate-900">{KAMPUS.alamat}</dd>
+                  <dd className="mt-0.5 font-medium text-slate-900">{k.kampus.alamat}</dd>
                 </div>
               </dl>
             </div>
@@ -185,10 +177,10 @@ export default async function Home() {
       {/* Alur */}
       <section className="mx-auto max-w-6xl px-4 py-16">
         <Judul eyebrow="Cara mendaftar" id="alur">
-          Lima langkah, semuanya dari HP atau komputer
+          {k.alur.judul}
         </Judul>
-        <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {ALUR.map(([t, d], i) => (
+        <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]">
+          {k.alur.langkah.map(({ judul: t, isi: d }, i) => (
             <li key={t} className="rounded-xl border border-slate-200 bg-white p-5">
               <span className="grid size-8 place-items-center rounded-full bg-blue-700 text-sm font-bold text-white">{i + 1}</span>
               <h3 className="mt-3 font-semibold text-slate-900">{t}</h3>
@@ -220,7 +212,7 @@ export default async function Home() {
             <LogoTedc size={48} />
             <div>
               <p className="font-bold text-white">{KAMPUS.nama}</p>
-              <p className="mt-1">{KAMPUS.alamat}</p>
+              <p className="mt-1">{k.kampus.alamat}</p>
               <a href={KAMPUS.website} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[#f5c400] hover:underline">
                 {KAMPUS.websiteLabel} ↗
               </a>

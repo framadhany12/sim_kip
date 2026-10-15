@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, MailWarning } from "lucide-react";
+import { TombolAktif } from "@/components/admin/tombol-aktif";
 import { Card, PageHeader } from "@/components/ui";
 import { daftarTahun } from "@/lib/admin-query";
 import { labelProses, tanggal } from "@/lib/constants";
@@ -125,7 +126,7 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
                     <span className="text-xs text-slate-400">Belum membuka formulir</span>
                   )}
                 </td>
-                <td className="px-4 py-3">{r.aktif ? <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-300">Aktif</span> : <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 ring-1 ring-rose-300">Nonaktif</span>}</td>
+                <td className="px-4 py-3"><TombolAktif userId={r.id} nama={r.namaLengkap ?? r.nama} aktif={r.aktif} /></td>
               </tr>
             ))}
           </tbody>

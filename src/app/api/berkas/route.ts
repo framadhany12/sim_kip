@@ -23,6 +23,9 @@ async function konteks(jenisRaw: unknown) {
 }
 
 export async function POST(req: Request) {
+  // Tolak lebih awal dari ukuran yang dilaporkan browser, sebelum isi dibaca ke memori (+ sedikit ruang untuk bidang formulir).
+  const panjang = Number(req.headers.get("content-length") ?? 0);
+  if (panjang > MAX_FILE_MB * 1024 * 1024 + 64 * 1024) return err(`Ukuran berkas maksimal ${MAX_FILE_MB} MB.`, 413);
   const fd = await req.formData();
   const k = await konteks(fd.get("jenis"));
   if ("error" in k) return k.error;
