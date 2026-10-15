@@ -27,7 +27,7 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
       {d.tahap === "pengusulan" && d.usulan === "menunggu" && (d.status === "terkirim" || d.status === "diperiksa") && <FormUsulan />}
       {d.tahap === "pengusulan" && d.usulan === "bersedia" && !diumumkan && (
         <Alert tone="success" title="Status: Diusulkan">
-          Terima kasih, Anda telah menyatakan bersedia diusulkan. Pengusulan tidak dapat dibatalkan. Mohon tunggu pengumuman hasil akhir seleksi.
+          Terima kasih. Data Anda akan kami usulkan sebagai penerima beasiswa dan Anda tidak bisa mengundurkan diri lagi. Mohon tunggu pengumuman hasil akhir seleksi.
         </Alert>
       )}
 

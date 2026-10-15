@@ -8,7 +8,7 @@ function Isi() {
   const s = useFormErrors();
   const [jawab, setJawab] = useState(s?.values?.jawaban ?? "");
   const pilihan = [
-    { v: "bersedia", judul: "Ya, saya bersedia diusulkan", ket: "Status berubah menjadi Diusulkan, lalu tinggal menunggu pengumuman. Setelah diusulkan, Anda tidak dapat membatalkan atau mengubah jawaban ini." },
+    { v: "bersedia", judul: "Ya, saya bersedia diusulkan", ket: "Data Anda akan kami usulkan sebagai penerima beasiswa dan Anda tidak bisa mengundurkan diri lagi." },
     { v: "tidak", judul: "Tidak, saya tidak bersedia", ket: "Pendaftaran Anda berhenti dan masuk daftar tidak diterima. Tidak dapat dibatalkan sendiri." },
   ];
   return (
