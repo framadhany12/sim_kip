@@ -3,11 +3,11 @@ import { TombolUnduh } from "@/components/admin/tombol-unduh";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import type { Status } from "@/db/schema";
 import { cariPendaftar, daftarTahun, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
-import { ALASAN_DESIL, ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI } from "@/lib/constants";
+import { ALASAN_DESIL, ALASAN_TIDAK_BERSEDIA, ALASAN_TIDAK_DITERIMA, ALASAN_TIDAK_LOLOS_ADMINISTRASI } from "@/lib/constants";
 import { inputCls } from "@/lib/styles";
 import { SEMUA_TAHUN } from "@/lib/tahun";
 
-const SEMUA_ALASAN = [...ALASAN_TIDAK_LOLOS_ADMINISTRASI, ALASAN_DESIL, ...ALASAN_TIDAK_DITERIMA];
+const SEMUA_ALASAN = [...ALASAN_TIDAK_LOLOS_ADMINISTRASI, ALASAN_DESIL, ALASAN_TIDAK_BERSEDIA, ...ALASAN_TIDAK_DITERIMA];
 
 /** Daftar khusus pendaftar yang sudah diputuskan: Diterima, atau Ditolak (semua alasan, termasuk tidak lolos administrasi). */
 export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak"; f: FilterPendaftar }) {
@@ -123,8 +123,13 @@ export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak";
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={r.status as Status} tahap={r.tahap} />
-                  {!diterima && <span className="mt-1 block text-xs text-slate-600">{r.alasanDitolak ?? "Alasan belum dicatat"}</span>}
+                  <StatusBadge status={r.status as Status} tahap={r.tahap} usulan={r.usulan} />
+                  {!diterima && (
+                    <span className="mt-1 block text-xs text-slate-600">
+                      {r.alasanDitolak ?? "Alasan belum dicatat"}
+                      {r.alasanTidakBersedia && <span className="mt-0.5 block italic text-slate-500">“{r.alasanTidakBersedia}”</span>}
+                    </span>
+                  )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                   {r.daftarPada.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" })}

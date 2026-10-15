@@ -52,10 +52,10 @@ export function Alert({ tone = "info", title, children }: { tone?: keyof typeof 
 }
 
 /** Lencana status; bila `tahap` diberikan dan seleksi sedang berjalan, yang tampil adalah nama tahapnya. */
-export function StatusBadge({ status, tahap }: { status: Status; tahap?: Tahap | null }) {
+export function StatusBadge({ status, tahap, usulan }: { status: Status; tahap?: Tahap | null; usulan?: string | null }) {
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${STATUS_TONE[status]}`}>
-      {tahap !== undefined ? labelProses(status, tahap) : STATUS_LABEL[status]}
+      {tahap !== undefined ? labelProses(status, tahap, usulan) : STATUS_LABEL[status]}
     </span>
   );
 }

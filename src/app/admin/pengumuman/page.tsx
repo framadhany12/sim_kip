@@ -25,7 +25,12 @@ const MODE: Record<JenisPengumuman, { judul: string; deskripsi: string }> = {
   },
   selesai_wawancara: {
     judul: "Sudah wawancara",
-    deskripsi: "Pendaftar yang sedang di Seleksi Wawancara dan sudah mengikuti wawancara. Mereka otomatis masuk tahap Pengusulan.",
+    deskripsi: "Pendaftar yang sedang di Seleksi Wawancara dan sudah mengikuti wawancara. Hanya menandai selesai wawancara; tahap mereka tetap Wawancara sampai dipindah lewat menu Pengusulan.",
+  },
+  pengusulan: {
+    judul: "Pengusulan",
+    deskripsi:
+      "Pendaftar yang sudah ditandai selesai wawancara dipindah ke tahap Pengusulan. Mereka diminta menjawab bersedia diusulkan atau tidak: bila bersedia statusnya menjadi Diusulkan (tinggal menunggu pengumuman), bila tidak langsung masuk Mahasiswa Ditolak.",
   },
   ditolak: {
     judul: "Tidak diterima",

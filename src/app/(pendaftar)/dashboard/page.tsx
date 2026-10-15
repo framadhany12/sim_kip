@@ -32,7 +32,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </Hero>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Card title="Pendaftaran Anda" action={<StatusBadge status={d.status} tahap={d.tahap} />}>
+        <Card title="Pendaftaran Anda" action={<StatusBadge status={d.status} tahap={d.tahap} usulan={d.usulan} />}>
           {!sudahDikirim ? (
             <>
               <div className="flex items-baseline justify-between">
@@ -97,6 +97,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   <p className="text-sm text-slate-500">Tahap saat ini</p>
                   <p className="text-xl font-bold text-blue-900">{TAHAP_LABEL[d.tahap ?? "administrasi"]}</p>
                   <p className="mt-1 text-[15px] text-slate-700">{TAHAP_DESKRIPSI[d.tahap ?? "administrasi"]}</p>
+                  {d.tahap === "pengusulan" && d.usulan === "menunggu" && (
+                    <div className="mt-3">
+                      <Alert tone="warning" title="Perlu jawaban Anda">
+                        Apakah Anda bersedia diusulkan sebagai penerima KIP Kuliah? <Link href="/status" className="font-semibold underline">Jawab di halaman Status</Link>.
+                      </Alert>
+                    </div>
+                  )}
+                  {d.tahap === "pengusulan" && d.usulan === "bersedia" && <p className="mt-2 text-sm font-semibold text-emerald-800">Status: Diusulkan, menunggu pengumuman.</p>}
                 </>
               )}
               {d.catatanAdmin && (

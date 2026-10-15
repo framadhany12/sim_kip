@@ -77,7 +77,7 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {d ? <StatusBadge status={d.status} tahap={d.tahap} /> : <span className="text-sm text-slate-500">Belum membuka formulir</span>}
+          {d ? <StatusBadge status={d.status} tahap={d.tahap} usulan={d.usulan} /> : <span className="text-sm text-slate-500">Belum membuka formulir</span>}
           {pend && (
             <Link href={`/admin/pendaftar/${pend.id}`} className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50">
               Berkas & status seleksi <ExternalLink className="size-3.5" aria-hidden />

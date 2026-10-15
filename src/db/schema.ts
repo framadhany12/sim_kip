@@ -65,6 +65,8 @@ export const AGAMA = ["Islam", "Kristen Protestan", "Katolik", "Hindu", "Buddha"
 export const TAHAP = ["administrasi", "ujian", "wawancara", "pengusulan", "pengumuman"] as const;
 export type Tahap = (typeof TAHAP)[number];
 
+export const USULAN = ["menunggu", "bersedia", "tidak"] as const;
+export type Usulan = (typeof USULAN)[number];
 export const STATUS = ["draft", "terkirim", "diperiksa", "perbaikan", "diterima", "ditolak"] as const;
 export type Status = (typeof STATUS)[number];
 
@@ -83,6 +85,12 @@ export const pendaftaran = mysqlTable(
     jurusanDiterimaId: varchar("jurusan_diterima_id", { length: 36 }).references(() => jurusan.id),
     /** Jenis beasiswa yang ditetapkan admin saat pengumuman diterima. Khusus admin, tidak ditampilkan ke pendaftar. */
     jenisBeasiswaId: varchar("jenis_beasiswa_id", { length: 36 }).references(() => jenisBeasiswa.id),
+    /** Admin menandai wawancara sudah dilaksanakan (pendaftar masih di tahap Wawancara sampai dipindah ke Pengusulan). */
+    wawancaraSelesai: boolean("wawancara_selesai").notNull().default(false),
+    /** Jawaban pendaftar atas pertanyaan "bersedia diusulkan?" di tahap Pengusulan. Null = belum/tidak berlaku. */
+    usulan: mysqlEnum("usulan", USULAN),
+    /** Alasan yang ditulis pendaftar sendiri bila tidak bersedia diusulkan. */
+    alasanTidakBersedia: text("alasan_tidak_bersedia"),
     /** Alasan tidak lolos Seleksi Administrasi atau tidak diterima saat Pengumuman. */
     alasanDitolak: varchar("alasan_ditolak", { length: 150 }),
     catatanAdmin: text("catatan_admin"),

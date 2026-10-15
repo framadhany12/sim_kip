@@ -2,11 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { pendaftaran, riwayatStatus, users } from "@/db/schema";
 import { requirePendaftar } from "@/lib/auth";
-import { ALASAN_DESIL, DESIL_TIDAK_SESUAI, MAX_UMUR, PESAN_DESIL } from "@/lib/constants";
+import { ALASAN_DESIL, ALASAN_TIDAK_BERSEDIA, DESIL_TIDAK_SESUAI, MAX_UMUR, PESAN_DESIL } from "@/lib/constants";
 import { kirimEmailPengumuman, urlAplikasi } from "@/lib/mail";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { belumDikirim, catatPerubahanPendaftar, cekKelengkapan, muatLengkap, PESAN_TERKUNCI, pendaftaranSaya, terkunci } from "@/lib/pendaftaran";
@@ -99,7 +99,7 @@ export async function kirimPendaftaran(_: FormState, fd: FormData): Promise<Form
     // Setelah dikirim, pendaftar otomatis masuk tahap pertama: Seleksi Administrasi.
     await tx
       .update(pendaftaran)
-      .set({ status: "terkirim", tahap: "administrasi", hasil: null, jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: null, submittedAt: new Date(), updatedAt: new Date() })
+      .set({ status: "terkirim", tahap: "administrasi", hasil: null, jurusanDiterimaId: null, jenisBeasiswaId: null, wawancaraSelesai: false, usulan: null, alasanTidakBersedia: null, alasanDitolak: null, submittedAt: new Date(), updatedAt: new Date() })
       .where(eq(pendaftaran.id, p.id));
     await tx.insert(riwayatStatus).values({
       pendaftaranId: p.id,
@@ -135,4 +135,38 @@ ${PESAN_DESIL}`,
   }
   revalidatePath("/", "layout");
   redirect("/status?terkirim=1");
+}
+
+/** Jawaban pendaftar di tahap Pengusulan: bersedia diusulkan (jadi "Diusulkan") atau tidak (langsung ditolak). Hanya bisa sekali. */
+export async function jawabPengusulan(_: FormState, fd: FormData): Promise<FormState> {
+  const user = await requirePendaftar();
+  const p = await pendaftaranSaya(user.id);
+  const v = nilaiForm(fd);
+  const menunggu = p.tahap === "pengusulan" && p.usulan === "menunggu" && (p.status === "terkirim" || p.status === "diperiksa");
+  if (!menunggu) return { message: "Pertanyaan ini tidak (lagi) berlaku untuk pendaftaran Anda. Muat ulang halaman." };
+  if (v.jawaban !== "bersedia" && v.jawaban !== "tidak") return { errors: { jawaban: "Pilih salah satu jawaban." }, values: v };
+  if (v.jawaban === "tidak" && (v.alasan.length < 5 || v.alasan.length > 500)) return { errors: { alasan: "Tulis alasan Anda, 5–500 karakter." }, values: v };
+
+  const db = await getDb();
+  const bersedia = v.jawaban === "bersedia";
+  await db.transaction(async (tx) => {
+    // Syarat usulan = "menunggu" di WHERE mencegah jawaban ganda bila dikirim dua kali bersamaan.
+    const [hasil] = await tx
+      .update(pendaftaran)
+      .set(
+        bersedia
+          ? { usulan: "bersedia", updatedAt: new Date() }
+          : { usulan: "tidak", status: "ditolak", hasil: "ditolak", alasanDitolak: ALASAN_TIDAK_BERSEDIA, alasanTidakBersedia: v.alasan, updatedAt: new Date() },
+      )
+      .where(and(eq(pendaftaran.id, p.id), eq(pendaftaran.usulan, "menunggu")));
+    if (hasil.affectedRows === 0) return;
+    await tx.insert(riwayatStatus).values({
+      pendaftaranId: p.id,
+      status: bersedia ? "diusulkan" : "tidak_diusulkan",
+      catatan: bersedia ? "Pendaftar bersedia diusulkan. Status: Diusulkan, menunggu pengumuman." : `Pendaftar tidak bersedia diusulkan. Alasan: ${v.alasan}`,
+      diubahOleh: user.id,
+    });
+  });
+  revalidatePath("/", "layout");
+  redirect("/status");
 }

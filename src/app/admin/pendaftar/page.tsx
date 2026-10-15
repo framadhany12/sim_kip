@@ -147,7 +147,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge status={r.status as Status} tahap={r.tahap} />
+                  <StatusBadge status={r.status as Status} tahap={r.tahap} usulan={r.usulan} />
                   {r.hasil === "diterima" && r.jurusanDiterima && <span className="mt-1 block text-xs text-emerald-800">{r.jurusanDiterima}</span>}
                 </td>
               </tr>

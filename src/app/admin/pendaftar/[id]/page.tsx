@@ -89,7 +89,7 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
       </Link>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{d.diri?.namaLengkap ?? d.user.nama}</h1>
-        <StatusBadge status={d.status} tahap={d.tahap} />
+        <StatusBadge status={d.status} tahap={d.tahap} usulan={d.usulan} />
         <Link href={`/admin/mahasiswa/${d.userId}`} className="text-sm font-semibold text-blue-700 hover:underline">
           Edit data & kata sandi →
         </Link>
@@ -117,6 +117,10 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
                 ["Mendaftar", tanggal(d.user.createdAt)],
                 ["Dikirim", tanggal(d.submittedAt)],
                 ...(d.jurusanDiterima ? ([["Diterima di", d.jurusanDiterima]] as [string, string][]) : []),
+                ...(d.usulan
+                  ? ([["Kesediaan diusulkan", d.usulan === "menunggu" ? "Menunggu jawaban pendaftar" : d.usulan === "bersedia" ? "Bersedia (Diusulkan)" : "Tidak bersedia"]] as [string, string][])
+                  : []),
+                ...(d.alasanTidakBersedia ? ([["Alasan tidak bersedia", d.alasanTidakBersedia]] as [string, string][]) : []),
                 ...(namaBeasiswa ? ([["Jenis beasiswa", namaBeasiswa]] as [string, string][]) : []),
                 ...(d.alasanDitolak
                   ? ([[d.tahap === "pengumuman" ? "Alasan tidak diterima" : "Alasan tidak lolos", d.alasanDitolak]] as [string, string][])

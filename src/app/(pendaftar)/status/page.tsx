@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ProsesSeleksi } from "@/components/proses-seleksi";
 import { Riwayat } from "@/components/riwayat";
 import { Hero } from "@/components/hero";
+import { FormUsulan } from "@/components/pendaftar/form-usulan";
 import { Alert, Card, Dl, StatusBadge } from "@/components/ui";
 import { TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { konteksPendaftar } from "@/lib/konteks";
@@ -23,7 +24,14 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
         </Alert>
       )}
 
-      <Card title="Proses seleksi" action={<StatusBadge status={d.status} tahap={d.tahap} />}>
+      {d.tahap === "pengusulan" && d.usulan === "menunggu" && (d.status === "terkirim" || d.status === "diperiksa") && <FormUsulan />}
+      {d.tahap === "pengusulan" && d.usulan === "bersedia" && !diumumkan && (
+        <Alert tone="success" title="Status: Diusulkan">
+          Terima kasih, Anda telah menyatakan bersedia diusulkan. Mohon tunggu pengumuman hasil akhir seleksi.
+        </Alert>
+      )}
+
+      <Card title="Proses seleksi" action={<StatusBadge status={d.status} tahap={d.tahap} usulan={d.usulan} />}>
         <ProsesSeleksi
           status={d.status}
           tahap={d.tahap}
@@ -38,7 +46,9 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
       {gugur && (
         <section className="rounded-xl border border-rose-200 bg-rose-50 p-5 sm:p-6" aria-label="Hasil seleksi">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">Hasil {TAHAP_LABEL[d.tahap!]}</p>
-          <p className="mt-1 text-xl font-bold text-rose-800 sm:text-2xl">✕ TIDAK LOLOS {TAHAP_LABEL[d.tahap!].toUpperCase()}</p>
+          <p className="mt-1 text-xl font-bold text-rose-800 sm:text-2xl">
+            {d.usulan === "tidak" ? "✕ TIDAK BERSEDIA DIUSULKAN" : `✕ TIDAK LOLOS ${TAHAP_LABEL[d.tahap!].toUpperCase()}`}
+          </p>
           {d.alasanDitolak && (
             <p className="mt-2 text-[15px] text-slate-800">
               Alasan: <b>{d.alasanDitolak}</b>

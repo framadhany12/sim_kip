@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, gte, inArray, isNull, like, lt, or, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, like, lt, ne, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { getDb } from "@/db";
 import { dataDiri, dataSekolah, jurusan, pendaftaran, pilihanJurusan, TAHAP, users, type Tahap } from "@/db/schema";
@@ -10,14 +10,19 @@ import { parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
  * - Meloloskan ke tahap berikutnya: lolos_administrasi, selesai_ujian, selesai_wawancara.
  * - Hasil akhir: ditolak, diterima. Tidak lolos administrasi tidak ada di sini: desil 5/6-10 tanpa PIP otomatis ditolak saat kirim (lihat kirimPendaftaran).
  */
-export const JENIS_PENGUMUMAN = ["lolos_administrasi", "selesai_ujian", "selesai_wawancara", "ditolak", "diterima"] as const;
+export const JENIS_PENGUMUMAN = ["lolos_administrasi", "selesai_ujian", "selesai_wawancara", "pengusulan", "ditolak", "diterima"] as const;
 export type JenisPengumuman = (typeof JENIS_PENGUMUMAN)[number];
 
-/** Jenis yang hanya memajukan pendaftar dari satu tahap ke tahap berikutnya (tanpa alasan). */
-export const JENIS_LANJUT: Partial<Record<JenisPengumuman, { dari: Tahap; ke: Tahap }>> = {
+/**
+ * Jenis yang hanya memajukan pendaftar dari satu tahap ke tahap berikutnya (tanpa alasan).
+ * `wawancaraSelesai`: syarat penanda wawancara. "Sudah wawancara" hanya menandai (tahap tetap Wawancara);
+ * "Pengusulan" memindahkan yang sudah ditandai ke tahap Pengusulan dan menanyakan kesediaan diusulkan.
+ */
+export const JENIS_LANJUT: Partial<Record<JenisPengumuman, { dari: Tahap; ke: Tahap; wawancaraSelesai?: boolean }>> = {
   lolos_administrasi: { dari: "administrasi", ke: "ujian" },
   selesai_ujian: { dari: "ujian", ke: "wawancara" },
-  selesai_wawancara: { dari: "wawancara", ke: "pengusulan" },
+  selesai_wawancara: { dari: "wawancara", ke: "wawancara", wawancaraSelesai: false },
+  pengusulan: { dari: "wawancara", ke: "pengusulan", wawancaraSelesai: true },
 };
 
 export type FilterKandidat = { jenis: JenisPengumuman; tahap?: string; tahun?: string; q?: string };
@@ -44,10 +49,13 @@ export async function kandidatPengumuman(f: FilterKandidat) {
   const lanjut = JENIS_LANJUT[f.jenis];
   if (lanjut) {
     c.push(lanjut.dari === "administrasi" ? or(eq(pendaftaran.tahap, "administrasi"), isNull(pendaftaran.tahap))! : eq(pendaftaran.tahap, lanjut.dari));
+    if (lanjut.wawancaraSelesai !== undefined) c.push(eq(pendaftaran.wawancaraSelesai, lanjut.wawancaraSelesai));
   } else {
     const t = f.tahap ?? TAHAP_BAWAAN;
     if (t !== "semua" && (TAHAP as readonly string[]).includes(t) && t !== "pengumuman") c.push(eq(pendaftaran.tahap, t as Tahap));
     else if (t !== "semua") c.push(eq(pendaftaran.tahap, TAHAP_BAWAAN));
+    // Yang belum menjawab pertanyaan "bersedia diusulkan?" belum bisa diumumkan hasilnya.
+    c.push(or(isNull(pendaftaran.usulan), ne(pendaftaran.usulan, "menunggu"))!);
   }
 
   // Tahun daftar: bawaan tahun berjalan, sama seperti daftar pendaftar.

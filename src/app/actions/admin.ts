@@ -87,6 +87,10 @@ export async function perbaruiTahap(pendaftaranId: string, _: FormState, fd: For
         hasil,
         jurusanDiterimaId,
         jenisBeasiswaId,
+        // Penanda wawancara dan jawaban Pengusulan hanya relevan di tahapnya; pindah ke Pengusulan selalu mulai dari "menunggu" kecuali sudah bersedia.
+        wawancaraSelesai: tahap === "wawancara" ? p.wawancaraSelesai : false,
+        usulan: tahap === "pengusulan" ? (p.tahap === "pengusulan" && p.usulan === "bersedia" ? "bersedia" : "menunggu") : tahap === "pengumuman" ? p.usulan : null,
+        alasanTidakBersedia: tahap === "pengumuman" ? p.alasanTidakBersedia : null,
         alasanDitolak: alasan,
         catatanAdmin: catatan || null,
         updatedAt: new Date(),
@@ -338,7 +342,9 @@ export async function ubahJurusanPendaftar(pendaftaranId: string, _: FormState, 
 
 /**
  * Mengumumkan banyak pendaftar sekaligus (satu transaksi: semua berhasil atau tidak sama sekali).
- * - lolos_administrasi / selesai_ujian / selesai_wawancara: dimajukan ke tahap berikutnya (Ujian / Wawancara / Pengusulan), tanpa alasan.
+ * - lolos_administrasi / selesai_ujian: dimajukan ke tahap berikutnya (Ujian / Wawancara), tanpa alasan.
+ * - selesai_wawancara: hanya menandai wawancara sudah dilaksanakan (tahap tetap Wawancara).
+ * - pengusulan: memindahkan yang sudah ditandai ke Pengusulan; pendaftar lalu menjawab bersedia diusulkan atau tidak.
  * - ditolak: Pengumuman "Tidak diterima" + alasan.
  * - diterima: Pengumuman "Diterima"; tiap pendaftar wajib punya jurusan (Jurusan 1 atau 2 pilihannya), dikirim sebagai `jurusan:<id>`.
  * Pendaftar yang statusnya sudah berubah sejak daftar dimuat (mis. diputuskan admin lain) dilewati dan dilaporkan.
@@ -366,7 +372,9 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
   const layak = rows.filter(
     (r) =>
       (r.p.status === "terkirim" || r.p.status === "diperiksa") &&
-      (lanjut ? (r.p.tahap ?? "administrasi") === lanjut.dari : true),
+      (lanjut
+        ? (r.p.tahap ?? "administrasi") === lanjut.dari && (lanjut.wawancaraSelesai === undefined || r.p.wawancaraSelesai === lanjut.wawancaraSelesai)
+        : r.p.usulan !== "menunggu"),
   );
   if (!layak.length) return { message: "Tidak ada pendaftar yang bisa diumumkan: statusnya sudah berubah. Muat ulang halaman." };
 
@@ -399,14 +407,26 @@ export async function umumkanMassal(jenis: JenisPengumuman, _: FormState, fd: Fo
       let statusRiwayat: string;
       let bawaan: string;
       if (lanjut) {
-        set = { tahap: lanjut.ke, status: "diperiksa", hasil: null, jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: null };
-        statusRiwayat = lanjut.ke;
+        set = {
+          tahap: lanjut.ke,
+          status: "diperiksa",
+          hasil: null,
+          jurusanDiterimaId: null,
+          jenisBeasiswaId: null,
+          alasanDitolak: null,
+          wawancaraSelesai: jenis === "selesai_wawancara",
+          usulan: jenis === "pengusulan" ? "menunggu" : null,
+          alasanTidakBersedia: null,
+        };
+        statusRiwayat = jenis === "selesai_wawancara" ? "wawancara_selesai" : lanjut.ke;
         bawaan =
           jenis === "lolos_administrasi"
             ? "Selamat, Anda lolos Seleksi Administrasi dan lanjut ke Seleksi Ujian."
             : jenis === "selesai_ujian"
               ? "Anda telah mengikuti Seleksi Ujian dan lanjut ke Seleksi Wawancara."
-              : "Anda telah mengikuti Seleksi Wawancara dan lanjut ke tahap Pengusulan.";
+              : jenis === "selesai_wawancara"
+                ? "Anda telah mengikuti Seleksi Wawancara. Mohon tunggu pengumuman tahap Pengusulan."
+                : "Anda masuk tahap Pengusulan. Silakan jawab di halaman Status: apakah Anda bersedia diusulkan sebagai penerima KIP Kuliah?";
       } else if (jenis === "ditolak") {
         set = { tahap: "pengumuman", status: "ditolak", hasil: "ditolak", jurusanDiterimaId: null, jenisBeasiswaId: null, alasanDitolak: alasan };
         statusRiwayat = "ditolak";

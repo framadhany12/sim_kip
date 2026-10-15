@@ -22,7 +22,8 @@ export type BarisKandidat = {
 const TEKS: Record<JenisPengumuman, { tombol: string; ringkas: string; gaya: string }> = {
   lolos_administrasi: { tombol: "Umumkan Lolos Administrasi", ringkas: "diumumkan LOLOS Seleksi Administrasi dan masuk Seleksi Ujian", gaya: "primary" },
   selesai_ujian: { tombol: "Tandai Sudah Ujian", ringkas: "ditandai SUDAH MENGIKUTI Seleksi Ujian dan masuk Seleksi Wawancara", gaya: "primary" },
-  selesai_wawancara: { tombol: "Tandai Sudah Wawancara", ringkas: "ditandai SUDAH MENGIKUTI Seleksi Wawancara dan masuk tahap Pengusulan", gaya: "primary" },
+  selesai_wawancara: { tombol: "Tandai Sudah Wawancara", ringkas: "ditandai SUDAH MENGIKUTI Seleksi Wawancara (tahap tetap Wawancara)", gaya: "primary" },
+  pengusulan: { tombol: "Pindahkan ke Pengusulan", ringkas: "dipindahkan ke tahap PENGUSULAN dan diminta menjawab bersedia diusulkan atau tidak", gaya: "primary" },
   ditolak: { tombol: "Umumkan Tidak Diterima", ringkas: "diumumkan TIDAK DITERIMA", gaya: "danger" },
   diterima: { tombol: "Umumkan Diterima", ringkas: "diumumkan DITERIMA", gaya: "success" },
 };
@@ -181,7 +182,7 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
             label="Catatan untuk pendaftar"
             rows={3}
             defaultValue={state?.values?.catatan}
-            hint={jenis === "diterima" ? "Mis. petunjuk daftar ulang. Tampil di halaman Status semua yang diumumkan." : jenis === "lolos_administrasi" ? "Mis. jadwal dan lokasi ujian. Tampil di halaman Status semua yang diumumkan." : jenis === "selesai_ujian" ? "Mis. jadwal wawancara. Tampil di halaman Status semua yang diumumkan." : "Opsional. Tampil di halaman Status semua yang diumumkan."}
+            hint={jenis === "diterima" ? "Mis. petunjuk daftar ulang. Tampil di halaman Status semua yang diumumkan." : jenis === "lolos_administrasi" ? "Mis. jadwal dan lokasi ujian. Tampil di halaman Status semua yang diumumkan." : jenis === "selesai_ujian" ? "Mis. jadwal wawancara. Tampil di halaman Status semua yang diumumkan." : jenis === "pengusulan" ? "Mis. batas waktu menjawab. Tampil di halaman Status bersama pertanyaan bersedia diusulkan." : "Opsional. Tampil di halaman Status semua yang diumumkan."}
             className={butuhAlasan ? "" : "md:col-span-2"}
           />
           {bisaEmail && (

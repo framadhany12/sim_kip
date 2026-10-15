@@ -80,6 +80,8 @@ function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
       id: pendaftaran.id,
       status: pendaftaran.status,
       tahap: pendaftaran.tahap,
+      usulan: pendaftaran.usulan,
+      alasanTidakBersedia: pendaftaran.alasanTidakBersedia,
       hasil: pendaftaran.hasil,
       jurusanDiterima: jDiterima.nama,
       jenisBeasiswa: jenisBeasiswa.nama,

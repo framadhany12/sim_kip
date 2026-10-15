@@ -6,10 +6,11 @@ import { DESIL_LABEL, STATUS_NIKAH_LABEL, labelProses, yaTidak } from "@/lib/con
 const KOLOM: [string, (r: Awaited<ReturnType<typeof cariPendaftar>>["rows"][number]) => unknown][] = [
   ["Tahun Daftar", (r) => new Date(r.daftarPada.getTime() + 7 * 3600e3).getUTCFullYear()],
   ["Tanggal Daftar", (r) => r.daftarPada.toISOString()],
-  ["Status / Tahap", (r) => labelProses(r.status, r.tahap)],
+  ["Status / Tahap", (r) => labelProses(r.status, r.tahap, r.usulan)],
   ["Hasil", (r) => (r.hasil === "diterima" ? "Diterima" : r.hasil === "ditolak" ? "Tidak diterima" : "")],
   ["Jurusan Diterima", (r) => r.jurusanDiterima],
   ["Jenis Beasiswa", (r) => r.jenisBeasiswa],
+  ["Alasan Tidak Bersedia Diusulkan", (r) => r.alasanTidakBersedia],
   ["Alasan Tidak Lolos/Tidak Diterima", (r) => r.alasanDitolak],
   ["Tanggal Kirim", (r) => r.submittedAt?.toISOString() ?? ""],
   ["No. Pendaftaran KIP Kuliah", (r) => r.nomorKip],
