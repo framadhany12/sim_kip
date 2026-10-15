@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
-import { FormLanding, FormPulihkan } from "@/components/admin/form-landing";
-import { Alert, Card, PageHeader } from "@/components/ui";
+import { EditorLanding } from "@/components/admin/form-landing";
+import { Alert, PageHeader } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { ambilLanding } from "@/lib/landing";
 
@@ -24,12 +24,7 @@ export default async function KelolaLanding() {
         Teks di sini hanya mengubah <b>tampilan</b> landing page. Aturan isian formulir (mis. batas umur dan tahun lulus) tidak ikut berubah, jadi bila syaratnya berubah, hubungi pengembang untuk menyesuaikan formulir.
         {diubah ? " Isi saat ini sudah pernah diubah dari bawaan." : " Isi saat ini masih bawaan."}
       </Alert>
-      <FormLanding key={JSON.stringify(konten)} k={konten} />
-      {diubah && (
-        <Card title="Kembalikan ke bawaan">
-          <FormPulihkan />
-        </Card>
-      )}
+      <EditorLanding k={konten} diubah={diubah} />
     </div>
   );
 }

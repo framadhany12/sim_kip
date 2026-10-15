@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ActionForm, SubmitButton, TextArea, Field, useFormErrors } from "@/components/form";
 import { Card } from "@/components/ui";
 import { pulihkanLanding, simpanLanding } from "@/app/actions/landing";
@@ -107,11 +108,55 @@ export function FormLanding({ k }: { k: LandingKonten }) {
   );
 }
 
-export function FormPulihkan() {
+/** Memberi tahu induk saat aksi berhasil, supaya formulir utama dimuat ulang dengan isi bawaan. */
+function PantauSukses({ onSukses }: { onSukses: () => void }) {
+  const s = useFormErrors();
+  useEffect(() => {
+    if (s?.ok) onSukses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s]);
+  return null;
+}
+
+/**
+ * Editor landing page. Formulir tidak dibuat ulang setelah menyimpan (pesan berhasil tetap terlihat);
+ * ia hanya dimuat ulang setelah "Kembalikan ke bawaan" agar isiannya kembali ke bawaan.
+ */
+export function EditorLanding({ k, diubah }: { k: LandingKonten; diubah: boolean }) {
+  const router = useRouter();
+  const [versi, setVersi] = useState(0);
+  const menunggu = useRef(false);
+  const tanda = JSON.stringify(k);
+  useEffect(() => {
+    if (menunggu.current) {
+      menunggu.current = false;
+      setVersi((v) => v + 1);
+    }
+  }, [tanda]);
+  return (
+    <>
+      <FormLanding key={versi} k={k} />
+      <Card title="Kembalikan ke bawaan">
+        <FormPulihkan
+          diubah={diubah}
+          onSukses={() => {
+            menunggu.current = true;
+            router.refresh();
+          }}
+        />
+      </Card>
+    </>
+  );
+}
+
+export function FormPulihkan({ onSukses, diubah = true }: { onSukses?: () => void; diubah?: boolean }) {
   const [yakin, setYakin] = useState(false);
   return (
     <ActionForm action={pulihkanLanding} className="space-y-3">
-      {!yakin ? (
+      {onSukses && <PantauSukses onSukses={() => { setYakin(false); onSukses(); }} />}
+      {!diubah ? (
+        <p className="text-sm text-slate-600">Isi landing page saat ini masih bawaan, belum ada yang perlu dikembalikan.</p>
+      ) : !yakin ? (
         <button type="button" onClick={() => setYakin(true)} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-rose-700 ring-1 ring-rose-300 hover:bg-rose-50">
           Kembalikan ke isi bawaan
         </button>

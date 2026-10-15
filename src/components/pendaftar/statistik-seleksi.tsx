@@ -114,7 +114,7 @@ export function StatistikSeleksi({ s }: { s: StatistikPendaftar }) {
                   <BarChart data={jurusan} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }} barGap={2} barCategoryGap="22%">
                     <CartesianGrid horizontal={false} stroke={WARNA.grid} />
                     <XAxis type="number" allowDecimals={false} tick={sumbu} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="nama" width={110} tick={{ ...sumbu, fill: "#52514e" }} axisLine={{ stroke: "#c3c2b7" }} tickLine={false} />
+                    <YAxis type="category" dataKey="nama" width={150} tick={{ ...sumbu, fill: "#52514e" }} axisLine={{ stroke: "#c3c2b7" }} tickLine={false} />
                     <Tooltip cursor={{ fill: "rgba(42,120,214,0.06)" }} content={<TooltipIsi />} />
                     <Legend iconType="square" wrapperStyle={{ fontSize: 12 }} />
                     <Bar dataKey="p1" name="Pilihan 1" fill={WARNA.p1} maxBarSize={16} radius={[0, 4, 4, 0]} animationDuration={500} />
