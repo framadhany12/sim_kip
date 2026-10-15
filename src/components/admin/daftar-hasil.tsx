@@ -84,7 +84,7 @@ export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak";
               <th className="px-4 py-3 font-semibold">Pendaftar</th>
               <th className="px-4 py-3 font-semibold">No. Pendaftaran KIP</th>
               <th className="px-4 py-3 font-semibold">NIK / NISN</th>
-              <th className="px-4 py-3 font-semibold">Asal sekolah</th>
+              <th className="px-4 py-3 font-semibold">{diterima ? "Jenis beasiswa" : "Asal sekolah"}</th>
               <th className="px-4 py-3 font-semibold">{diterima ? "Jurusan diterima" : "Jurusan 1 / 2"}</th>
               <th className="px-4 py-3 font-semibold">{diterima ? "Status" : "Status / Alasan"}</th>
               <th className="px-4 py-3 font-semibold">Mendaftar</th>
@@ -111,13 +111,10 @@ export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak";
                   {r.nik ?? "-"}
                   <span className="block text-slate-500">{r.nisn ?? "-"}</span>
                 </td>
-                <td className="px-4 py-3 text-slate-700">{r.sekolah ?? "-"}</td>
+                <td className="px-4 py-3 text-slate-700">{diterima ? (r.jenisBeasiswa ?? "-") : (r.sekolah ?? "-")}</td>
                 <td className="px-4 py-3 text-slate-700">
                   {diterima ? (
-                    <>
-                      <span className="font-semibold text-emerald-800">{r.jurusanDiterima ?? "-"}</span>
-                      {r.jenisBeasiswa && <span className="block text-xs text-slate-500">Beasiswa: {r.jenisBeasiswa}</span>}
-                    </>
+                    <span className="font-semibold text-emerald-800">{r.jurusanDiterima ?? "-"}</span>
                   ) : (
                     <>
                       {r.jurusan1 ?? "-"}
