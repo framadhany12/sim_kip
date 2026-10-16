@@ -6,6 +6,7 @@ import {
   dataDiri,
   dataKeluarga,
   dataSekolah,
+  DESIL,
   ekonomiOrangtua,
   jenisBeasiswa,
   jurusan,
@@ -24,7 +25,7 @@ import {
 import { parseTahun, rentangTahun, SEMUA_TAHUN, tahunBerjalan } from "./tahun";
 import { daftarPilihanTahun } from "./tahun-ajaran";
 
-export type FilterPendaftar = { q?: string; status?: string; tahun?: string; dari?: string; sampai?: string; alasan?: string; page?: string };
+export type FilterPendaftar = { q?: string; status?: string; tahun?: string; desil?: string; pip?: string; alasan?: string; page?: string };
 
 /**
  * Pilihan filter daftar admin. "semua" = tanpa filter (bawaan), "masuk" = semua yang sedang dalam proses seleksi,
@@ -50,8 +51,8 @@ function kondisi(f: FilterPendaftar): SQL | undefined {
     const { dari, sampai } = rentangTahun(tahun);
     c.push(gte(users.createdAt, dari), lt(users.createdAt, sampai));
   }
-  if (f.dari) c.push(gte(users.createdAt, new Date(`${f.dari}T00:00:00+07:00`)));
-  if (f.sampai) c.push(lt(users.createdAt, new Date(new Date(`${f.sampai}T00:00:00+07:00`).getTime() + 864e5)));
+  if ((DESIL as readonly string[]).includes(f.desil ?? "")) c.push(eq(dataDiri.desil, f.desil as (typeof DESIL)[number]));
+  if (f.pip === "ya" || f.pip === "tidak") c.push(eq(dataDiri.penerimaPip, f.pip === "ya"));
   const q = f.q?.trim();
   if (q) {
     const pola = `%${q}%`;

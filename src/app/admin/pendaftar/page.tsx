@@ -2,7 +2,8 @@ import Link from "next/link";
 import { TombolUnduh } from "@/components/admin/tombol-unduh";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import { inputCls } from "@/lib/styles";
-import { TAHAP_LABEL } from "@/lib/constants";
+import { DESIL_LABEL, TAHAP_LABEL } from "@/lib/constants";
+import { DESIL } from "@/db/schema";
 import { cariPendaftar, daftarTahun, FILTER_STATUS, PER_HALAMAN, type FilterPendaftar } from "@/lib/admin-query";
 import type { Status } from "@/db/schema";
 import { parseTahun, SEMUA_TAHUN, tahunBerjalan } from "@/lib/tahun";
@@ -76,16 +77,27 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
             </select>
           </div>
           <div>
-            <label htmlFor="dari" className="mb-1 block text-xs font-medium text-slate-600">
-              Dari tanggal
+            <label htmlFor="desil" className="mb-1 block text-xs font-medium text-slate-600">
+              Desil
             </label>
-            <input id="dari" name="dari" type="date" defaultValue={f.dari} className={inputCls} />
+            <select id="desil" name="desil" defaultValue={f.desil ?? ""} className={inputCls}>
+              <option value="">Semua desil</option>
+              {DESIL.map((d) => (
+                <option key={d} value={d}>
+                  {DESIL_LABEL[d]}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
-            <label htmlFor="sampai" className="mb-1 block text-xs font-medium text-slate-600">
-              Sampai tanggal
+            <label htmlFor="pip" className="mb-1 block text-xs font-medium text-slate-600">
+              Penerima PIP
             </label>
-            <input id="sampai" name="sampai" type="date" defaultValue={f.sampai} className={inputCls} />
+            <select id="pip" name="pip" defaultValue={f.pip ?? ""} className={inputCls}>
+              <option value="">Semua</option>
+              <option value="ya">Ya</option>
+              <option value="tidak">Tidak</option>
+            </select>
           </div>
           <div className="flex items-center gap-2">
             <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
