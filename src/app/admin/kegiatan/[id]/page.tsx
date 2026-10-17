@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
 import { BarcodeKegiatan } from "@/components/admin/barcode-kegiatan";
-import { MuatUlangBerkala } from "@/components/admin/muat-ulang-berkala";
+import { MuatUlangPresensi } from "@/components/admin/muat-ulang-presensi";
 import { Card } from "@/components/ui";
 import { tanggal } from "@/lib/constants";
 import { ambilKegiatan, rekapKegiatan, STEP_DETIK } from "@/lib/kegiatan";
@@ -17,7 +17,7 @@ export default async function DetailKegiatan({ params }: { params: Promise<{ id:
 
   return (
     <div className="space-y-5">
-      <MuatUlangBerkala detik={10} />
+      <MuatUlangPresensi kegiatanId={k.id} jumlahAwal={rekap.length} />
       <Link href="/admin/kegiatan" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900">
         <ArrowLeft className="size-4" aria-hidden /> Kegiatan
       </Link>
