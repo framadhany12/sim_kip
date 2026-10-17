@@ -36,7 +36,7 @@ export function BottomNav({ mahasiswa = false }: { mahasiswa?: boolean }) {
                 href={i.href}
                 aria-current={aktif ? "page" : undefined}
                 className={`relative flex h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition active:bg-slate-100 ${
-                  aktif ? "text-[#0d2a63]" : "text-slate-500"
+                  aktif ? "text-[#0d2a63] dark:text-blue-300" : "text-slate-500"
                 }`}
               >
                 {aktif && <span aria-hidden className="absolute inset-x-5 top-0 h-0.5 rounded-b bg-gradient-to-r from-[#2563eb] to-[#0d2a63]" />}

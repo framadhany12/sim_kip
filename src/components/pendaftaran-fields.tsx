@@ -239,7 +239,7 @@ export function FieldsSekolah({
           required
           defaultValue={s?.tahunLulus}
           options={tahunLulusBoleh().map((t) => ({ value: String(t), label: String(t) }))}
-          hint="Hanya lulusan 2024, 2025, atau 2026 yang dapat mendaftar."
+          hint={`Hanya lulusan ${tahunLulusBoleh().join(", ")} yang dapat mendaftar.`}
         />
         <Field name="jurusanSekolah" label="Jurusan di sekolah" required defaultValue={s?.jurusanSekolah} hint="Jurusan/peminatan saat SMA/SMK/MA." contoh="IPA / Teknik Kendaraan Ringan" />
       </div>

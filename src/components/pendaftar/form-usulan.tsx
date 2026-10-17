@@ -54,7 +54,7 @@ function Isi() {
         )}
       </div>
       {konfirmasi && jawab === "bersedia" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" onClick={() => setKonfirmasi(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setKonfirmasi(false)}>
           <div role="alertdialog" aria-modal="true" aria-labelledby="judul-konfirmasi" className="max-h-full w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6" onClick={(e) => e.stopPropagation()}>
             <h3 id="judul-konfirmasi" className="text-lg font-bold text-slate-900">Yakin bersedia diusulkan?</h3>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-700">

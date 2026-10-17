@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   if (!p || !sudahMahasiswa(p)) return jawab("Presensi hanya untuk mahasiswa.", 403);
 
   const body = (await req.json().catch(() => ({}))) as { kegiatanId?: string; token?: string };
-  if (!body.kegiatanId || !body.token) return jawab("Barcode tidak valid.", 400);
+  if (typeof body.kegiatanId !== "string" || typeof body.token !== "string" || !body.kegiatanId || !body.token) return jawab("Barcode tidak valid.", 400);
   const k = await ambilKegiatan(body.kegiatanId);
   if (!k) return jawab("Kegiatan tidak ditemukan.", 404);
   if (!kodeValid(k.rahasia, body.token)) return jawab("Barcode sudah kedaluwarsa. Pindai ulang barcode yang sedang tampil.", 400);

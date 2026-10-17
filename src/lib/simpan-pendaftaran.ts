@@ -18,6 +18,7 @@ import {
   wilayahKecamatan,
 } from "@/db/schema";
 import { tahunLulusBoleh, hitungUmur, normalHp } from "./constants";
+import { isDuplikat } from "./pendaftaran";
 import type { FormState } from "./form-state";
 
 /**
@@ -189,7 +190,8 @@ export async function simpanSekolahCore(pendaftaranId: string, v: Nilai, modeJur
   const npsn = angka(v.npsn);
   if (npsn.length !== 8) e.npsn = "NPSN terdiri dari 8 digit angka.";
   const tahun = Number(v.tahunLulus);
-  if (!tahunLulusBoleh().includes(tahun)) e.tahunLulus = `Hanya lulusan tahun ${tahunLulusBoleh().join(", ")} yang dapat mendaftar.`;
+  // Koreksi oleh admin dan pendaftar yang sudah mengirim tidak dibatasi rentang tahun berjalan (data lama tetap bisa dikoreksi).
+  if (modeJurusan === "pendaftar" && !tahunLulusBoleh().includes(tahun)) e.tahunLulus = `Hanya lulusan tahun ${tahunLulusBoleh().join(", ")} yang dapat mendaftar.`;
   const db = await getDb();
   if (ubahJurusan) {
     if (v.jurusan1Id && v.jurusan1Id === v.jurusan2Id) e.jurusan2Id = "Jurusan 2 harus berbeda dari Jurusan 1.";
@@ -249,6 +251,12 @@ export async function simpanAkademikCore(pendaftaranId: string, v: Nilai): Promi
     if (dipakai) e.nim = "NIM ini sudah dipakai mahasiswa lain. Periksa kembali, atau hubungi admin.";
   }
   if (Object.keys(e).length) return gagal(e, v);
-  await db.update(pendaftaran).set({ nim: nim || null, kelas: kelas || null, updatedAt: new Date() }).where(eq(pendaftaran.id, pendaftaranId));
+  try {
+    await db.update(pendaftaran).set({ nim: nim || null, kelas: kelas || null, updatedAt: new Date() }).where(eq(pendaftaran.id, pendaftaranId));
+  } catch (err) {
+    // Dua penyimpanan NIM yang sama hampir bersamaan: yang kalah mendapat pesan yang sama dengan pemeriksaan di atas.
+    if (isDuplikat(err)) return gagal({ nim: "NIM ini sudah dipakai mahasiswa lain. Periksa kembali, atau hubungi admin." }, v);
+    throw err;
+  }
   return {};
 }

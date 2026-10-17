@@ -53,7 +53,8 @@ function useStatistikLive(awal: Statistik) {
   const [memuat, setMemuat] = useState(false);
   const [galat, setGalat] = useState(false);
   const [jeda, setJeda] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
+  // Awal memakai waktu dari server agar render server dan klien sama (hindari galat hydration); lalu berdetak tiap detik.
+  const [now, setNow] = useState(() => Date.parse(awal.diperbarui));
   const urut = useRef(0);
   // Selama admin tidak memilih tahun lain, dashboard mengikuti tahun berjalan (berpindah sendiri saat tahun berganti).
   const ikutiTahunBerjalan = useRef(awal.tahun === awal.tahunBerjalan);

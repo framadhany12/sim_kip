@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { TombolTema } from "@/components/tombol-tema";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -154,7 +155,7 @@ export function AdminShell({
       {/* Sidebar ponsel */}
       {buka && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu admin">
-          <button className="absolute inset-0 bg-slate-900/50" aria-label="Tutup menu" onClick={() => setBuka(false)} />
+          <button className="absolute inset-0 bg-black/50" aria-label="Tutup menu" onClick={() => setBuka(false)} />
           <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-[#0d2a63] shadow-xl">
             <button onClick={() => setBuka(false)} className="absolute right-3 top-4 rounded-md p-1.5 text-blue-100 hover:bg-white/10" aria-label="Tutup menu">
               <X className="size-5" />
@@ -185,6 +186,7 @@ export function AdminShell({
             <input type="hidden" name="tahun" value="semua" />
           </form>
           <div className="ml-auto flex items-center gap-3">
+            <TombolTema />
             <div className="hidden text-right leading-tight sm:block">
               <p className="text-sm font-semibold text-slate-900">{nama}</p>
               <p className="text-xs text-slate-500">{email}</p>

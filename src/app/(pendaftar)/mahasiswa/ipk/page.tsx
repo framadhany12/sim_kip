@@ -5,6 +5,8 @@ import { getDb } from "@/db";
 import { laporanAkademik } from "@/db/schema";
 import { BannerPengumuman } from "@/components/pendaftar/banner-pengumuman";
 import { FormLaporanIpk } from "@/components/pendaftar/form-laporan-ipk";
+import { GrafikIpk } from "@/components/grafik-ipk";
+import { ambilStatistikIpk } from "@/lib/statistik-ipk";
 import { Card } from "@/components/ui";
 import { tanggal } from "@/lib/constants";
 import { konteksPendaftar } from "@/lib/konteks";
@@ -16,6 +18,9 @@ export default async function LaporanIpkPage() {
   const { d } = await konteksPendaftar();
   if (!sudahMahasiswa(d)) redirect("/dashboard");
   const db = await getDb();
+  // Tampilan mahasiswa: hanya rata-rata, kelompok kecil (< 3 mahasiswa) disembunyikan agar IPK individu tidak terbaca.
+  const statistik = await ambilStatistikIpk(3);
+  const angkatanSaya = String(new Date(d.user.createdAt.getTime() + 7 * 3600e3).getUTCFullYear());
   const laporan = await db.select().from(laporanAkademik).where(eq(laporanAkademik.pendaftaranId, d.id)).orderBy(asc(laporanAkademik.semester));
 
   return (
@@ -45,6 +50,12 @@ export default async function LaporanIpkPage() {
           </ul>
         )}
       </Card>
+      <section aria-labelledby="judul-grafik-ipk" className="space-y-3">
+        <h2 id="judul-grafik-ipk" className="text-lg font-bold text-slate-900">
+          Perbandingan IPK
+        </h2>
+        <GrafikIpk data={statistik} tandaiAngkatan={angkatanSaya} tandaiJurusan={d.jurusanDiterima ?? undefined} />
+      </section>
     </div>
   );
 }

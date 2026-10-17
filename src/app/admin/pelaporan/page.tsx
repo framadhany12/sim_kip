@@ -2,13 +2,16 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import { tutupPengumumanMahasiswa } from "@/app/actions/pelaporan";
 import { FormUmumkan } from "@/components/admin/form-umumkan";
+import { GrafikIpk } from "@/components/grafik-ipk";
+import { ambilStatistikIpk } from "@/lib/statistik-ipk";
 import { Card, PageHeader } from "@/components/ui";
 import { daftarTahun } from "@/lib/admin-query";
 import { tanggal } from "@/lib/constants";
 import {
   daftarBelumMelapor,
   daftarJurusanFilter,
-  daftarPelaporan,
+  daftarMahasiswaMelapor,
+  ringkasSemester,
   daftarPengumumanMahasiswa,
   PER_HALAMAN_LAPORAN,
   type FilterPelaporan,
@@ -21,10 +24,10 @@ type Params = FilterPelaporan & { tab?: string };
 const TAB = [
   ["laporan", "Laporan masuk"],
   ["belum", "Belum melapor"],
+  ["grafik", "Grafik IPK"],
   ["umumkan", "Umumkan"],
 ] as const;
 
-const ipkFmt = (v: string | number) => Number(v).toFixed(2).replace(".", ",");
 const tglPendek = (s: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${s}T00:00:00Z`));
 
 export default async function PelaporanPage({ searchParams }: { searchParams: Promise<Params> }) {
@@ -49,9 +52,14 @@ export default async function PelaporanPage({ searchParams }: { searchParams: Pr
           </Link>
         ))}
       </nav>
-      {tab === "umumkan" ? <Umumkan /> : <Daftar tab={tab} f={f} qs={qs} qsFilter={qsFilter} />}
+      {tab === "umumkan" ? <Umumkan /> : tab === "grafik" ? <Grafik /> : <Daftar tab={tab} f={f} qs={qs} qsFilter={qsFilter} />}
     </div>
   );
+}
+
+async function Grafik() {
+  const data = await ambilStatistikIpk(1);
+  return <GrafikIpk data={data} />;
 }
 
 async function Umumkan() {
@@ -105,7 +113,7 @@ async function Umumkan() {
 async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: Params; qs: (e: Record<string, string | number>) => string; qsFilter: string }) {
   const [pilihanTahun, daftarJurusan] = await Promise.all([daftarTahun(), daftarJurusanFilter()]);
   const belum = tab === "belum";
-  const hasil = belum ? await daftarBelumMelapor(f) : await daftarPelaporan(f);
+  const hasil = belum ? await daftarBelumMelapor(f) : await daftarMahasiswaMelapor(f);
   const { total, halaman } = hasil;
   const jumlahHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN_LAPORAN));
   const semesterAktif = belum ? (hasil as Awaited<ReturnType<typeof daftarBelumMelapor>>).semester : undefined;
@@ -177,7 +185,7 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
             </>
           ) : (
             <>
-              <b>{total}</b> laporan.
+              <b>{total}</b> mahasiswa sudah melapor. Klik nama untuk melihat IPK per semester.
             </>
           )}
         </p>
@@ -185,7 +193,7 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
           href={`/api/admin/export-ipk?${qsFilter}${belum ? `&semester=${semesterAktif}` : ""}`}
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
         >
-          <Download className="size-4" aria-hidden /> Export Excel ({total})
+          <Download className="size-4" aria-hidden /> Export Excel{belum ? ` (${total})` : ""}
         </a>
       </div>
 
@@ -227,44 +235,40 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
             </tbody>
           </table>
         ) : (
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">Mahasiswa</th>
                 <th className="px-4 py-3 font-semibold">NIM / Kelas</th>
                 <th className="px-4 py-3 font-semibold">Jurusan</th>
                 <th className="px-4 py-3 font-semibold">Angkatan</th>
-                <th className="px-4 py-3 font-semibold">Semester</th>
-                <th className="px-4 py-3 font-semibold">IPK</th>
-                <th className="px-4 py-3 font-semibold">Dilaporkan</th>
-                <th className="px-4 py-3 font-semibold">Transkrip</th>
+                <th className="px-4 py-3 font-semibold">Laporan masuk</th>
+                <th className="px-4 py-3 font-semibold">Terakhir melapor</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {hasil.rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
-                    Belum ada laporan yang cocok dengan filter.
+                  <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
+                    Belum ada mahasiswa yang melapor sesuai filter.
                   </td>
                 </tr>
               )}
-              {(hasil.rows as Awaited<ReturnType<typeof daftarPelaporan>>["rows"]).map((r) => (
+              {(hasil.rows as Awaited<ReturnType<typeof daftarMahasiswaMelapor>>["rows"]).map((r) => (
                 <tr key={r.id} className="align-top hover:bg-slate-50">
-                  <td className="px-4 py-3 font-semibold text-slate-900">{r.nama}</td>
+                  <td className="px-4 py-3">
+                    <Link href={`/admin/pelaporan/${r.id}`} className="font-semibold text-blue-700 hover:underline">
+                      {r.nama}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 font-mono text-[13px] text-slate-700">
                     {r.nim ?? "—"}
                     <span className="block font-sans text-slate-500">{r.kelas ?? "—"}</span>
                   </td>
                   <td className="px-4 py-3 text-slate-700">{r.jurusan ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-700">{r.angkatan}</td>
-                  <td className="px-4 py-3 text-slate-700">{r.semester}</td>
-                  <td className="px-4 py-3 font-semibold tabular-nums text-slate-900">{ipkFmt(r.ipk)}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">{tanggal(r.diperbarui)}</td>
-                  <td className="px-4 py-3">
-                    <a href={`/api/laporan-akademik/${r.id}`} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
-                      Buka
-                    </a>
-                  </td>
+                  <td className="px-4 py-3 text-slate-700">{ringkasSemester(r.semesterDilaporkan)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-slate-600">{tanggal(new Date(r.terakhir))}</td>
                 </tr>
               ))}
             </tbody>

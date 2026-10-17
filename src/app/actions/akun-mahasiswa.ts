@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
-import { pendaftaran } from "@/db/schema";
+import { dataDiri, pendaftaran } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin, requirePendaftar } from "@/lib/auth";
 import { nilaiForm, type FormState } from "@/lib/form-state";
@@ -32,7 +32,17 @@ const TOLAK: FormState = { message: "Menu Mahasiswa hanya untuk pendaftar yang s
 export async function simpanIdentitasMahasiswa(_: FormState, fd: FormData): Promise<FormState> {
   const m = await ambilMahasiswa();
   if (!m) return TOLAK;
-  const hasil = await simpanDataDiriCore(m.p.id, nilaiForm(fd));
+  const db = await getDb();
+  const [lama] = await db.select().from(dataDiri).where(eq(dataDiri.pendaftaranId, m.p.id));
+  if (!lama) return { message: "Data diri belum lengkap. Hubungi admin." };
+  // Data KIP dikunci di server: nilai dari form (input hidden) diabaikan agar tidak bisa dimanipulasi.
+  const v = {
+    ...nilaiForm(fd),
+    nomorPendaftaranKip: lama.nomorPendaftaranKip ?? "",
+    desil: lama.desil ?? "",
+    penerimaPip: lama.penerimaPip == null ? "" : lama.penerimaPip ? "ya" : "tidak",
+  };
+  const hasil = await simpanDataDiriCore(m.p.id, v);
   if (hasil.galat) return hasil.galat;
   await catat(m, "Identitas & Alamat");
   redirect("/mahasiswa?tersimpan=identitas");

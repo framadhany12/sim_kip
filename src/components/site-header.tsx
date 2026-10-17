@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { keluar } from "@/app/actions/auth";
 import { NavLinks } from "./nav-links";
 import { LogoTedc } from "./logo";
+import { TombolTema } from "./tombol-tema";
 
 const NAV_ADMIN = [
   { href: "/admin", label: "Ringkasan", exact: true },
@@ -38,6 +39,7 @@ export async function SiteHeader() {
         </Link>
         <NavLinks links={links} />
         <div className="ml-auto flex items-center gap-2">
+          <TombolTema gelapDiLatar />
           {user ? (
             <>
               <span className="hidden max-w-40 truncate text-sm text-blue-100 sm:inline">{user.nama}</span>

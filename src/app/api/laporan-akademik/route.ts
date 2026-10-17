@@ -22,7 +22,8 @@ export async function POST(req: Request) {
   const fd = await req.formData();
   const semester = Number(fd.get("semester"));
   if (!Number.isInteger(semester) || semester < 1 || semester > 14) return err("Pilih semester (1–14).");
-  const ipk = Number(String(fd.get("ipk") ?? "").replace(",", "."));
+  const ipkTeks = String(fd.get("ipk") ?? "").trim().replace(",", ".");
+  const ipk = /^[0-9]([.][0-9]{1,2})?$/.test(ipkTeks) ? Number(ipkTeks) : NaN;
   if (!Number.isFinite(ipk) || ipk < 0 || ipk > 4) return err("IPK harus antara 0,00 dan 4,00.");
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return err("Unggah berkas transkrip nilai.");
@@ -40,7 +41,8 @@ export async function POST(req: Request) {
     .insert(laporanAkademik)
     .values({ pendaftaranId: p.id, semester, ...data })
     .onDuplicateKeyUpdate({ set: data });
-  if (lama) await hapusBerkas(lama.fileUrl);
+  // Berkas lama yang gagal dihapus tidak boleh menggagalkan laporan yang sudah tersimpan.
+  if (lama) await hapusBerkas(lama.fileUrl).catch(() => {});
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { simpanAkademikMahasiswa } from "@/app/actions/akun-mahasiswa";
 import { ActionForm, Field, SubmitButton } from "@/components/form";
 import { Dl } from "@/components/ui";
@@ -10,7 +11,12 @@ export function FormAkademik({ nim, kelas }: { nim: string | null; kelas: string
     return (
       <div className="space-y-2">
         <Dl items={[["NIM", nim], ["Kelas", kelas]]} />
-        <p className="text-xs text-slate-500">🔒 NIM dan kelas sudah tersimpan dan tidak dapat diubah lagi. Hubungi admin lewat halaman Bantuan bila ada yang salah.</p>
+        <p className="text-xs text-slate-500">🔒 NIM dan kelas sudah tersimpan dan tidak dapat diubah lagi. Hubungi admin lewat{" "}
+          <Link href="/bantuan" className="font-semibold text-blue-700 hover:underline">
+            halaman Bantuan
+          </Link>{" "}
+          bila ada yang salah.
+        </p>
       </div>
     );
   return (

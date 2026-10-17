@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -19,3 +21,114 @@ body {
   color: #0f172a;
   overflow-wrap: break-word;
 }
+/*
+ * ===== MODE GELAP =====
+ * Pendekatan: skala slate dibalik (50↔950 dst.) sehingga semua kelas bg-/text-/border-slate-* otomatis berbalik;
+ * kelas berwarna (biru/hijau/merah/kuning/sky) disesuaikan satu per satu di bawah. Bila memakai kelas berwarna
+ * BARU dengan langkah 50–200 (latar), 500–950 (teks), atau 100–400 (garis/ring), tambahkan aturannya di sini.
+ * Pengecualian dibuat di komponen dengan varian dark: (aktif lewat @custom-variant di atas).
+ */
+.dark {
+  color-scheme: dark;
+  --color-slate-50: oklch(12.9% 0.042 264.695);
+  --color-slate-100: oklch(20.8% 0.042 265.755);
+  --color-slate-200: oklch(27.9% 0.041 260.031);
+  --color-slate-300: oklch(37.2% 0.044 257.287);
+  --color-slate-400: oklch(54% 0.043 257.281); /* ikon/teks pudar: dinaikkan agar terbaca di latar gelap */
+  --color-slate-500: oklch(68% 0.04 257.417); /* teks sekunder: kontras ≥ 4,5:1 di permukaan #111a2e */
+  --color-slate-600: oklch(70.4% 0.04 256.788);
+  --color-slate-700: oklch(86.9% 0.022 252.894);
+  --color-slate-800: oklch(92.9% 0.013 255.508);
+  --color-slate-900: oklch(96.8% 0.007 247.896);
+  --color-slate-950: oklch(98.4% 0.003 247.858);
+}
+
+/* warna kromatik: latar muda -> tint transparan, teks gelap -> terang, garis/ring muda -> redup */
+.dark .bg-amber-50 { background-color: color-mix(in oklab, var(--color-amber-500) 14%, transparent); }
+.dark .bg-blue-100 { background-color: color-mix(in oklab, var(--color-blue-500) 20%, transparent); }
+.dark .bg-blue-50 { background-color: color-mix(in oklab, var(--color-blue-500) 14%, transparent); }
+.dark .bg-blue-50\/50 { background-color: color-mix(in oklab, var(--color-blue-500) 14%, transparent); }
+.dark .bg-blue-50\/60 { background-color: color-mix(in oklab, var(--color-blue-500) 14%, transparent); }
+.dark .bg-emerald-50 { background-color: color-mix(in oklab, var(--color-emerald-500) 14%, transparent); }
+.dark .bg-rose-50 { background-color: color-mix(in oklab, var(--color-rose-500) 14%, transparent); }
+.dark .bg-rose-50\/40 { background-color: color-mix(in oklab, var(--color-rose-500) 14%, transparent); }
+.dark .bg-sky-50 { background-color: color-mix(in oklab, var(--color-sky-500) 14%, transparent); }
+.dark .border-amber-200 { border-color: color-mix(in oklab, var(--color-amber-400) 32%, transparent); }
+.dark .border-blue-100 { border-color: color-mix(in oklab, var(--color-blue-400) 32%, transparent); }
+.dark .border-blue-200 { border-color: color-mix(in oklab, var(--color-blue-400) 32%, transparent); }
+.dark .border-blue-300 { border-color: color-mix(in oklab, var(--color-blue-400) 55%, transparent); }
+.dark .border-blue-400 { border-color: color-mix(in oklab, var(--color-blue-400) 55%, transparent); }
+.dark .border-emerald-200 { border-color: color-mix(in oklab, var(--color-emerald-400) 32%, transparent); }
+.dark .border-emerald-300 { border-color: color-mix(in oklab, var(--color-emerald-400) 55%, transparent); }
+.dark .border-rose-200 { border-color: color-mix(in oklab, var(--color-rose-400) 32%, transparent); }
+.dark .border-rose-300 { border-color: color-mix(in oklab, var(--color-rose-400) 55%, transparent); }
+.dark .border-rose-400 { border-color: color-mix(in oklab, var(--color-rose-400) 55%, transparent); }
+.dark .border-sky-200 { border-color: color-mix(in oklab, var(--color-sky-400) 32%, transparent); }
+.dark .from-blue-50 { --tw-gradient-from: color-mix(in oklab, var(--color-blue-500) 14%, transparent); }
+.dark .hover\:bg-amber-100:hover { background-color: color-mix(in oklab, var(--color-amber-500) 20%, transparent); }
+.dark .hover\:bg-emerald-50:hover { background-color: color-mix(in oklab, var(--color-emerald-500) 14%, transparent); }
+.dark .hover\:bg-rose-50:hover { background-color: color-mix(in oklab, var(--color-rose-500) 14%, transparent); }
+.dark .hover\:border-blue-300:hover { border-color: color-mix(in oklab, var(--color-blue-400) 55%, transparent); }
+.dark .hover\:text-blue-700:hover { color: var(--color-blue-300); }
+.dark .ring-amber-300 { --tw-ring-color: color-mix(in oklab, var(--color-amber-400) 55%, transparent); }
+.dark .ring-blue-100 { --tw-ring-color: color-mix(in oklab, var(--color-blue-400) 32%, transparent); }
+.dark .ring-blue-200 { --tw-ring-color: color-mix(in oklab, var(--color-blue-400) 32%, transparent); }
+.dark .ring-emerald-200 { --tw-ring-color: color-mix(in oklab, var(--color-emerald-400) 32%, transparent); }
+.dark .ring-emerald-300 { --tw-ring-color: color-mix(in oklab, var(--color-emerald-400) 55%, transparent); }
+.dark .ring-rose-200 { --tw-ring-color: color-mix(in oklab, var(--color-rose-400) 32%, transparent); }
+.dark .ring-rose-300 { --tw-ring-color: color-mix(in oklab, var(--color-rose-400) 55%, transparent); }
+.dark .ring-sky-300 { --tw-ring-color: color-mix(in oklab, var(--color-sky-400) 55%, transparent); }
+.dark .text-amber-700 { color: var(--color-amber-300); }
+.dark .text-amber-800 { color: var(--color-amber-200); }
+.dark .text-amber-900 { color: var(--color-amber-100); }
+.dark .text-amber-950 { color: var(--color-amber-50); }
+.dark .text-blue-700 { color: var(--color-blue-300); }
+.dark .text-blue-800 { color: var(--color-blue-200); }
+.dark .text-blue-900 { color: var(--color-blue-100); }
+.dark .text-emerald-600 { color: var(--color-emerald-400); }
+.dark .text-emerald-700 { color: var(--color-emerald-300); }
+.dark .text-emerald-800 { color: var(--color-emerald-200); }
+.dark .text-emerald-900 { color: var(--color-emerald-100); }
+.dark .text-rose-600 { color: var(--color-rose-400); }
+.dark .text-rose-700 { color: var(--color-rose-300); }
+.dark .text-rose-800 { color: var(--color-rose-200); }
+.dark .text-rose-900 { color: var(--color-rose-100); }
+.dark .text-rose-950 { color: var(--color-rose-50); }
+.dark .text-sky-800 { color: var(--color-sky-200); }
+.dark .text-sky-900 { color: var(--color-sky-100); }
+
+/* Warna yang tidak lewat skala Tailwind (permukaan kartu, latar halaman, grafik). */
+:root {
+  --surface: #ffffff;
+  --grafik-grid: #e1e0d9;
+  --grafik-bar: #2a78d6;
+  --grafik-bar-redup: #c3c2b7;
+}
+.dark {
+  --surface: #111a2e;
+  --grafik-grid: #2b3552;
+  --grafik-bar: #5b9bf0;
+  --grafik-bar-redup: #4a5570;
+}
+.dark body {
+  background: #0b1220 linear-gradient(180deg, #0f1c3a 0, #0b1220 420px) no-repeat;
+  color: #e2e8f0;
+}
+.dark .bg-white { background-color: var(--surface); }
+.dark .bg-white\/95 { background-color: color-mix(in oklab, var(--surface) 95%, transparent); }
+.dark .focus\:bg-white:focus { background-color: var(--surface); }
+.dark .to-white { --tw-gradient-to: var(--surface); }
+.dark .bg-\[\#f4f6fa\] { background-color: #0b1220; }
+.dark ::placeholder { opacity: 0.7; }
+.dark input[type="date"], .dark input[type="datetime-local"] { color-scheme: dark; }
+
+/* Grafik recharts (dashboard admin & statistik pendaftar): sumbu, garis bantu, tooltip. */
+.dark .recharts-cartesian-grid line { stroke: #2b3552 !important; }
+.dark .recharts-cartesian-axis-line, .dark .recharts-cartesian-axis-tick-line { stroke: #3a4666 !important; }
+.dark .recharts-text, .dark .recharts-legend-item-text { fill: #a9b4cc !important; color: #a9b4cc !important; }
+.dark .recharts-default-tooltip { background-color: var(--surface) !important; border-color: #2b3552 !important; }
+.dark .recharts-tooltip-label, .dark .recharts-tooltip-item { color: #e2e8f0 !important; }
+.dark .recharts-tooltip-cursor { fill: rgb(148 163 184 / 0.12) !important; }
+.dark .bg-slate-700 { background-color: #475569; }
+.dark .ring-slate-700 { --tw-ring-color: #475569; }
+.dark .ring-white { --tw-ring-color: var(--surface); }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CircleHelp, FileText, CalendarCheck, ChartColumn, GraduationCap, House, ListChecks, LogOut, UserRound, type LucideIcon } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
+import { TombolTema } from "@/components/tombol-tema";
 
 type Item = { href: string; label: string; match: string; icon: LucideIcon; kecuali?: string[] };
 
@@ -102,6 +103,7 @@ export function PendaftarShell({
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-3">
+            <TombolTema />
             <div className="hidden text-right leading-tight sm:block">
               <p className="text-sm font-semibold text-slate-900">{nama}</p>
               <p className="max-w-56 truncate text-xs text-slate-500">{email}</p>

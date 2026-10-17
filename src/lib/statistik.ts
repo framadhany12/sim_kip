@@ -13,7 +13,11 @@ const WIB_MS = 7 * 3600e3;
 /** "YYYY-MM-DD" menurut WIB untuk sebuah waktu. */
 const tglWib = (d: Date) => new Date(d.getTime() + WIB_MS).toISOString().slice(0, 10);
 
-const go = <T,>(q: PromiseLike<T>) => Promise.resolve(q);
+const go = <T,>(q: PromiseLike<T>) => {
+  const p = Promise.resolve(q);
+  p.catch(() => {}); // kegagalan tetap dilempar saat di-await; ini hanya mencegah unhandled rejection pada query yang belum sempat di-await
+  return p;
+};
 type Baris = Record<string, unknown>;
 async function rows<T extends Baris>(q: SQL): Promise<T[]> {
   const db = await getDb();
@@ -123,7 +127,7 @@ async function hitungStatistik({ tahun, hari = 30 }: { tahun?: number; hari?: nu
     .where(fG)
     .orderBy(desc(riwayatStatus.createdAt))
     .limit(8));
-  const pilihanTahunP = daftarPilihanTahun();
+  const pilihanTahunP = go(daftarPilihanTahun());
 
   // --- Angka utama -----------------------------------------------------------
   const perStatus = await q0;

@@ -132,20 +132,15 @@ export async function daftarPengumumanMahasiswa() {
     .select({ total: sql<number>`count(*)` })
     .from(pendaftaran)
     .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")));
-  const hasil = [];
-  for (const r of rows) {
-    let belum: number | null = null;
-    if (r.semester) {
-      const [{ n }] = await db
-        .select({ n: sql<number>`count(*)` })
-        .from(laporanAkademik)
-        .innerJoin(pendaftaran, eq(pendaftaran.id, laporanAkademik.pendaftaranId))
-        .where(and(eq(laporanAkademik.semester, r.semester), eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")));
-      belum = Math.max(0, Number(total) - Number(n));
-    }
-    hasil.push({ ...r, belum });
-  }
-  return hasil;
+  // Satu query untuk semua semester, bukan satu per pengumuman.
+  const sudah = await db
+    .select({ semester: laporanAkademik.semester, n: sql<number>`count(*)` })
+    .from(laporanAkademik)
+    .innerJoin(pendaftaran, eq(pendaftaran.id, laporanAkademik.pendaftaranId))
+    .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")))
+    .groupBy(laporanAkademik.semester);
+  const perSemester = new Map(sudah.map((r) => [r.semester, Number(r.n)]));
+  return rows.map((r) => ({ ...r, belum: r.semester ? Math.max(0, Number(total) - (perSemester.get(r.semester) ?? 0)) : (null as number | null) }));
 }
 
 /** Pengumuman aktif yang masih relevan bagi satu mahasiswa: semester terkait belum dilaporkannya. */
@@ -161,4 +156,85 @@ export async function pengumumanUntukMahasiswa(pendaftaranId: string) {
     .where(and(eq(pengumumanMahasiswa.aktif, true), or(isNull(pengumumanMahasiswa.semester), notExists(sudah))))
     .orderBy(desc(pengumumanMahasiswa.createdAt))
     .limit(5);
+}
+
+/** "1,2,3" → "Semester 1–3"; bila tidak berurutan → "Semester 1, 3, 4". */
+export function ringkasSemester(daftar: string | null) {
+  const s = (daftar ?? "")
+    .split(",")
+    .map(Number)
+    .filter((n) => n > 0)
+    .sort((a, b) => a - b);
+  if (s.length === 0) return "—";
+  if (s.length === 1) return `Semester ${s[0]}`;
+  const berurutan = s.every((n, i) => i === 0 || n === s[i - 1] + 1);
+  return berurutan ? `Semester ${s[0]}–${s[s.length - 1]}` : `Semester ${s.join(", ")}`;
+}
+
+/**
+ * Mahasiswa yang sudah pernah melapor, satu baris per mahasiswa (tanpa IPK; IPK ada di halaman detail).
+ * Filter semester = hanya yang sudah melaporkan semester itu.
+ */
+export async function daftarMahasiswaMelapor(f: FilterPelaporan) {
+  const db = await getDb();
+  const c = syaratMahasiswa(f);
+  const semester = semesterValid(f.semester);
+  if (semester) c.push(sql`exists (select 1 from laporan_akademik x where x.pendaftaran_id = ${pendaftaran.id} and x.semester = ${semester})`);
+  const where = and(...c);
+  const halaman = Math.max(1, Number(f.page) || 1);
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select({
+        id: pendaftaran.id,
+        nama: namaMhs,
+        nim: pendaftaran.nim,
+        kelas: pendaftaran.kelas,
+        jurusan: jurusan.nama,
+        angkatan: angkatanMhs,
+        semesterDilaporkan: sql<string>`group_concat(distinct ${laporanAkademik.semester} order by ${laporanAkademik.semester})`,
+        terakhir: sql<Date>`max(${laporanAkademik.updatedAt})`,
+      })
+      .from(pendaftaran)
+      .innerJoin(laporanAkademik, eq(laporanAkademik.pendaftaranId, pendaftaran.id))
+      .innerJoin(users, eq(users.id, pendaftaran.userId))
+      .leftJoin(dataDiri, eq(dataDiri.pendaftaranId, pendaftaran.id))
+      .leftJoin(jurusan, eq(jurusan.id, pendaftaran.jurusanDiterimaId))
+      .where(where)
+      .groupBy(pendaftaran.id, namaMhs, pendaftaran.nim, pendaftaran.kelas, jurusan.nama, angkatanMhs)
+      .orderBy(asc(namaMhs))
+      .limit(PER_HALAMAN_LAPORAN)
+      .offset((halaman - 1) * PER_HALAMAN_LAPORAN),
+    db
+      .select({ total: sql<number>`count(distinct ${pendaftaran.id})` })
+      .from(pendaftaran)
+      .innerJoin(laporanAkademik, eq(laporanAkademik.pendaftaranId, pendaftaran.id))
+      .innerJoin(users, eq(users.id, pendaftaran.userId))
+      .leftJoin(dataDiri, eq(dataDiri.pendaftaranId, pendaftaran.id))
+      .where(where),
+  ]);
+  return { rows, total: Number(total), halaman };
+}
+
+/** Identitas satu mahasiswa beserta seluruh laporan IPK-nya, urut semester. null bila bukan mahasiswa. */
+export async function detailPelaporanMahasiswa(pendaftaranId: string) {
+  const db = await getDb();
+  const [m] = await db
+    .select({
+      id: pendaftaran.id,
+      nama: namaMhs,
+      email: users.email,
+      nim: pendaftaran.nim,
+      kelas: pendaftaran.kelas,
+      jurusan: jurusan.nama,
+      angkatan: angkatanMhs,
+      kontak: dataDiri.kontak,
+    })
+    .from(pendaftaran)
+    .innerJoin(users, eq(users.id, pendaftaran.userId))
+    .leftJoin(dataDiri, eq(dataDiri.pendaftaranId, pendaftaran.id))
+    .leftJoin(jurusan, eq(jurusan.id, pendaftaran.jurusanDiterimaId))
+    .where(and(eq(pendaftaran.id, pendaftaranId), eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")));
+  if (!m) return null;
+  const laporan = await db.select().from(laporanAkademik).where(eq(laporanAkademik.pendaftaranId, pendaftaranId)).orderBy(asc(laporanAkademik.semester));
+  return { ...m, laporan };
 }

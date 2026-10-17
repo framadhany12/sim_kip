@@ -18,7 +18,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         </span>
       </Link>
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-blue-950/10 sm:p-8">{children}</div>
-      <Link href="/" className="text-center text-sm font-medium text-slate-600 hover:text-[#0d2a63]">
+      <Link href="/" className="text-center text-sm font-medium text-slate-600 hover:text-[#0d2a63] dark:hover:text-blue-300">
         ← Kembali ke beranda
       </Link>
     </main>

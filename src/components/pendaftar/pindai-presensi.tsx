@@ -34,6 +34,7 @@ const WARNA = { ok: "border-emerald-200 bg-emerald-50 text-emerald-900", info: "
 export function PindaiPresensi() {
   const video = useRef<HTMLVideoElement>(null);
   const aktif = useRef(false);
+  const membuka = useRef(false); // cegah dua permintaan kamera bersamaan (klik ganda)
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [galat, setGalat] = useState("");
   const [menyala, setMenyala] = useState(false);
@@ -47,17 +48,27 @@ export function PindaiPresensi() {
   }, []);
 
   const nyalakan = useCallback(async () => {
+    if (membuka.current || aktif.current) return;
+    membuka.current = true;
     setGalat("");
     setHasil(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       setGalat("Kamera tidak tersedia. Buka situs ini lewat HTTPS, atau pindai barcode memakai aplikasi kamera bawaan HP lalu buka tautannya.");
+      membuka.current = false;
       return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
       const v = video.current!;
       v.srcObject = stream;
-      await v.play();
+      try {
+        await v.play();
+      } catch (e) {
+        stream.getTracks().forEach((t) => t.stop()); // jangan biarkan lampu kamera menyala bila pemutaran gagal
+        v.srcObject = null;
+        throw e;
+      }
+      membuka.current = false;
       aktif.current = true;
       setMenyala(true);
 
@@ -98,6 +109,7 @@ export function PindaiPresensi() {
       };
       void baca();
     } catch {
+      membuka.current = false;
       setGalat("Kamera tidak dapat dibuka. Izinkan akses kamera di browser, lalu coba lagi.");
     }
   }, [matikan]);
@@ -106,9 +118,9 @@ export function PindaiPresensi() {
 
   return (
     <div className="space-y-4">
-      <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-2xl bg-slate-900">
+      <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-2xl bg-black">
         <video ref={video} playsInline muted className="size-full object-cover" />
-        {!menyala && <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-slate-300">Kamera mati</div>}
+        {!menyala && <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-white/70">Kamera mati</div>}
         {menyala && <div aria-hidden className="pointer-events-none absolute inset-8 rounded-xl border-2 border-white/70" />}
       </div>
       <div className="flex justify-center">
