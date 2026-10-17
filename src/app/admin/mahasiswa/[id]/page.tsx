@@ -55,7 +55,7 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
   return (
     <div className="space-y-5">
       <Link href="/admin/mahasiswa" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900">
-        <ArrowLeft className="size-4" aria-hidden /> Master Mahasiswa
+        <ArrowLeft className="size-4" aria-hidden /> Master Calon Mahasiswa
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">

@@ -2,11 +2,11 @@ import { AGAMA, DESIL } from "@/db/schema";
 import { Field, Select, TextArea } from "@/components/form";
 import { Alert } from "@/components/ui";
 import { WilayahSelect } from "@/components/wilayah-select";
-import { DESIL_LABEL, MAX_UMUR, STATUS_NIKAH_LABEL, TAHUN_LULUS } from "@/lib/constants";
+import { DESIL_LABEL, MAX_UMUR, STATUS_NIKAH_LABEL, tahunLulusBoleh } from "@/lib/constants";
 import type { PendaftaranLengkap } from "@/lib/pendaftaran";
 
 /**
- * Kelompok isian formulir yang dipakai bersama oleh halaman pendaftar dan halaman edit admin (Master Mahasiswa).
+ * Kelompok isian formulir yang dipakai bersama oleh halaman pendaftar dan halaman edit admin (Master Calon Mahasiswa).
  * Harus dirender di dalam <ActionForm>. `admin` mengganti beberapa petunjuk yang berbunyi "Anda".
  */
 type Konteks = { admin?: boolean };
@@ -24,9 +24,19 @@ export function FieldsDataDiri({
   nikAkun,
   kabupaten,
   admin,
-}: { x: Maybe<PendaftaranLengkap["diri"]>; namaBawaan?: string; nikAkun?: string | null; kabupaten: { id: string; nama: string; provinsi: string }[] } & Konteks) {
+  tanpaKip,
+}: { x: Maybe<PendaftaranLengkap["diri"]>; namaBawaan?: string; nikAkun?: string | null; kabupaten: { id: string; nama: string; provinsi: string }[]; tanpaKip?: boolean } & Konteks) {
   return (
     <>
+      {tanpaKip ? (
+        // Akun mahasiswa tidak mengubah data KIP; nilainya dikirim ulang agar validasi bagian ini tetap lengkap.
+        <>
+          <input type="hidden" name="nomorPendaftaranKip" value={x?.nomorPendaftaranKip ?? ""} />
+          <input type="hidden" name="desil" value={x?.desil ?? ""} />
+          <input type="hidden" name="penerimaPip" value={x?.penerimaPip == null ? "" : x.penerimaPip ? "ya" : "tidak"} />
+        </>
+      ) : (
+        <>
       <Subjudul>Data KIP Kuliah</Subjudul>
       <div className="grid gap-5 sm:grid-cols-3">
         <Field
@@ -58,6 +68,8 @@ export function FieldsDataDiri({
           hint="Program Indonesia Pintar saat SD/SMP/SMA."
         />
       </div>
+        </>
+      )}
 
       <Subjudul>Identitas</Subjudul>
       <div className="grid gap-5 sm:grid-cols-2">
@@ -226,7 +238,7 @@ export function FieldsSekolah({
           label="Tahun lulus"
           required
           defaultValue={s?.tahunLulus}
-          options={TAHUN_LULUS.map((t) => ({ value: String(t), label: String(t) }))}
+          options={tahunLulusBoleh().map((t) => ({ value: String(t), label: String(t) }))}
           hint="Hanya lulusan 2024, 2025, atau 2026 yang dapat mendaftar."
         />
         <Field name="jurusanSekolah" label="Jurusan di sekolah" required defaultValue={s?.jurusanSekolah} hint="Jurusan/peminatan saat SMA/SMK/MA." contoh="IPA / Teknik Kendaraan Ringan" />

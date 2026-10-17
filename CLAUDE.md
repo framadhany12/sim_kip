@@ -11,7 +11,7 @@ Aplikasi pendaftaran KIP Kuliah. Next.js 15 (App Router) + React 19, Drizzle ORM
 - `npm run dev` / `build` / `start`, `npm run lint`, `npx tsc --noEmit`
 - `npm run db:generate` (buat migrasi drizzle), `npm run db:migrate`, `npm run db:backup`
 - `npm run admin:buat -- email sandi "Nama"` membuat akun admin
-- Setelah deploy: `npm install` lalu `npm run db:migrate` (migrasi 0000–0012)
+- Setelah deploy: `npm install` lalu `npm run db:migrate` (migrasi 0000–0017)
 
 ## Struktur
 - `src/db/schema.ts` skema Drizzle (users, pendaftaran, data_diri, data_sekolah, pilihan_jurusan, jurusan, jenis_beasiswa, riwayat, dst). Migrasi di `drizzle/`.
@@ -45,3 +45,11 @@ Build produksi `NEXT_DIST_DIR=.next-uji npx next build`, `next start -p 3120`, s
 
 ## Belum diuji
 Email sungguhan (Gmail), uji beban, browser selain Chrome, tampilan visual manual perubahan terbaru.
+
+## Akun mahasiswa (setelah diterima)
+- Pendaftar dengan `status='diterima'` dan `hasil='diterima'` (`sudahMahasiswa` di `lib/pendaftaran.ts`) dianggap mahasiswa: menu Formulir diganti menu **Mahasiswa** (`/mahasiswa`), `/formulir/*` diarahkan ke sana. Role tetap `pendaftar`.
+- Mahasiswa boleh mengubah Identitas & Alamat (`/mahasiswa/ubah`, tanpa data KIP/NIK/jurusan) dan mengisi NIM + kelas, terkunci setelah keduanya terisi (`pendaftaran.nim` unik, `pendaftaran.kelas`). Jurusan hanya admin. Aksi di `actions/akun-mahasiswa.ts`.
+- Admin > Master Mahasiswa (`/admin/master-mahasiswa`) = daftar yang diterima. Master Calon Mahasiswa (`/admin/mahasiswa`) = semua akun pendaftar.
+- Sidebar admin grup **SIM KIP**: Master Mahasiswa + Pelaporan IPK & Transkrip (`/admin/pelaporan`). Mahasiswa melapor di `/mahasiswa/ipk` (IPK per semester + transkrip PDF/JPG/PNG, tabel `laporan_akademik`, unik per semester; kirim ulang = ganti). Berkas lewat `/api/laporan-akademik[/id]`.
+- `/admin/pelaporan` punya tab: Laporan masuk, Belum melapor (per semester), Umumkan. Filter angkatan = tahun akun dibuat (WIB). Export Excel: `/api/admin/export-ipk?tab=laporan|belum&...filter`. Pengumuman ke mahasiswa (`pengumuman_mahasiswa`) hanya banner di akun (tanpa email); yang terkait semester hilang otomatis setelah mahasiswa melapor semester itu.
+- Kegiatan kemahasiswaan: admin `/admin/kegiatan` (tambah, hapus, detail dengan barcode QR berganti tiap 30 dtk + rekap + export Excel); mahasiswa `/mahasiswa/kegiatan` (daftar, status hadir) dan `/mahasiswa/kegiatan/scan` (kamera). Kode QR = HMAC(`kegiatan.rahasia`, jendela 30 dtk), jendela sebelumnya masih diterima; presensi hanya saat kegiatan berlangsung (`/api/presensi`). Kamera butuh HTTPS atau localhost.

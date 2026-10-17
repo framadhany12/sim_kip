@@ -6,7 +6,7 @@ import { kirimPertanyaan } from "@/app/actions/bantuan";
 import { ActionForm, SubmitButton, TextArea } from "@/components/form";
 import { Alert, Card, PageHeader } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
-import { LINK_FORMAT_SURAT, MAX_UMUR, TAHUN_LULUS, tanggal } from "@/lib/constants";
+import { LINK_FORMAT_SURAT, MAX_UMUR, tahunLulusBoleh, tanggal } from "@/lib/constants";
 
 export const metadata = { title: "Bantuan" };
 
@@ -45,7 +45,7 @@ const TIPS: { bagian: string; kolom: [string, string, string][] }[] = [
     bagian: "Sekolah & Jurusan",
     kolom: [
       ["NPSN", "8 digit nomor sekolah; cek di referensi.data.kemdikbud.go.id.", "20224021"],
-      ["Tahun lulus", `Hanya ${TAHUN_LULUS.join(", ")}.`, "2026"],
+      ["Tahun lulus", `Hanya ${tahunLulusBoleh().join(", ")}.`, String(tahunLulusBoleh().at(-1))],
       ["Jurusan 1 & 2", "Pilih dua jurusan berbeda; Jurusan 1 adalah prioritas utama.", "D3 Teknik Mesin / D3 Teknik Otomotif"],
     ],
   },
@@ -73,7 +73,7 @@ export default async function BantuanPage() {
     <Pembungkus className={user?.role === "pendaftar" ? "space-y-8" : "mx-auto max-w-5xl space-y-8 px-4 py-8"}>
       <PageHeader
         title="Panduan & Bantuan"
-        desc={`Syarat: lulusan SMA/SMK/MA atau sederajat tahun ${TAHUN_LULUS.join(", ")} dan berusia maksimal ${MAX_UMUR} tahun.`}
+        desc={`Syarat: lulusan SMA/SMK/MA atau sederajat tahun ${tahunLulusBoleh().join(", ")} dan berusia maksimal ${MAX_UMUR} tahun.`}
       />
 
       <section aria-labelledby="kontak-resmi" className="space-y-3">

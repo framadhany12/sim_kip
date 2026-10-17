@@ -21,7 +21,7 @@ import {
   type HasilSimpan,
 } from "@/lib/simpan-pendaftaran";
 
-/** Bagian formulir yang bisa diedit admin lewat Master Mahasiswa. */
+/** Bagian formulir yang bisa diedit admin lewat Master Calon Mahasiswa. */
 export type BagianEdit = "diri" | "keluarga" | "ekonomi" | "sekolah" | "rekomendasi";
 const LABEL_BAGIAN: Record<BagianEdit, string> = {
   diri: "Data Diri",

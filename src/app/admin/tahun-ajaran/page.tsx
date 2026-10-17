@@ -13,7 +13,7 @@ export default async function TahunAjaranPage() {
     <div className="space-y-6">
       <PageHeader
         title="Tahun Ajaran"
-        desc="Tahun yang tersedia pada filter “Tahun daftar” di Dashboard, Data Pendaftar, Pengumuman, dan Master Mahasiswa. Tahun berjalan selalu tersedia dan dipilih otomatis; tahun yang sudah punya pendaftar tidak dapat dihapus."
+        desc="Tahun yang tersedia pada filter “Tahun daftar” di Dashboard, Data Pendaftar, Pengumuman, dan Master Calon Mahasiswa. Tahun berjalan selalu tersedia dan dipilih otomatis; tahun yang sudah punya pendaftar tidak dapat dihapus."
       />
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-[420px] text-left text-sm">

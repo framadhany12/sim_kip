@@ -7,7 +7,7 @@ import { labelProses, tanggal } from "@/lib/constants";
 import { daftarMahasiswa, PER_HALAMAN_MHS, type FilterMahasiswa } from "@/lib/mahasiswa";
 import { inputCls } from "@/lib/styles";
 
-export const metadata = { title: "Master Mahasiswa" };
+export const metadata = { title: "Master Calon Mahasiswa" };
 
 export default async function MasterMahasiswa({ searchParams }: { searchParams: Promise<FilterMahasiswa> }) {
   const f = await searchParams;
@@ -19,7 +19,7 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Master Mahasiswa"
+        title="Master Calon Mahasiswa"
         desc="Seluruh akun pendaftar, termasuk yang belum mengisi formulir. Buka satu akun untuk melihat data lengkap, mengedit data, dan mengatur ulang kata sandi."
       />
       <Card>

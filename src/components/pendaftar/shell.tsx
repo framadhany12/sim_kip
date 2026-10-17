@@ -2,14 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CircleHelp, FileText, House, ListChecks, LogOut, UserRound, type LucideIcon } from "lucide-react";
+import { CircleHelp, FileText, CalendarCheck, ChartColumn, GraduationCap, House, ListChecks, LogOut, UserRound, type LucideIcon } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
 
-type Item = { href: string; label: string; match: string; icon: LucideIcon };
+type Item = { href: string; label: string; match: string; icon: LucideIcon; kecuali?: string[] };
 
-const MENU: Item[] = [
+const MENU_FORMULIR: Item = { href: "/formulir/data-diri", label: "Formulir", match: "/formulir", icon: FileText };
+const MENU_MAHASISWA: Item[] = [
+  { href: "/mahasiswa", label: "Mahasiswa", match: "/mahasiswa", icon: GraduationCap, kecuali: ["/mahasiswa/ipk", "/mahasiswa/kegiatan"] },
+  { href: "/mahasiswa/ipk", label: "Laporan IPK", match: "/mahasiswa/ipk", icon: ChartColumn },
+  { href: "/mahasiswa/kegiatan", label: "Kegiatan", match: "/mahasiswa/kegiatan", icon: CalendarCheck },
+];
+
+const MENU = (mahasiswa: boolean): Item[] => [
   { href: "/dashboard", label: "Beranda", match: "/dashboard", icon: House },
-  { href: "/formulir/data-diri", label: "Formulir", match: "/formulir", icon: FileText },
+  ...(mahasiswa ? MENU_MAHASISWA : [MENU_FORMULIR]),
   { href: "/status", label: "Status Seleksi", match: "/status", icon: ListChecks },
   { href: "/bantuan", label: "Bantuan", match: "/bantuan", icon: CircleHelp },
   { href: "/akun", label: "Akun Saya", match: "/akun", icon: UserRound },
@@ -25,15 +32,18 @@ export function PendaftarShell({
   email,
   logo,
   aksiKeluar,
+  mahasiswa = false,
 }: {
   children: React.ReactNode;
   nama: string;
   email: string;
   logo: React.ReactNode;
   aksiKeluar: () => Promise<void>;
+  /** Pendaftar yang sudah diterima: menu Formulir diganti menu Mahasiswa. */
+  mahasiswa?: boolean;
 }) {
   const path = usePathname();
-  const aktif = (i: Item) => path === i.match || path.startsWith(i.match + "/");
+  const aktif = (i: Item) => (path === i.match || path.startsWith(i.match + "/")) && !i.kecuali?.some((k) => path === k || path.startsWith(k + "/"));
   const inisial = nama
     .split(/\s+/)
     .slice(0, 2)
@@ -54,7 +64,7 @@ export function PendaftarShell({
           <div className="flex-1 overflow-y-auto px-3 py-5">
             <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-200/60">Menu</p>
             <ul className="space-y-0.5">
-              {MENU.map((i) => {
+              {MENU(mahasiswa).map((i) => {
                 const on = aktif(i);
                 return (
                   <li key={i.href}>
@@ -109,7 +119,7 @@ export function PendaftarShell({
         {/* pb-28: ruang untuk menu bawah (HP/tablet) beserta area aman perangkat. */}
         <div className="mx-auto max-w-6xl px-4 pb-28 pt-5 sm:px-6 sm:pt-7 lg:px-8 lg:pb-10">{children}</div>
       </div>
-      <BottomNav />
+      <BottomNav mahasiswa={mahasiswa} />
     </div>
   );
 }

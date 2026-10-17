@@ -19,7 +19,7 @@ import {
   type Status,
   type Tahap,
 } from "@/db/schema";
-import { BERKAS_INFO, BERKAS_UTAMA, LANGKAH, MAX_UMUR, TAHUN_LULUS, hitungUmur, type SlugLangkah } from "./constants";
+import { BERKAS_INFO, BERKAS_UTAMA, LANGKAH, MAX_UMUR, tahunLulusBoleh, hitungUmur, type SlugLangkah } from "./constants";
 
 /** Kolom `gelombang` dipertahankan di database (tidak lagi dipakai/ditampilkan); pendaftaran baru diisi nilai tetap ini. */
 export const GELOMBANG_AKTIF = "-";
@@ -32,7 +32,7 @@ export const belumDikirim = (status: Status) => status === "draft" || status ===
 
 /**
  * Terkunci: sejak tahap Pengusulan (dan Pengumuman) pendaftar tidak dapat mengubah data apa pun, termasuk berkas.
- * Perubahan setelah itu hanya bisa dilakukan admin (Master Mahasiswa).
+ * Perubahan setelah itu hanya bisa dilakukan admin (Master Calon Mahasiswa).
  */
 export const terkunci = (p: { tahap: Tahap | null }) => p.tahap === "pengusulan" || p.tahap === "pengumuman";
 
@@ -84,7 +84,7 @@ export async function muatLengkap(pendaftaranId: string) {
     .innerJoin(users, eq(users.id, pendaftaran.userId))
     .where(eq(pendaftaran.id, pendaftaranId));
   if (!p) return null;
-  const [[diri], [keluarga], [ekonomi], [sekolah], [pilihan], [rekom], daftarBerkas, riwayat] = await Promise.all([
+  const [[diri], [keluarga], [ekonomi], [sekolah], [pilihan], [rekom], daftarBerkas, riwayat, semuaJurusan] = await Promise.all([
     db
       .select({ d: dataDiri, kab: wilayahKabupaten.nama, prov: wilayahKabupaten.provinsi, kec: wilayahKecamatan.nama })
       .from(dataDiri)
@@ -107,8 +107,8 @@ export async function muatLengkap(pendaftaranId: string) {
       .leftJoin(users, eq(users.id, riwayatStatus.diubahOleh))
       .where(eq(riwayatStatus.pendaftaranId, pendaftaranId))
       .orderBy(desc(riwayatStatus.createdAt)),
+    db.select().from(jurusan).orderBy(asc(jurusan.nama)),
   ]);
-  const semuaJurusan = await db.select().from(jurusan).orderBy(asc(jurusan.nama));
   const namaJurusan = (id?: string) => semuaJurusan.find((j) => j.id === id)?.nama ?? "-";
   return {
     ...p.p,
@@ -150,8 +150,11 @@ export function cekKelengkapan(d: PendaftaranLengkap) {
     const umur = hitungUmur(d.diri.tanggalLahir);
     if (umur > MAX_UMUR) masalah.push(`Umur Anda ${umur} tahun — syarat KIP Kuliah maksimal ${MAX_UMUR} tahun.`);
   }
-  if (d.sekolah && !(TAHUN_LULUS as readonly number[]).includes(d.sekolah.tahunLulus))
-    masalah.push(`Tahun lulus harus ${TAHUN_LULUS.join(", ")}.`);
+  if (d.sekolah && !tahunLulusBoleh().includes(d.sekolah.tahunLulus))
+    masalah.push(`Tahun lulus harus ${tahunLulusBoleh().join(", ")}.`);
   const terisi = (Object.keys(langkah) as SlugLangkah[]).filter((k) => k !== "ringkasan" && langkah[k]).length;
   return { langkah, masalah, siapKirim: masalah.length === 0, persen: Math.round((terisi / (LANGKAH.length - 1)) * 100) };
 }
+
+/** Pendaftar yang sudah diterima: akunnya berfungsi sebagai akun mahasiswa (menu Formulir diganti menu Mahasiswa). */
+export const sudahMahasiswa = (p: { status: Status; hasil: "diterima" | "ditolak" | null }) => p.status === "diterima" && p.hasil === "diterima";

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ProsesSeleksi } from "@/components/proses-seleksi";
-import { Riwayat } from "@/components/riwayat";
 import { Hero } from "@/components/hero";
 import { FormUsulan } from "@/components/pendaftar/form-usulan";
 import { Alert, Card, Dl, StatusBadge } from "@/components/ui";
 import { TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { konteksPendaftar } from "@/lib/konteks";
+import { sudahMahasiswa } from "@/lib/pendaftaran";
 
 export const metadata = { title: "Status Pendaftaran" };
 
@@ -79,52 +79,59 @@ export default async function StatusPage({ searchParams }: { searchParams: Promi
         </section>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-        <div className="space-y-4">
-          <Card title="Catatan dari admin">
-            {d.catatanAdmin ? (
-              <>
-                {d.tahap && sudahDikirim && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{TAHAP_LABEL[d.tahap]}</p>}
-                <p className="whitespace-pre-line text-[15px] text-slate-800">{d.catatanAdmin}</p>
-              </>
-            ) : (
-              <p className="text-sm text-slate-500">Belum ada catatan.</p>
-            )}
-          </Card>
-          <Card title="Data pendaftaran">
-            <Dl
-              items={[
-                ["Dikirim", tanggal(d.submittedAt)],
-                ["Pembaruan terakhir", tanggal(d.updatedAt)],
-              ]}
-            />
-            {!sudahDikirim ? (
-              <p className="mt-4 text-sm text-slate-600">
-                Pendaftaran belum dikirim.{" "}
-                <Link href="/formulir/ringkasan" className="font-semibold text-blue-700 hover:underline">
-                  Lengkapi & kirim →
-                </Link>
-              </p>
-            ) : terkunci ? (
-              <p className="mt-4 text-sm text-slate-600">
-                🔒 Data terkunci sejak tahap Pengusulan. Hubungi admin lewat{" "}
-                <Link href="/bantuan" className="font-semibold text-blue-700 hover:underline">
-                  halaman Bantuan
-                </Link>{" "}
-                bila ada data yang salah.
-              </p>
-            ) : (
-              <p className="mt-4 text-sm text-slate-600">
-                Perlu memperbarui data atau berkas?{" "}
-                <Link href="/formulir/ringkasan" className="font-semibold text-blue-700 hover:underline">
-                  Perbarui di sini →
-                </Link>
-              </p>
-            )}
-          </Card>
-        </div>
-        <Card title="Riwayat pendaftaran">
-          <Riwayat items={d.riwayat} />
+      <div className="grid items-start gap-4 md:grid-cols-2">
+        <Card title="Catatan dari admin">
+          {d.catatanAdmin ? (
+            <>
+              {d.tahap && sudahDikirim && <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{TAHAP_LABEL[d.tahap]}</p>}
+              <p className="whitespace-pre-line text-[15px] text-slate-800">{d.catatanAdmin}</p>
+            </>
+          ) : (
+            <p className="text-sm text-slate-500">Belum ada catatan.</p>
+          )}
+        </Card>
+        <Card title="Data pendaftaran">
+          <Dl
+            items={[
+              ["Dikirim", tanggal(d.submittedAt)],
+              ["Pembaruan terakhir", tanggal(d.updatedAt)],
+            ]}
+          />
+          {!sudahDikirim ? (
+            <p className="mt-4 text-sm text-slate-600">
+              Pendaftaran belum dikirim.{" "}
+              <Link href="/formulir/ringkasan" className="font-semibold text-blue-700 hover:underline">
+                Lengkapi & kirim →
+              </Link>
+            </p>
+          ) : terkunci ? (
+            <p className="mt-4 text-sm text-slate-600">
+              {sudahMahasiswa(d) ? (
+                <>
+                  Selamat bergabung! Lengkapi dan perbarui data Anda di menu{" "}
+                  <Link href="/mahasiswa" className="font-semibold text-blue-700 hover:underline">
+                    Mahasiswa
+                  </Link>
+                  .
+                </>
+              ) : (
+                <>
+                  🔒 Data terkunci sejak tahap Pengusulan. Hubungi admin lewat{" "}
+                  <Link href="/bantuan" className="font-semibold text-blue-700 hover:underline">
+                    halaman Bantuan
+                  </Link>{" "}
+                  bila ada data yang salah.
+                </>
+              )}
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-slate-600">
+              Perlu memperbarui data atau berkas?{" "}
+              <Link href="/formulir/ringkasan" className="font-semibold text-blue-700 hover:underline">
+                Perbarui di sini →
+              </Link>
+            </p>
+          )}
         </Card>
       </div>
     </div>

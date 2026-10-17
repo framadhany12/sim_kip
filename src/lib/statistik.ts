@@ -7,12 +7,13 @@ import { rentangTahun, tahunBerjalan } from "./tahun";
 import { daftarPilihanTahun } from "./tahun-ajaran";
 
 /** Ringkasan untuk dashboard admin. Semua nilai JSON-safe (tanggal sebagai string ISO). */
-export type Statistik = Awaited<ReturnType<typeof ambilStatistik>>;
+export type Statistik = Awaited<ReturnType<typeof hitungStatistik>>;
 
 const WIB_MS = 7 * 3600e3;
 /** "YYYY-MM-DD" menurut WIB untuk sebuah waktu. */
 const tglWib = (d: Date) => new Date(d.getTime() + WIB_MS).toISOString().slice(0, 10);
 
+const go = <T,>(q: PromiseLike<T>) => Promise.resolve(q);
 type Baris = Record<string, unknown>;
 async function rows<T extends Baris>(q: SQL): Promise<T[]> {
   const db = await getDb();
@@ -24,7 +25,25 @@ async function rows<T extends Baris>(q: SQL): Promise<T[]> {
  * `tahun` menyaring pendaftar yang mendaftar (akun dibuat) pada tahun itu, menurut WIB; kosong = semua tahun.
  * Grafik tren menampilkan `hari` hari terakhir, berakhir hari ini (atau 31 Desember bila tahun sudah lewat).
  */
-export async function ambilStatistik({ tahun, hari = 30 }: { tahun?: number; hari?: number }) {
+export function ambilStatistik(opsi: { tahun?: number; hari?: number }) {
+  return cacheSingkat(`${opsi.tahun ?? "semua"}:${opsi.hari ?? 30}`, () => hitungStatistik(opsi));
+}
+
+// Dashboard di-poll banyak admin/tab; hasil dipakai bersama selama beberapa detik (termasuk permintaan yang sedang berjalan).
+const TTL_MS = 8_000;
+const memo = new Map<string, { sampai: number; nilai: Promise<Statistik> }>();
+function cacheSingkat(kunci: string, hitung: () => Promise<Statistik>) {
+  const sekarang = Date.now();
+  const ada = memo.get(kunci);
+  if (ada && ada.sampai > sekarang) return ada.nilai;
+  const nilai = hitung();
+  memo.set(kunci, { sampai: sekarang + TTL_MS, nilai });
+  nilai.catch(() => memo.delete(kunci));
+  for (const [k, v] of memo) if (v.sampai <= sekarang) memo.delete(k);
+  return nilai;
+}
+
+async function hitungStatistik({ tahun, hari = 30 }: { tahun?: number; hari?: number }) {
   const db = await getDb();
   const sekarang = new Date();
   const hariIni = tglWib(sekarang);
@@ -39,93 +58,54 @@ export async function ambilStatistik({ tahun, hari = 30 }: { tahun?: number; har
   const akunFilter = rentang ? sql` and created_at >= ${rentang.dari} and created_at < ${rentang.sampai}` : sql``;
   const dikirim = sql`p.status not in ('draft','perbaikan')`;
 
-  // --- Angka utama -----------------------------------------------------------
-  const perStatus = await db.select({ status: pendaftaran.status, n: sql<number>`count(*)` }).from(pendaftaran).where(fG).groupBy(pendaftaran.status);
-  const n = (s: Status[]) => perStatus.filter((r) => s.includes(r.status)).reduce((a, r) => a + Number(r.n), 0);
-  const [{ gugurAdm }] = await db
+  // Semua query dimulai serentak (pool 10 koneksi), bukan berurutan.
+  const q0 = go(db.select({ status: pendaftaran.status, n: sql<number>`count(*)` }).from(pendaftaran).where(fG).groupBy(pendaftaran.status));
+  const q1 = go(db
     .select({ gugurAdm: sql<number>`count(*)` })
     .from(pendaftaran)
-    .where(and(fG, eq(pendaftaran.status, "ditolak"), eq(pendaftaran.tahap, "administrasi")));
-  const [akun] = await rows<{ total: number; terverifikasi: number; hariIni: number }>(sql`
+    .where(and(fG, eq(pendaftaran.status, "ditolak"), eq(pendaftaran.tahap, "administrasi"))));
+  const q2 = go(rows<{ total: number; terverifikasi: number; hariIni: number }>(sql`
     select count(*) total,
            sum(email_verified_at is not null) terverifikasi,
            sum(date_format(date_add(created_at, interval 7 hour), '%Y-%m-%d') = ${hariIni}) hariIni
-    from users where role = 'pendaftar' ${akunFilter}`);
-  const [kirimHariIni] = await rows<{ n: number }>(sql`
+    from users where role = 'pendaftar' ${akunFilter}`));
+  const q3 = go(rows<{ n: number }>(sql`
     select count(*) n from pendaftaran p
-    where p.submitted_at is not null and date_format(date_add(p.submitted_at, interval 7 hour), '%Y-%m-%d') = ${hariIni} ${gSql}`);
-  const [{ belumDijawab }] = await db.select({ belumDijawab: sql<number>`count(*)` }).from(pertanyaan).where(sql`${pertanyaan.jawaban} is null`);
-
-  const kpi = {
-    akun: Number(akun?.total ?? 0),
-    akunTerverifikasi: Number(akun?.terverifikasi ?? 0),
-    akunHariIni: Number(akun?.hariIni ?? 0),
-    masuk: n(["terkirim", "diperiksa", "diterima", "ditolak"]),
-    kirimHariIni: Number(kirimHariIni?.n ?? 0),
-    proses: n(["terkirim", "diperiksa"]),
-    diterima: n(["diterima"]),
-    tidakDiterima: n(["ditolak"]) - Number(gugurAdm),
-    gugurAdministrasi: Number(gugurAdm),
-    belumKirim: n(["draft", "perbaikan"]),
-    pertanyaanBaru: Number(belumDijawab),
-  };
-
-  // --- Tren harian (WIB) -------------------------------------------------------
-  const akunHarian = await rows<{ tgl: string; n: number }>(sql`
+    where p.submitted_at is not null and date_format(date_add(p.submitted_at, interval 7 hour), '%Y-%m-%d') = ${hariIni} ${gSql}`));
+  const q4 = go(db.select({ belumDijawab: sql<number>`count(*)` }).from(pertanyaan).where(sql`${pertanyaan.jawaban} is null`));
+  const q5 = go(rows<{ tgl: string; n: number }>(sql`
     select date_format(date_add(created_at, interval 7 hour), '%Y-%m-%d') tgl, count(*) n
-    from users where role = 'pendaftar' and created_at >= ${awalRentang} ${akunFilter} group by tgl`);
-  const kirimHarian = await rows<{ tgl: string; n: number }>(sql`
+    from users where role = 'pendaftar' and created_at >= ${awalRentang} ${akunFilter} group by tgl`));
+  const q6 = go(rows<{ tgl: string; n: number }>(sql`
     select date_format(date_add(p.submitted_at, interval 7 hour), '%Y-%m-%d') tgl, count(*) n
-    from pendaftaran p where p.submitted_at >= ${awalRentang} ${gSql} group by tgl`);
-  const tren = Array.from({ length: hari }, (_, i) => {
-    const tgl = tglWib(new Date(awalRentang.getTime() + i * 864e5));
-    return {
-      tanggal: tgl,
-      akun: Number(akunHarian.find((r) => r.tgl === tgl)?.n ?? 0),
-      kirim: Number(kirimHarian.find((r) => r.tgl === tgl)?.n ?? 0),
-    };
-  });
-
-  // --- Tahap seleksi (yang masih berproses) + hasil ------------------------------------
-  const tahapRows = await db
+    from pendaftaran p where p.submitted_at >= ${awalRentang} ${gSql} group by tgl`));
+  const q7 = go(db
     .select({ tahap: pendaftaran.tahap, n: sql<number>`count(*)` })
     .from(pendaftaran)
     .where(and(fG, inArray(pendaftaran.status, ["terkirim", "diperiksa"])))
-    .groupBy(pendaftaran.tahap);
-  const perTahap = TAHAP.filter((t) => t !== "pengumuman").map((t) => ({
-    tahap: t,
-    label: TAHAP_LABEL[t],
-    n: tahapRows.filter((r) => (r.tahap ?? "administrasi") === t).reduce((a, r) => a + Number(r.n), 0),
-  }));
-
-  // --- Jurusan: peminat pilihan 1 & 2, dan yang diterima ---------------------------------
-  const jurusanRows = await rows<{ nama: string; p1: number; p2: number; diterima: number }>(sql`
+    .groupBy(pendaftaran.tahap));
+  const q8 = go(rows<{ nama: string; p1: number; p2: number; diterima: number }>(sql`
     select j.nama,
       (select count(*) from pilihan_jurusan pj join pendaftaran p on p.id = pj.pendaftaran_id
         where pj.jurusan_1_id = j.id and ${dikirim} ${gSql}) p1,
       (select count(*) from pilihan_jurusan pj join pendaftaran p on p.id = pj.pendaftaran_id
         where pj.jurusan_2_id = j.id and ${dikirim} ${gSql}) p2,
       (select count(*) from pendaftaran p where p.jurusan_diterima_id = j.id and p.hasil = 'diterima' ${gSql}) diterima
-    from jurusan j where j.aktif = 1 order by j.nama`);
-
-  // --- Rekomendasi, desil, kabupaten ---------------------------------------------------
-  const rekomRows = await rows<{ nama: string; n: number }>(sql`
+    from jurusan j where j.aktif = 1 order by j.nama`));
+  const q9 = go(rows<{ nama: string; n: number }>(sql`
     select s.nama, count(p.id) n from sumber_rekomendasi s
     left join rekomendasi r on r.sumber_id = s.id
     left join pendaftaran p on p.id = r.pendaftaran_id and ${dikirim} ${gSql}
-    group by s.id, s.nama, s.urutan order by s.urutan, s.nama`);
-  const desilRows = await rows<{ desil: string | null; n: number }>(sql`
+    group by s.id, s.nama, s.urutan order by s.urutan, s.nama`));
+  const q10 = go(rows<{ desil: string | null; n: number }>(sql`
     select d.desil, count(*) n from data_diri d join pendaftaran p on p.id = d.pendaftaran_id
-    where ${dikirim} ${gSql} group by d.desil`);
-  const desil = Object.keys(DESIL_LABEL).map((k) => ({ label: DESIL_LABEL[k], n: Number(desilRows.find((r) => r.desil === k)?.n ?? 0) }));
-  const kabupaten = await rows<{ nama: string; n: number }>(sql`
+    where ${dikirim} ${gSql} group by d.desil`));
+  const q11 = go(rows<{ nama: string; n: number }>(sql`
     select k.nama, count(*) n from data_diri d
     join pendaftaran p on p.id = d.pendaftaran_id
     join wilayah_kabupaten k on k.id = d.kabupaten_id
-    where ${dikirim} ${gSql} group by k.id, k.nama order by n desc, k.nama limit 6`);
-
-  // --- Aktivitas terbaru -------------------------------------------------------------
-  const aktivitasRows = await db
+    where ${dikirim} ${gSql} group by k.id, k.nama order by n desc, k.nama limit 6`));
+  const q12 = go(db
     .select({
       id: riwayatStatus.id,
       status: riwayatStatus.status,
@@ -142,14 +122,69 @@ export async function ambilStatistik({ tahun, hari = 30 }: { tahun?: number; har
     .leftJoin(users, eq(users.id, riwayatStatus.diubahOleh))
     .where(fG)
     .orderBy(desc(riwayatStatus.createdAt))
-    .limit(8);
+    .limit(8));
+  const pilihanTahunP = daftarPilihanTahun();
+
+  // --- Angka utama -----------------------------------------------------------
+  const perStatus = await q0;
+  const n = (s: Status[]) => perStatus.filter((r) => s.includes(r.status)).reduce((a, r) => a + Number(r.n), 0);
+  const [{ gugurAdm }] = await q1;
+  const [akun] = await q2;
+  const [kirimHariIni] = await q3;
+  const [{ belumDijawab }] = await q4;
+
+  const kpi = {
+    akun: Number(akun?.total ?? 0),
+    akunTerverifikasi: Number(akun?.terverifikasi ?? 0),
+    akunHariIni: Number(akun?.hariIni ?? 0),
+    masuk: n(["terkirim", "diperiksa", "diterima", "ditolak"]),
+    kirimHariIni: Number(kirimHariIni?.n ?? 0),
+    proses: n(["terkirim", "diperiksa"]),
+    diterima: n(["diterima"]),
+    tidakDiterima: n(["ditolak"]) - Number(gugurAdm),
+    gugurAdministrasi: Number(gugurAdm),
+    belumKirim: n(["draft", "perbaikan"]),
+    pertanyaanBaru: Number(belumDijawab),
+  };
+
+  // --- Tren harian (WIB) -------------------------------------------------------
+  const akunHarian = await q5;
+  const kirimHarian = await q6;
+  const tren = Array.from({ length: hari }, (_, i) => {
+    const tgl = tglWib(new Date(awalRentang.getTime() + i * 864e5));
+    return {
+      tanggal: tgl,
+      akun: Number(akunHarian.find((r) => r.tgl === tgl)?.n ?? 0),
+      kirim: Number(kirimHarian.find((r) => r.tgl === tgl)?.n ?? 0),
+    };
+  });
+
+  // --- Tahap seleksi (yang masih berproses) + hasil ------------------------------------
+  const tahapRows = await q7;
+  const perTahap = TAHAP.filter((t) => t !== "pengumuman").map((t) => ({
+    tahap: t,
+    label: TAHAP_LABEL[t],
+    n: tahapRows.filter((r) => (r.tahap ?? "administrasi") === t).reduce((a, r) => a + Number(r.n), 0),
+  }));
+
+  // --- Jurusan: peminat pilihan 1 & 2, dan yang diterima ---------------------------------
+  const jurusanRows = await q8;
+
+  // --- Rekomendasi, desil, kabupaten ---------------------------------------------------
+  const rekomRows = await q9;
+  const desilRows = await q10;
+  const desil = Object.keys(DESIL_LABEL).map((k) => ({ label: DESIL_LABEL[k], n: Number(desilRows.find((r) => r.desil === k)?.n ?? 0) }));
+  const kabupaten = await q11;
+
+  // --- Aktivitas terbaru -------------------------------------------------------------
+  const aktivitasRows = await q12;
 
   return {
     diperbarui: sekarang.toISOString(),
     tahun: tahun ?? null,
     // Dikirim bersama data agar dashboard yang sedang terbuka tahu saat tahun berganti dan pilihan tahun baru muncul.
     tahunBerjalan: tahunBerjalan(),
-    pilihanTahun: await daftarPilihanTahun(),
+    pilihanTahun: await pilihanTahunP,
     hari,
     kpi,
     tren,

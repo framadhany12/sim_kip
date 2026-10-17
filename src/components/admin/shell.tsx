@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BookOpenText,
+  BookUser,
+  CalendarCheck,
+  FileSpreadsheet,
   BadgeCheck,
   CalendarDays,
   Contact,
@@ -61,12 +64,20 @@ export function AdminShell({
     {
       judul: "Master data",
       item: [
-        { href: "/admin/mahasiswa", label: "Master Mahasiswa", icon: Contact },
+        { href: "/admin/mahasiswa", label: "Master Calon Mahasiswa", icon: Contact },
         { href: "/admin/user", label: "Manajemen User", icon: ShieldCheck },
         { href: "/admin/tahun-ajaran", label: "Tahun Ajaran", icon: CalendarDays },
         { href: "/admin/jurusan", label: "Jurusan", icon: GraduationCap },
         { href: "/admin/rekomendasi", label: "Sumber Rekomendasi", icon: Share2 },
         { href: "/admin/beasiswa", label: "Jenis Beasiswa", icon: Award },
+      ],
+    },
+    {
+      judul: "SIM KIP",
+      item: [
+        { href: "/admin/master-mahasiswa", label: "Master Mahasiswa", icon: BookUser },
+        { href: "/admin/pelaporan", label: "Pelaporan IPK & Transkrip", icon: FileSpreadsheet },
+        { href: "/admin/kegiatan", label: "Kegiatan", icon: CalendarCheck },
       ],
     },
     { judul: "Informasi", item: [{ href: "/admin/landing", label: "Landing Page", icon: PanelsTopLeft }] },

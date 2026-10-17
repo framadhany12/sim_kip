@@ -2,18 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CircleHelp, FileText, House, ListChecks, UserRound, type LucideIcon } from "lucide-react";
+import { CircleHelp, FileText, CalendarCheck, ChartColumn, GraduationCap, House, ListChecks, UserRound, type LucideIcon } from "lucide-react";
 
-const ITEM: { href: string; label: string; match: string; icon: LucideIcon }[] = [
+const ITEM = (mahasiswa: boolean): { href: string; label: string; match: string; icon: LucideIcon; kecuali?: string[] }[] => [
   { href: "/dashboard", label: "Beranda", match: "/dashboard", icon: House },
-  { href: "/formulir/data-diri", label: "Formulir", match: "/formulir", icon: FileText },
+  ...(mahasiswa
+    ? [
+        { href: "/mahasiswa", label: "Mahasiswa", match: "/mahasiswa", icon: GraduationCap, kecuali: ["/mahasiswa/ipk", "/mahasiswa/kegiatan"] },
+        { href: "/mahasiswa/ipk", label: "IPK", match: "/mahasiswa/ipk", icon: ChartColumn },
+        { href: "/mahasiswa/kegiatan", label: "Kegiatan", match: "/mahasiswa/kegiatan", icon: CalendarCheck },
+      ]
+    : [{ href: "/formulir/data-diri", label: "Formulir", match: "/formulir", icon: FileText }]),
   { href: "/status", label: "Status", match: "/status", icon: ListChecks },
-  { href: "/bantuan", label: "Bantuan", match: "/bantuan", icon: CircleHelp },
+  ...(mahasiswa ? [] : [{ href: "/bantuan", label: "Bantuan", match: "/bantuan", icon: CircleHelp }]),
   { href: "/akun", label: "Akun", match: "/akun", icon: UserRound },
 ];
 
 /** Menu bawah untuk pendaftar di HP & tablet (di bawah lebar lg): mudah dijangkau ibu jari. */
-export function BottomNav() {
+export function BottomNav({ mahasiswa = false }: { mahasiswa?: boolean }) {
   const path = usePathname();
   return (
     <nav
@@ -21,9 +27,9 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-5">
-        {ITEM.map((i) => {
-          const aktif = path === i.match || path.startsWith(i.match + "/");
+      <ul className="mx-auto grid max-w-xl" style={{ gridTemplateColumns: `repeat(${ITEM(mahasiswa).length}, minmax(0, 1fr))` }}>
+        {ITEM(mahasiswa).map((i) => {
+          const aktif = (path === i.match || path.startsWith(i.match + "/")) && !i.kecuali?.some((k) => path === k || path.startsWith(k + "/"));
           return (
             <li key={i.href}>
               <Link

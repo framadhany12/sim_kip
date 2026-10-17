@@ -1,6 +1,10 @@
 import type { JenisBerkas, Status, Tahap } from "@/db/schema";
 
-export const TAHUN_LULUS = [2024, 2025, 2026] as const;
+/** Tahun lulus yang boleh mendaftar: tahun berjalan (WIB) dan dua tahun sebelumnya, berganti otomatis tiap 1 Januari. Terurut naik. */
+export function tahunLulusBoleh(): number[] {
+  const sekarang = new Date(Date.now() + 7 * 3600e3).getUTCFullYear();
+  return [sekarang - 2, sekarang - 1, sekarang];
+}
 export const MAX_UMUR = 21;
 export const MAX_FILE_MB = 2;
 export const MIME_DIIZINKAN = ["application/pdf", "image/jpeg", "image/png"];

@@ -2,7 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { pengaturan } from "@/db/schema";
-import { BERKAS_INFO, BERKAS_UTAMA, MAX_FILE_MB, MAX_UMUR, TAHUN_LULUS } from "@/lib/constants";
+import { BERKAS_INFO, BERKAS_UTAMA, MAX_FILE_MB, MAX_UMUR, tahunLulusBoleh } from "@/lib/constants";
 import { KAMPUS, KIP } from "@/lib/profil";
 
 /** Isi landing page yang bisa diubah admin lewat Informasi → Landing Page. */
@@ -18,7 +18,7 @@ export type LandingKonten = {
 
 export const KUNCI_LANDING = "landing";
 
-export const LANDING_BAWAAN: LandingKonten = {
+export const landingBawaan = (): LandingKonten => ({
   banner: { aktif: false, teks: "" },
   hero: {
     judul: "Kuliah vokasi di Politeknik TEDC,",
@@ -27,7 +27,7 @@ export const LANDING_BAWAAN: LandingKonten = {
   },
   syarat: {
     judul: "Siapa yang bisa mendaftar?",
-    item: [`Lulusan SMA/SMK/MA atau sederajat tahun ${TAHUN_LULUS.join(", ")}`, `Berusia maksimal ${MAX_UMUR} tahun`, "Berasal dari keluarga dengan keterbatasan ekonomi"],
+    item: [`Lulusan SMA/SMK/MA atau sederajat tahun ${tahunLulusBoleh().join(", ")}`, `Berusia maksimal ${MAX_UMUR} tahun`, "Berasal dari keluarga dengan keterbatasan ekonomi"],
   },
   berkas: {
     judul: "Berkas yang disiapkan",
@@ -51,7 +51,7 @@ export const LANDING_BAWAAN: LandingKonten = {
     ],
   },
   kampus: { ringkas: KAMPUS.ringkas, alamat: KAMPUS.alamat },
-};
+});
 
 const teks = (v: unknown, d: string) => (typeof v === "string" && v.trim() ? v : d);
 const daftar = (v: unknown, d: string[]) => (Array.isArray(v) && v.length && v.every((x) => typeof x === "string") ? (v as string[]) : d);
@@ -60,7 +60,7 @@ const pasangan = (v: unknown, d: { judul: string; isi: string }[]) =>
 
 /** Menggabungkan data tersimpan dengan bawaan; bagian yang rusak/hilang memakai bawaan agar landing page tidak pernah kosong. */
 function gabung(mentah: unknown): LandingKonten {
-  const b = LANDING_BAWAAN;
+  const b = landingBawaan();
   const m = (mentah && typeof mentah === "object" ? mentah : {}) as Record<string, Record<string, unknown> | undefined>;
   const x = (k: string) => m[k] ?? {};
   return {
@@ -79,9 +79,9 @@ export async function ambilLanding(): Promise<{ konten: LandingKonten; diubah: b
   try {
     const db = await getDb();
     const [row] = await db.select().from(pengaturan).where(eq(pengaturan.kunci, KUNCI_LANDING));
-    if (!row) return { konten: LANDING_BAWAAN, diubah: false };
+    if (!row) return { konten: landingBawaan(), diubah: false };
     return { konten: gabung(JSON.parse(row.nilai)), diubah: true };
   } catch {
-    return { konten: LANDING_BAWAAN, diubah: false };
+    return { konten: landingBawaan(), diubah: false };
   }
 }

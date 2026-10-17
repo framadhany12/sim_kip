@@ -19,7 +19,7 @@ export const users = mysqlTable("users", {
   /** False = akun dinonaktifkan admin: tidak bisa masuk dan sesinya dicabut. Data tetap tersimpan. */
   aktif: boolean("aktif").notNull().default(true),
   createdAt: now("created_at"),
-});
+}, (t) => [index("users_role_created").on(t.role, t.createdAt)]);
 
 /** Master jenis beasiswa (mis. LLDIKTI); dikelola admin dan ditetapkan per mahasiswa saat pengumuman diterima. */
 export const jenisBeasiswa = mysqlTable("jenis_beasiswa", {
@@ -94,11 +94,14 @@ export const pendaftaran = mysqlTable(
     /** Alasan tidak lolos Seleksi Administrasi atau tidak diterima saat Pengumuman. */
     alasanDitolak: varchar("alasan_ditolak", { length: 150 }),
     catatanAdmin: text("catatan_admin"),
+    /** Data akademik mahasiswa yang diterima: NIM dan kelas dari bagian akademik kampus; diisi mahasiswa sendiri atau admin. */
+    nim: varchar("nim", { length: 30 }),
+    kelas: varchar("kelas", { length: 30 }),
     submittedAt: ts("submitted_at"),
     createdAt: now("created_at"),
     updatedAt: now("updated_at"),
   },
-  (t) => [uniqueIndex("pendaftaran_user_gelombang").on(t.userId, t.gelombang), index("pendaftaran_status").on(t.status)],
+  (t) => [uniqueIndex("pendaftaran_user_gelombang").on(t.userId, t.gelombang), uniqueIndex("pendaftaran_nim").on(t.nim), index("pendaftaran_status").on(t.status), index("pendaftaran_submitted").on(t.submittedAt)],
 );
 
 export const wilayahKabupaten = mysqlTable("wilayah_kabupaten", {
@@ -241,7 +244,61 @@ export const riwayatStatus = mysqlTable(
     diubahOleh: ref("diubah_oleh").references(() => users.id, { onDelete: "set null" }),
     createdAt: now("created_at"),
   },
-  (t) => [index("riwayat_pendaftaran").on(t.pendaftaranId)],
+  (t) => [index("riwayat_pendaftaran").on(t.pendaftaranId), index("riwayat_created").on(t.createdAt)],
+);
+
+/** Laporan IPK per semester beserta berkas transkrip, dikirim mahasiswa (SIM KIP). Satu laporan per semester. */
+export const laporanAkademik = mysqlTable(
+  "laporan_akademik",
+  {
+    id: id(),
+    pendaftaranId: ref("pendaftaran_id").notNull().references(() => pendaftaran.id, { onDelete: "cascade" }),
+    semester: int("semester").notNull(),
+    ipk: decimal("ipk", { precision: 3, scale: 2 }).notNull(),
+    fileUrl: varchar("file_url", { length: 255 }).notNull(), // path relatif di dalam folder storage
+    namaAsli: varchar("nama_asli", { length: 200 }).notNull(),
+    mimeType: varchar("mime_type", { length: 50 }).notNull(),
+    ukuran: int("ukuran").notNull(),
+    createdAt: now("created_at"),
+    updatedAt: now("updated_at"),
+  },
+  (t) => [uniqueIndex("laporan_pendaftaran_semester").on(t.pendaftaranId, t.semester)],
+);
+
+/** Pengumuman admin ke seluruh mahasiswa (mis. perintah melaporkan IPK). Bila `semester` diisi, pengumuman hilang dari mahasiswa yang sudah melaporkan semester itu. */
+export const pengumumanMahasiswa = mysqlTable("pengumuman_mahasiswa", {
+  id: id(),
+  judul: varchar("judul", { length: 150 }).notNull(),
+  isi: text("isi").notNull(),
+  semester: int("semester"),
+  tenggat: varchar("tenggat", { length: 10 }),
+  aktif: boolean("aktif").notNull().default(true),
+  dibuatOleh: ref("dibuat_oleh").references(() => users.id, { onDelete: "set null" }),
+  createdAt: now("created_at"),
+});
+
+/** Kegiatan kemahasiswaan. Presensi memakai kode QR yang berganti tiap beberapa detik, diturunkan dari `rahasia` milik kegiatan. */
+export const kegiatan = mysqlTable("kegiatan", {
+  id: id(),
+  nama: varchar("nama", { length: 150 }).notNull(),
+  deskripsi: text("deskripsi"),
+  lokasi: varchar("lokasi", { length: 150 }),
+  mulai: ts("mulai").notNull(),
+  selesai: ts("selesai").notNull(),
+  rahasia: varchar("rahasia", { length: 64 }).notNull(),
+  dibuatOleh: ref("dibuat_oleh").references(() => users.id, { onDelete: "set null" }),
+  createdAt: now("created_at"),
+});
+
+export const presensiKegiatan = mysqlTable(
+  "presensi_kegiatan",
+  {
+    id: id(),
+    kegiatanId: ref("kegiatan_id").notNull().references(() => kegiatan.id, { onDelete: "cascade" }),
+    pendaftaranId: ref("pendaftaran_id").notNull().references(() => pendaftaran.id, { onDelete: "cascade" }),
+    waktu: now("waktu"),
+  },
+  (t) => [uniqueIndex("presensi_kegiatan_mahasiswa").on(t.kegiatanId, t.pendaftaranId)],
 );
 
 export const faq = mysqlTable("faq", {

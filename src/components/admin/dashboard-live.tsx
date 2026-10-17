@@ -32,7 +32,7 @@ const C = {
   muted: "#898781",
   ink2: "#52514e",
 };
-const INTERVAL_MS = 10_000;
+const INTERVAL_MS = 30_000;
 const fmt = new Intl.NumberFormat("id-ID");
 const tglPendek = (s: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${s}T00:00:00Z`));
 const tglPanjang = (s: string) => new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${s}T00:00:00Z`));

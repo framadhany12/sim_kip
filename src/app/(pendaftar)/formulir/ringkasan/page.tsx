@@ -12,7 +12,7 @@ export default async function RingkasanPage({ searchParams }: { searchParams: Pr
   const { diperbarui } = await searchParams;
   return (
     <div className="space-y-6">
-      {diperbarui && <Alert tone="success">Perubahan tersimpan dan tercatat di riwayat pendaftaran.</Alert>}
+      {diperbarui && <Alert tone="success">Perubahan tersimpan dan tercatat dan terlihat oleh admin.</Alert>}
       <p className="text-[15px] text-slate-600">Periksa kembali semua isian di bawah.{terkunci ? " Data sudah terkunci dan tidak dapat diubah lagi." : <> Tekan <b>Ubah</b> pada bagian yang ingin diperbaiki.</>}</p>
       <RingkasanData d={d} editLinks={!terkunci} />
       {!sudahDikirim && (

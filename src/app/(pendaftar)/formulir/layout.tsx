@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Hero } from "@/components/hero";
 import { Stepper } from "@/components/stepper";
 import { Alert } from "@/components/ui";
 import { konteksPendaftar } from "@/lib/konteks";
+import { sudahMahasiswa } from "@/lib/pendaftaran";
 
 export default async function FormulirLayout({ children }: { children: React.ReactNode }) {
   const { d, cek, sudahDikirim, terkunci } = await konteksPendaftar();
+  // Setelah diterima, akun berfungsi sebagai akun mahasiswa: formulir pendaftaran tidak lagi ditampilkan.
+  if (sudahMahasiswa(d)) redirect("/mahasiswa");
   return (
     <div className="space-y-6">
       <Hero
@@ -32,7 +36,7 @@ export default async function FormulirLayout({ children }: { children: React.Rea
       )}
       {sudahDikirim && !terkunci && (
         <Alert tone="info" title="Pendaftaran sudah dikirim">
-          Anda masih bisa memperbarui data dan mengganti berkas; setiap perubahan tercatat di riwayat dan terlihat oleh admin. Pilihan
+          Anda masih bisa memperbarui data dan mengganti berkas; setiap perubahan terlihat oleh admin. Pilihan
           jurusan hanya dapat diubah oleh admin. Pantau perkembangan di{" "}
           <Link href="/status" className="font-semibold underline">
             halaman Status

@@ -17,12 +17,12 @@ import {
   users,
   wilayahKecamatan,
 } from "@/db/schema";
-import { TAHUN_LULUS, hitungUmur, normalHp } from "./constants";
+import { tahunLulusBoleh, hitungUmur, normalHp } from "./constants";
 import type { FormState } from "./form-state";
 
 /**
  * Validasi + penyimpanan tiap bagian formulir, dipakai bersama oleh formulir pendaftar
- * dan edit oleh admin (Master Mahasiswa) agar aturannya selalu sama.
+ * dan edit oleh admin (Master Calon Mahasiswa) agar aturannya selalu sama.
  * `galat` terisi bila validasi gagal (tidak ada yang disimpan); selain itu data sudah tersimpan.
  */
 export type HasilSimpan = { galat?: FormState; umur?: number };
@@ -189,7 +189,7 @@ export async function simpanSekolahCore(pendaftaranId: string, v: Nilai, modeJur
   const npsn = angka(v.npsn);
   if (npsn.length !== 8) e.npsn = "NPSN terdiri dari 8 digit angka.";
   const tahun = Number(v.tahunLulus);
-  if (!(TAHUN_LULUS as readonly number[]).includes(tahun)) e.tahunLulus = `Hanya lulusan tahun ${TAHUN_LULUS.join(", ")} yang dapat mendaftar.`;
+  if (!tahunLulusBoleh().includes(tahun)) e.tahunLulus = `Hanya lulusan tahun ${tahunLulusBoleh().join(", ")} yang dapat mendaftar.`;
   const db = await getDb();
   if (ubahJurusan) {
     if (v.jurusan1Id && v.jurusan1Id === v.jurusan2Id) e.jurusan2Id = "Jurusan 2 harus berbeda dari Jurusan 1.";
@@ -233,5 +233,22 @@ export async function simpanRekomendasiCore(pendaftaranId: string, v: Nilai): Pr
 
   const data = { sumberId: sumber.id, namaPerekomendasi: v.namaPerekomendasi || null, teleponPerekomendasi: telepon };
   await db.insert(rekomendasi).values({ pendaftaranId, ...data }).onDuplicateKeyUpdate({ set: data });
+  return {};
+}
+
+/** NIM & kelas dari bagian akademik; dipakai bersama oleh akun mahasiswa dan admin (Master Mahasiswa). Kosong = dikosongkan. */
+export async function simpanAkademikCore(pendaftaranId: string, v: Nilai): Promise<HasilSimpan> {
+  const e: Record<string, string> = {};
+  const nim = (v.nim ?? "").replace(/\s/g, "").toUpperCase();
+  const kelas = (v.kelas ?? "").trim().toUpperCase();
+  if (nim && !/^[A-Z0-9][A-Z0-9./-]{3,29}$/.test(nim)) e.nim = "NIM 4–30 karakter: huruf, angka, titik, garis miring, atau strip.";
+  if (kelas && !/^[A-Z0-9][A-Z0-9 ./-]{0,29}$/.test(kelas)) e.kelas = "Kelas maksimal 30 karakter, hanya huruf, angka, spasi, atau strip (mis. TI-1A).";
+  const db = await getDb();
+  if (nim && !e.nim) {
+    const [dipakai] = await db.select({ id: pendaftaran.id }).from(pendaftaran).where(and(eq(pendaftaran.nim, nim), ne(pendaftaran.id, pendaftaranId))).limit(1);
+    if (dipakai) e.nim = "NIM ini sudah dipakai mahasiswa lain. Periksa kembali, atau hubungi admin.";
+  }
+  if (Object.keys(e).length) return gagal(e, v);
+  await db.update(pendaftaran).set({ nim: nim || null, kelas: kelas || null, updatedAt: new Date() }).where(eq(pendaftaran.id, pendaftaranId));
   return {};
 }

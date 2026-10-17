@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ProsesSeleksi } from "@/components/proses-seleksi";
+import { BannerPengumuman } from "@/components/pendaftar/banner-pengumuman";
 import { Hero, HeroStat } from "@/components/hero";
 import { Alert, ButtonLink, Card, StatusBadge } from "@/components/ui";
 import { LANGKAH, TAHAP_DESKRIPSI, TAHAP_LABEL, tanggal } from "@/lib/constants";
 import { StatistikSeleksi } from "@/components/pendaftar/statistik-seleksi";
 import { konteksPendaftar } from "@/lib/konteks";
+import { sudahMahasiswa } from "@/lib/pendaftaran";
 import { ambilStatistikPendaftar } from "@/lib/statistik-pendaftar";
 
 export const metadata = { title: "Beranda" };
@@ -16,6 +18,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const berikutnya = LANGKAH.find((l) => !cek.langkah[l.slug]) ?? LANGKAH[LANGKAH.length - 1];
   // Pengumuman, atau gugur di tahap sebelumnya (mis. tidak lolos Seleksi Administrasi).
   const diumumkan = !!d.hasil;
+  const mahasiswa = sudahMahasiswa(d);
 
   return (
     <div className="space-y-6">
@@ -24,6 +27,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           Langkah pertama selesai. Lanjutkan dengan mengisi formulir pendaftaran.
         </Alert>
       )}
+      {mahasiswa && <BannerPengumuman pendaftaranId={d.id} />}
       <Hero eyebrow="KIP Kuliah · Poltek TEDC" title={`Halo, ${user.nama.split(" ")[0]}!`} desc="Pantau kelengkapan formulir, tahap seleksi, dan hasil pendaftaran Anda di sini.">
         <div className="grid grid-cols-2 gap-2.5 sm:max-w-md">
           <HeroStat label="Kelengkapan" value={`${cek.persen}%`} />
@@ -117,9 +121,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               <p className="mt-2 text-sm text-slate-500">Dikirim: {tanggal(d.submittedAt)}</p>
               <div className="mt-5 grid gap-2 sm:flex sm:flex-wrap">
                 <ButtonLink href="/status">Lihat Detail Status →</ButtonLink>
-                <ButtonLink href="/formulir/ringkasan" variant="secondary">
-                  {terkunci ? "Lihat Data Pendaftaran" : "Perbarui Data & Berkas"}
-                </ButtonLink>
+                {mahasiswa ? (
+                  <ButtonLink href="/mahasiswa" variant="secondary">
+                    Buka Data Mahasiswa
+                  </ButtonLink>
+                ) : (
+                  <ButtonLink href="/formulir/ringkasan" variant="secondary">
+                    {terkunci ? "Lihat Data Pendaftaran" : "Perbarui Data & Berkas"}
+                  </ButtonLink>
+                )}
               </div>
             </>
           )}
