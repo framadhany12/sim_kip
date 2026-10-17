@@ -16,6 +16,31 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Penanda fokus keyboard; komponen yang memakai focus:outline-none sudah punya ring sendiri. */
+:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
+.dark :focus-visible { outline-color: #93c5fd; }
+.latar-tua :focus-visible { outline-color: #f5c400; }
+
+/* Gerak: singkat (≤200 ms), hanya opacity/transform, dan mati untuk pengguna yang memilih kurangi gerakan. */
+@layer base {
+  a, button, summary { transition: color 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out, transform 120ms ease-out; }
+}
+@keyframes halaman-masuk { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes muncul { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  .halaman-masuk { animation: halaman-masuk 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  /* Kerangka muat baru tampil setelah 120 ms, jadi perpindahan cepat tidak berkedip. */
+  .muat-tunda { animation: muncul 160ms ease-out 120ms both; }
+  button:not(:disabled):active { transform: scale(0.97); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .muat-tunda { animation: muncul 1ms linear 120ms both; }
+  a, button, summary { transition: none; }
+}
+
+/* Header situs menempel di atas: sisakan ruang agar anchor dan elemen yang difokus tidak tertutup. */
+html:has(.header-situs) { scroll-padding-top: 5rem; }
+
 body {
   background: #f4f6fa linear-gradient(180deg, #e3ecfb 0, #f4f6fa 420px) no-repeat;
   color: #0f172a;

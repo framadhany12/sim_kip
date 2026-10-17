@@ -53,7 +53,7 @@ const TIPS: { bagian: string; kolom: [string, string, string][] }[] = [
 
 // Pendaftar sudah punya wadah dari kerangka pendaftar, jadi tidak perlu <main> bersarang.
 function Pembungkus({ className, children }: { className: string; children: React.ReactNode }) {
-  return className.includes("max-w-5xl") ? <main className={className}>{children}</main> : <div className={className}>{children}</div>;
+  return className.includes("max-w-5xl") ? <main id="konten" className={className}>{children}</main> : <div className={className}>{children}</div>;
 }
 
 export default async function BantuanPage() {

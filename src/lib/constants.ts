@@ -84,7 +84,7 @@ export const BERKAS_INFO: Record<JenisBerkas, { label: string; tips: string; waj
     tips: "Pindai/foto halaman depan ijazah. Bila ijazah belum terbit, unggah Surat Keterangan Lulus (SKL) dari sekolah.",
     wajib: true,
   },
-  akta_kelahiran: { label: "Akta Kelahiran", tips: "Pastikan nama dan tanggal lahir terbaca jelas — dipakai untuk memeriksa umur.", wajib: true },
+  akta_kelahiran: { label: "Akta Kelahiran", tips: "Pastikan nama dan tanggal lahir terbaca jelas, karena dipakai untuk memeriksa umur.", wajib: true },
   kk: { label: "Kartu Keluarga (KK)", tips: "Gunakan KK terbaru. Nama ayah, ibu, dan anggota keluarga harus terlihat.", wajib: true },
   ktp: { label: "Kartu Tanda Penduduk (KTP)", tips: "Foto KTP tanpa terpotong dan tidak silau. NIK harus sama dengan isian Data Diri.", wajib: true },
   surat_permohonan_direktur: {

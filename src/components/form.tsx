@@ -34,7 +34,8 @@ export function ActionForm({
   return (
     <Ctx.Provider value={state}>
       <PendingCtx.Provider value={pending}>
-        <form ref={ref} onSubmit={onSubmit} className="space-y-5" noValidate>
+        {/* method=post: bila diklik sebelum JavaScript siap, isian (termasuk kata sandi) tidak ikut ke URL. */}
+        <form ref={ref} onSubmit={onSubmit} method="post" className="space-y-5" noValidate>
           {state?.message && <Alert tone={state.ok ? "success" : "error"}>{state.message}</Alert>}
           {/* Tata letak (jarak/grid) diterapkan di fieldset karena dialah induk langsung kolom-kolom formulir. */}
           <fieldset disabled={disabled} className={`m-0 min-w-0 border-0 p-0 ${className}`}>

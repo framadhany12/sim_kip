@@ -55,3 +55,8 @@ next-env.d.ts
 
 # qa
 /qa/node_modules
+
+# skill agen terpasang lokal (npx skills add)
+/.agents/
+/.claude/skills/
+/skills-lock.json

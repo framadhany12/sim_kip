@@ -9,7 +9,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   if (user) redirect(user.role === "admin" ? "/admin" : "/dashboard");
   return (
     <div className="min-h-dvh bg-[linear-gradient(180deg,#0d2a63_0,#1646a0_13rem,transparent_19rem)]">
-    <main className="mx-auto grid max-w-md gap-6 px-4 py-8 sm:py-12">
+    <main id="konten" className="mx-auto grid max-w-md gap-6 px-4 py-8 sm:py-12">
       <Link href="/" className="flex flex-col items-center gap-3 text-center">
         <LogoTedc size={72} />
         <span className="leading-tight">

@@ -9,7 +9,7 @@ export const KAMPUS = {
   berdiri: "5 Mei 2001",
   dasarHukum: "SK Mendiknas No. 73/D/O/2002",
   penyelenggara: "Yayasan Daya Juang Bangsa",
-  alamat: "Jl. Politeknik – Pesantren KM 2, Cibabat, Cimahi Utara, Kota Cimahi, Jawa Barat 40513",
+  alamat: "Jl. Politeknik-Pesantren KM 2, Cibabat, Cimahi Utara, Kota Cimahi, Jawa Barat 40513",
   website: "https://poltektedc.ac.id",
   websiteLabel: "poltektedc.ac.id",
   ringkas:

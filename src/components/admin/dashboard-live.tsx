@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   Area,
   AreaChart,
@@ -45,6 +45,32 @@ function relatif(iso: string, now: number) {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" }).format(new Date(iso));
 }
 
+// Satu detak bersama untuk teks "N dtk lalu": hanya teks itu yang dirender ulang tiap detik, bukan seluruh dasbor dan grafiknya.
+const detak = { now: 0, id: undefined as ReturnType<typeof setInterval> | undefined, pendengar: new Set<() => void>() };
+function ikutiDetak(cb: () => void) {
+  detak.pendengar.add(cb);
+  if (!detak.id) {
+    detak.now = Date.now();
+    detak.id = setInterval(() => {
+      detak.now = Date.now();
+      detak.pendengar.forEach((f) => f());
+    }, 1000);
+  }
+  return () => {
+    detak.pendengar.delete(cb);
+    if (!detak.pendengar.size) {
+      clearInterval(detak.id);
+      detak.id = undefined;
+    }
+  };
+}
+
+/** `awal` = waktu dari server, dipakai saat render server/hydration agar keduanya sama. */
+function Relatif({ iso, awal }: { iso: string; awal: number }) {
+  const now = useSyncExternalStore(ikutiDetak, () => detak.now || awal, () => awal);
+  return <>{relatif(iso, now)}</>;
+}
+
 // ---- Data & pembaruan otomatis -------------------------------------------------------------------
 function useStatistikLive(awal: Statistik) {
   const [data, setData] = useState(awal);
@@ -53,8 +79,7 @@ function useStatistikLive(awal: Statistik) {
   const [memuat, setMemuat] = useState(false);
   const [galat, setGalat] = useState(false);
   const [jeda, setJeda] = useState(false);
-  // Awal memakai waktu dari server agar render server dan klien sama (hindari galat hydration); lalu berdetak tiap detik.
-  const [now, setNow] = useState(() => Date.parse(awal.diperbarui));
+  const [waktuServer] = useState(() => Date.parse(awal.diperbarui));
   const urut = useRef(0);
   // Selama admin tidak memilih tahun lain, dashboard mengikuti tahun berjalan (berpindah sendiri saat tahun berganti).
   const ikutiTahunBerjalan = useRef(awal.tahun === awal.tahunBerjalan);
@@ -99,12 +124,7 @@ function useStatistikLive(awal: Statistik) {
     };
   }, [muat]);
 
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return { data, tahun, ubahTahun, hari, setHari, memuat, galat, jeda, now, muat };
+  return { data, tahun, ubahTahun, hari, setHari, memuat, galat, jeda, waktuServer, muat };
 }
 
 /** Menandai sebentar nilai yang baru berubah (agar pembaruan langsung terlihat). */
@@ -267,7 +287,7 @@ function BarHorizontal({ data, seri, tinggiBaris = 34 }: { data: Record<string, 
 
 // ---- Dashboard -------------------------------------------------------------------------------------
 export function DashboardLive({ awal }: { awal: Statistik }) {
-  const { data, tahun, ubahTahun, hari, setHari, memuat, galat, jeda, now, muat } = useStatistikLive(awal);
+  const { data, tahun, ubahTahun, hari, setHari, memuat, galat, jeda, waktuServer, muat } = useStatistikLive(awal);
   const k = data.kpi;
   // Tautan kartu membawa tahun yang dipilih agar daftar yang terbuka sama dengan angkanya.
   const thn = `&tahun=${tahun}`; // "semua" harus eksplisit: tanpa parameter, daftar bawaannya tahun berjalan
@@ -300,13 +320,13 @@ export function DashboardLive({ awal }: { awal: Statistik }) {
             className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 font-medium ring-1 ring-inset ${
               galat ? "bg-rose-50 text-rose-700 ring-rose-200" : jeda ? "bg-slate-100 text-slate-600 ring-slate-200" : "bg-emerald-50 text-emerald-800 ring-emerald-200"
             }`}
-            role="status"
           >
             <span className="relative flex size-2">
               {!galat && !jeda && <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60 motion-reduce:hidden" />}
               <span className={`relative inline-flex size-2 rounded-full ${galat ? "bg-rose-500" : jeda ? "bg-slate-400" : "bg-emerald-500"}`} />
             </span>
-            {galat ? "Gagal memuat, mencoba lagi…" : jeda ? "Dijeda (tab tidak aktif)" : "Langsung"} · diperbarui {relatif(data.diperbarui, now)}
+            <span role="status">{galat ? "Gagal memuat, mencoba lagi…" : jeda ? "Dijeda (tab tidak aktif)" : "Langsung"}</span> · diperbarui{" "}
+            <Relatif iso={data.diperbarui} awal={waktuServer} />
           </span>
           <button
             onClick={() => void muat()}
@@ -517,7 +537,7 @@ export function DashboardLive({ awal }: { awal: Statistik }) {
                       </p>
                       <p className="truncate text-[13px] text-slate-600">{a.catatan?.split("\n")[0] || a.label}</p>
                       <p className="text-[11px] text-slate-400">
-                        {a.label} · {relatif(a.waktu, now)} · oleh {a.olehAdmin ? "Admin" : "Pendaftar"}
+                        {a.label} · <Relatif iso={a.waktu} awal={waktuServer} /> · oleh {a.olehAdmin ? "Admin" : "Pendaftar"}
                       </p>
                     </div>
                   </li>

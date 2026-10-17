@@ -38,7 +38,7 @@ export function FormLaporanIpk() {
   }
 
   return (
-    <form ref={form} onSubmit={kirim} className="space-y-4">
+    <form ref={form} onSubmit={kirim} method="post" className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label htmlFor="semester" className="mb-1 block text-sm font-medium text-slate-700">

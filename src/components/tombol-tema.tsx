@@ -61,7 +61,7 @@ export function TombolTema({ gelapDiLatar = false, className = "" }: { gelapDiLa
       onClick={ganti}
       title={LABEL[tema]}
       aria-label={`${LABEL[tema]}. Tekan untuk mengganti.`}
-      className={`grid size-10 shrink-0 place-items-center rounded-lg transition ${warna} ${className}`}
+      className={`grid size-11 shrink-0 place-items-center rounded-lg transition ${warna} ${className}`}
     >
       {/* Ikon baru dirender setelah pilihan tersimpan terbaca, agar tidak beda antara server dan klien. */}
       {siap ? <Ikon className="size-[18px]" strokeWidth={1.8} aria-hidden /> : <Monitor className="size-[18px]" strokeWidth={1.8} aria-hidden />}
