@@ -4,7 +4,7 @@ Aplikasi pendaftaran KIP Kuliah. Next.js 15 (App Router) + React 19, Drizzle ORM
 
 ## Lingkungan
 - Windows 11, Git Bash + PowerShell. **Python tidak ada**; pakai Node.
-- `.env`: `DATABASE_URL=mysql://root@127.0.0.1:3306/kip_kuliah`, `SMTP_HOST/USER/PASS`. `.env.example` hanya berisi placeholder; **jangan commit sandi asli**. Saat uji lokal kosongkan `SMTP_*` agar tidak ada email terkirim.
+- `.env`: `DATABASE_URL=mysql://root@127.0.0.1:3306/sim_kip` (salinan dari kip_kuliah), `SMTP_HOST/USER/PASS`. `.env.example` hanya berisi placeholder; **jangan commit sandi asli**. Saat uji lokal kosongkan `SMTP_*` agar tidak ada email terkirim.
 - Berkas diabaikan git: `.env*`, `akun-uji.local.md`, `/storage/`, `database/backup`, `/qa/node_modules`. `qa.rar` bukan bagian repo.
 
 ## Perintah
