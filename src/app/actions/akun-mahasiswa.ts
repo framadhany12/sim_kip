@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
-import { dataDiri, pendaftaran } from "@/db/schema";
+import { dataDiri, jenisBeasiswa, pendaftaran, sessions, STATUS_MAHASISWA, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin, requirePendaftar } from "@/lib/auth";
+import { STATUS_MAHASISWA_LABEL, tanggalPanjang } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { cariPendaftaranUser, sudahMahasiswa } from "@/lib/pendaftaran";
 import { simpanAkademikCore, simpanDataDiriCore } from "@/lib/simpan-pendaftaran";
@@ -66,9 +67,52 @@ export async function simpanAkademikAdmin(pendaftaranId: string, _: FormState, f
   const db = await getDb();
   const [p] = await db.select().from(pendaftaran).where(eq(pendaftaran.id, pendaftaranId));
   if (!p || !sudahMahasiswa(p)) return { message: "Data mahasiswa tidak ditemukan." };
-  const hasil = await simpanAkademikCore(p.id, nilaiForm(fd));
+  const v = nilaiForm(fd);
+  const [b] = v.jenisBeasiswaId ? await db.select({ id: jenisBeasiswa.id }).from(jenisBeasiswa).where(eq(jenisBeasiswa.id, v.jenisBeasiswaId)) : [];
+  if (v.jenisBeasiswaId && !b) return { errors: { jenisBeasiswaId: "Jenis beasiswa tidak ditemukan." }, values: v };
+  const hasil = await simpanAkademikCore(p.id, v);
   if (hasil.galat) return hasil.galat;
-  await db.insert(riwayatStatus).values({ pendaftaranId: p.id, status: p.status, catatan: "Admin memperbarui data akademik (NIM/kelas)", diubahOleh: admin.id });
+  await db.update(pendaftaran).set({ jenisBeasiswaId: b?.id ?? null }).where(eq(pendaftaran.id, p.id));
+  await db.insert(riwayatStatus).values({ pendaftaranId: p.id, status: p.status, catatan: "Admin memperbarui data akademik (NIM/kelas/jenis beasiswa)", diubahOleh: admin.id });
   revalidatePath("/", "layout");
   return { ok: true, message: "Tersimpan." };
+}
+
+/**
+ * Admin mengubah status mahasiswa. Selain Aktif, akun dinonaktifkan dan semua sesinya dicabut;
+ * kembali ke Aktif mengaktifkan akun lagi. Setiap perubahan dicatat di riwayat.
+ */
+export async function ubahStatusMahasiswa(pendaftaranId: string, _: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const v: Record<string, string> = { tanggal: "", keterangan: "", ...nilaiForm(fd) };
+  const status = STATUS_MAHASISWA.find((s) => s === v.statusMahasiswa);
+  const e: Record<string, string> = {};
+  if (!status) e.statusMahasiswa = "Pilih status mahasiswa.";
+  const tgl = v.tanggal && /^\d{4}-\d{2}-\d{2}$/.test(v.tanggal) && !Number.isNaN(Date.parse(`${v.tanggal}T00:00:00Z`)) ? v.tanggal : "";
+  if (!tgl) e.tanggal = "Isi tanggal berlakunya status.";
+  if ((status === "dicabut" || status === "tidak_aktif") && !v.keterangan) e.keterangan = "Tuliskan alasannya, misalnya nomor SK atau penyebab berhenti.";
+  if (v.keterangan.length > 255) e.keterangan = "Maksimal 255 karakter.";
+  if (Object.keys(e).length) return { errors: e, values: v };
+
+  const db = await getDb();
+  const [p] = await db.select().from(pendaftaran).where(eq(pendaftaran.id, pendaftaranId));
+  if (!p || !sudahMahasiswa(p)) return { message: "Data mahasiswa tidak ditemukan." };
+  const keterangan = v.keterangan || null;
+  if (p.statusMahasiswa === status && p.statusMahasiswaTanggal === tgl && p.statusMahasiswaKeterangan === keterangan) return { message: "Tidak ada perubahan." };
+
+  const aktif = status === "aktif";
+  await db.transaction(async (tx) => {
+    await tx.update(pendaftaran).set({ statusMahasiswa: status, statusMahasiswaTanggal: tgl, statusMahasiswaKeterangan: keterangan, updatedAt: new Date() }).where(eq(pendaftaran.id, p.id));
+    await tx.update(users).set({ aktif }).where(eq(users.id, p.userId));
+    if (!aktif) await tx.delete(sessions).where(eq(sessions.userId, p.userId));
+    await tx.insert(riwayatStatus).values({
+      pendaftaranId: p.id,
+      status: `mhs:${status}`,
+      catatan: `Berlaku ${tanggalPanjang(tgl)}.${keterangan ? ` ${keterangan}` : ""}`,
+      diubahOleh: admin.id,
+    });
+  });
+  revalidatePath("/", "layout");
+  const label = STATUS_MAHASISWA_LABEL[status!];
+  return { ok: true, message: aktif ? `Status diubah menjadi ${label}. Akun mahasiswa aktif.` : `Status diubah menjadi ${label}. Akun dinonaktifkan dan dikeluarkan dari semua perangkat.` };
 }

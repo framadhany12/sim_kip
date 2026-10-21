@@ -141,6 +141,20 @@
       "when": 1792570206381,
       "tag": "0019_kata_cari_sekolah",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1792596832040,
+      "tag": "0020_status_mahasiswa",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1792599560129,
+      "tag": "0021_mahasiswa_lama",
+      "breakpoints": true
     }
   ]
 }

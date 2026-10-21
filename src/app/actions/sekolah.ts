@@ -6,6 +6,7 @@ import { getDb } from "@/db";
 import { dataSekolah, sekolah } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { nilaiForm, type FormState } from "@/lib/form-state";
+import { bacaTabel } from "@/lib/baca-tabel";
 import { kataCariSekolah } from "@/lib/sekolah";
 
 /**
@@ -65,20 +66,7 @@ const MAKS_BERKAS = 900 * 1024;
 
 /** Baca baris [npsn, nama, kota] dari .xlsx atau .csv; baris judul dicari dari sel yang memuat "npsn" dan "nama". */
 async function bacaBaris(file: File): Promise<string[][]> {
-  const buf = Buffer.from(await file.arrayBuffer());
-  let rows: string[][];
-  if (/\.csv$/i.test(file.name)) {
-    const teks = buf.toString("utf8").replace(/^FEFF/, "");
-    const pemisah = (teks.split(/\r?\n/)[0].match(/;/g)?.length ?? 0) > (teks.split(/\r?\n/)[0].match(/,/g)?.length ?? 0) ? ";" : ",";
-    rows = teks.split(/\r?\n/).map((l) => l.split(pemisah).map((c) => c.replace(/^"|"$/g, "").trim()));
-  } else {
-    const ExcelJS = (await import("exceljs")).default;
-    const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(buf as unknown as ArrayBuffer);
-    const ws = wb.worksheets[0];
-    rows = [];
-    ws?.eachRow((r) => rows.push((r.values as unknown[]).slice(1).map((v) => (v == null ? "" : typeof v === "object" && "text" in v ? String(v.text) : String(v)).trim())));
-  }
+  const rows = (await bacaTabel(file)).map((r) => r.map((c) => c.teks));
   const iJudul = rows.findIndex((r) => r.some((c) => /npsn/i.test(c)) && r.some((c) => /nama/i.test(c)));
   if (iJudul < 0) return [];
   const judul = rows[iJudul].map((c) => c.toLowerCase());

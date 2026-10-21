@@ -209,10 +209,18 @@ export function FieldsEkonomi({ x, admin }: { x: Maybe<PendaftaranLengkap["ekono
   );
 }
 
+/** Mahasiswa lama bisa lulus sekolah jauh sebelum angkatannya; terbaru di atas. */
+const tahunLulusLama = () => {
+  const akhir = tahunLulusBoleh().at(-1)!;
+  return Array.from({ length: 12 }, (_, i) => akhir - i);
+};
+
 type OpsiJurusan = { value: string; label: string }[];
 export type KontrolJurusan =
   | { mode: "edit"; opsi1: OpsiJurusan; opsi2: OpsiJurusan }
-  | { mode: "kunci"; nama1?: string | null; nama2?: string | null };
+  | { mode: "kunci"; nama1?: string | null; nama2?: string | null }
+  /** Mahasiswa lama: satu jurusan yang sedang ditempuh. */
+  | { mode: "satu"; opsi: OpsiJurusan; nilai?: string | null };
 
 export function FieldsSekolah({
   s,
@@ -229,14 +237,18 @@ export function FieldsSekolah({
           label="Tahun lulus"
           required
           defaultValue={s?.tahunLulus}
-          options={tahunLulusBoleh().map((t) => ({ value: String(t), label: String(t) }))}
-          hint={`Hanya lulusan ${tahunLulusBoleh().join(", ")} yang dapat mendaftar.`}
+          options={(jurusan.mode === "satu" ? tahunLulusLama() : tahunLulusBoleh()).map((t) => ({ value: String(t), label: String(t) }))}
+          hint={jurusan.mode === "satu" ? "Tahun lulus SMA/SMK/MA sesuai ijazah." : `Hanya lulusan ${tahunLulusBoleh().join(", ")} yang dapat mendaftar.`}
         />
         <Field name="jurusanSekolah" label="Jurusan di sekolah" required defaultValue={s?.jurusanSekolah} hint="Jurusan/peminatan saat SMA/SMK/MA." contoh="IPA / Teknik Kendaraan Ringan" />
       </div>
 
-      <h3 className="pt-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Pilihan jurusan kuliah</h3>
-      {jurusan.mode === "kunci" ? (
+      <h3 className="pt-2 text-sm font-semibold uppercase tracking-wide text-slate-500">{jurusan.mode === "satu" ? "Jurusan kuliah" : "Pilihan jurusan kuliah"}</h3>
+      {jurusan.mode === "satu" ? (
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Select name="jurusanId" label="Jurusan yang sedang Anda tempuh" required defaultValue={jurusan.nilai} options={jurusan.opsi} hint="Sesuai program studi tempat Anda kuliah sekarang." />
+        </div>
+      ) : jurusan.mode === "kunci" ? (
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             {[

@@ -15,14 +15,14 @@ export type StatistikIpk = {
 type Baris = Record<string, unknown>;
 
 /**
- * Rata-rata IPK per angkatan (tahun akun dibuat, WIB) dan per jurusan diterima.
+ * Rata-rata IPK per angkatan (kolom angkatan, atau tahun akun dibuat WIB) dan per jurusan diterima.
  * Tiap mahasiswa dihitung SEKALI memakai IPK pada semester terakhir yang ia laporkan.
  * `minimalN` > 1 menyembunyikan kelompok kecil agar rata-ratanya tidak membuka IPK individu (dipakai untuk tampilan mahasiswa).
  */
 export async function ambilStatistikIpk(minimalN = 1): Promise<StatistikIpk> {
   const db = await getDb();
   const dasar = sql`
-    select year(date_add(u.created_at, interval 7 hour)) angkatan, coalesce(j.nama, 'Tanpa jurusan') jurusan, l.ipk ipk
+    select coalesce(p.angkatan, year(date_add(u.created_at, interval 7 hour))) angkatan, coalesce(j.nama, 'Tanpa jurusan') jurusan, l.ipk ipk
     from pendaftaran p
     join users u on u.id = p.user_id
     join laporan_akademik l on l.pendaftaran_id = p.id

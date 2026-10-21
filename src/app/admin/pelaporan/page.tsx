@@ -5,7 +5,7 @@ import { FormUmumkan } from "@/components/admin/form-umumkan";
 import { GrafikIpk } from "@/components/grafik-ipk";
 import { ambilStatistikIpk } from "@/lib/statistik-ipk";
 import { Card, PageHeader } from "@/components/ui";
-import { daftarTahun } from "@/lib/admin-query";
+import { daftarAngkatan } from "@/lib/angkatan";
 import { tanggal } from "@/lib/constants";
 import {
   daftarBelumMelapor,
@@ -111,7 +111,7 @@ async function Umumkan() {
 }
 
 async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: Params; qs: (e: Record<string, string | number>) => string; qsFilter: string }) {
-  const [pilihanTahun, daftarJurusan] = await Promise.all([daftarTahun(), daftarJurusanFilter()]);
+  const [pilihanTahun, daftarJurusan] = await Promise.all([daftarAngkatan(), daftarJurusanFilter()]);
   const belum = tab === "belum";
   const hasil = belum ? await daftarBelumMelapor(f) : await daftarMahasiswaMelapor(f);
   const { total, halaman } = hasil;
@@ -181,7 +181,7 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
         <p className="text-sm text-slate-600">
           {belum ? (
             <>
-              <b>{total}</b> mahasiswa belum melaporkan IPK <b>Semester {semesterAktif}</b>.
+              <b>{total}</b> mahasiswa aktif belum melaporkan IPK <b>Semester {semesterAktif}</b>. Mahasiswa yang lulus, dicabut KIP-K, atau tidak aktif tidak dihitung.
             </>
           ) : (
             <>

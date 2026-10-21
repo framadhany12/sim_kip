@@ -1,4 +1,4 @@
-import type { JenisBerkas, Status, Tahap } from "@/db/schema";
+import type { JenisBerkas, Status, StatusMahasiswa, Tahap } from "@/db/schema";
 
 /** Tahun lulus yang boleh mendaftar: tahun berjalan (WIB) dan dua tahun sebelumnya, berganti otomatis tiap 1 Januari. Terurut naik. */
 export function tahunLulusBoleh(): number[] {
@@ -28,6 +28,31 @@ export const STATUS_TONE: Record<Status, string> = {
   diterima: "bg-emerald-50 text-emerald-800 ring-emerald-300",
   ditolak: "bg-rose-50 text-rose-800 ring-rose-300",
 };
+
+export const STATUS_MAHASISWA_LABEL: Record<StatusMahasiswa, string> = {
+  aktif: "Aktif",
+  dicabut: "Dicabut KIP-K",
+  tidak_aktif: "Tidak aktif",
+  lulus: "Lulus",
+};
+
+/** Akibat tiap status bagi akun mahasiswa, ditampilkan di pilihan status admin. */
+export const STATUS_MAHASISWA_AKIBAT: Record<StatusMahasiswa, string> = {
+  aktif: "Akun bisa dipakai; wajib lapor IPK tiap semester.",
+  dicabut: "Bantuan KIP-K dihentikan. Akun dinonaktifkan.",
+  tidak_aktif: "Berhenti, cuti, atau mengundurkan diri. Akun dinonaktifkan.",
+  lulus: "Studi selesai. Akun dinonaktifkan.",
+};
+
+export const STATUS_MAHASISWA_TONE: Record<StatusMahasiswa, string> = {
+  aktif: "bg-emerald-50 text-emerald-800 ring-emerald-300",
+  dicabut: "bg-rose-50 text-rose-800 ring-rose-300",
+  tidak_aktif: "bg-amber-50 text-amber-900 ring-amber-300",
+  lulus: "bg-sky-50 text-sky-800 ring-sky-300",
+};
+
+/** "2026-09-30" → "30 September 2026". */
+export const tanggalPanjang = (iso: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
 
 export const TAHAP_LABEL: Record<Tahap, string> = {
   administrasi: "Seleksi Administrasi",
@@ -72,8 +97,9 @@ export function labelProses(status: Status, tahap: Tahap | null | undefined, usu
 
 /** Label baris riwayat: status lama, tahap seleksi, hasil tahap ("lolos:<tahap>"/"tidak_lolos:<tahap>"), atau hasil pengumuman. */
 export function labelRiwayat(s: string) {
-  const khusus: Record<string, string> = { wawancara_selesai: "Selesai Seleksi Wawancara", diusulkan: "Bersedia diusulkan", tidak_diusulkan: "Tidak bersedia diusulkan", terkirim: "Pendaftaran dikirim", diterima: "Pengumuman: Diterima", ditolak: "Pengumuman: Tidak diterima" };
+  const khusus: Record<string, string> = { impor: "Akun dibuat lewat impor", wawancara_selesai: "Selesai Seleksi Wawancara", diusulkan: "Bersedia diusulkan", tidak_diusulkan: "Tidak bersedia diusulkan", terkirim: "Pendaftaran dikirim", diterima: "Pengumuman: Diterima", ditolak: "Pengumuman: Tidak diterima" };
   const [jenis, t] = s.split(":");
+  if (jenis === "mhs" && t in STATUS_MAHASISWA_LABEL) return `Status mahasiswa: ${STATUS_MAHASISWA_LABEL[t as StatusMahasiswa]}`;
   if (t && t in TAHAP_LABEL) return `${jenis === "lolos" ? "Lolos" : "Tidak lolos"} ${TAHAP_LABEL[t as Tahap]}`;
   return khusus[s] ?? (TAHAP_LABEL as Record<string, string>)[s] ?? (STATUS_LABEL as Record<string, string>)[s] ?? s;
 }

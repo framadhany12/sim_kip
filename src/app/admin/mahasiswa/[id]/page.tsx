@@ -14,7 +14,7 @@ import { RekomendasiFields } from "@/components/rekomendasi-fields";
 import { RingkasanData } from "@/components/ringkasan-data";
 import { Riwayat } from "@/components/riwayat";
 import { Alert, Card, StatusBadge } from "@/components/ui";
-import { tanggal } from "@/lib/constants";
+import { STATUS_MAHASISWA_LABEL, tanggal } from "@/lib/constants";
 import { cariPendaftaranUser, muatLengkap } from "@/lib/pendaftaran";
 
 export const metadata = { title: "Detail Mahasiswa" };
@@ -210,7 +210,16 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
 
       {tab === "status" && (
         <Card title="Status akun">
-          <FormAktif nama={d?.diri?.namaLengkap ?? u.nama} aktif={u.aktif} action={aturAktifAkun.bind(null, id)} />
+          <FormAktif
+            nama={d?.diri?.namaLengkap ?? u.nama}
+            aktif={u.aktif}
+            action={aturAktifAkun.bind(null, id)}
+            dilarang={
+              d && !u.aktif && d.statusMahasiswa !== "aktif"
+                ? `Akun nonaktif karena status mahasiswa ${STATUS_MAHASISWA_LABEL[d.statusMahasiswa]}. Untuk mengaktifkannya, ubah status menjadi Aktif di Master Mahasiswa.`
+                : undefined
+            }
+          />
         </Card>
       )}
 

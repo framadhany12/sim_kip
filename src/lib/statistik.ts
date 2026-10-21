@@ -54,12 +54,12 @@ async function hitungStatistik({ tahun, hari = 30 }: { tahun?: number; hari?: nu
   const rentang = tahun ? rentangTahun(tahun) : null;
   const akhirTren = tahun && `${tahun}-12-31` < hariIni ? `${tahun}-12-31` : hariIni;
   const awalRentang = new Date(Date.parse(`${akhirTren}T00:00:00+07:00`) - (hari - 1) * 864e5);
-  const pemilikTahun = rentang
-    ? sql`select u2.id from users u2 where u2.created_at >= ${rentang.dari} and u2.created_at < ${rentang.sampai}`
-    : null;
-  const fG = pemilikTahun ? sql`${pendaftaran.userId} in (${pemilikTahun})` : undefined;
-  const gSql = pemilikTahun ? sql` and p.user_id in (${pemilikTahun})` : sql``;
-  const akunFilter = rentang ? sql` and created_at >= ${rentang.dari} and created_at < ${rentang.sampai}` : sql``;
+  // Mahasiswa lama hasil impor tidak dihitung sebagai pendaftar.
+  const rentangSql = (kolom: string) => (rentang ? sql` and ${sql.raw(kolom)} >= ${rentang.dari} and ${sql.raw(kolom)} < ${rentang.sampai}` : sql``);
+  const pemilikTahun = sql`select u2.id from users u2 where u2.mahasiswa_lama = 0${rentangSql("u2.created_at")}`;
+  const fG = sql`${pendaftaran.userId} in (${pemilikTahun})`;
+  const gSql = sql` and p.user_id in (${pemilikTahun})`;
+  const akunFilter = sql` and mahasiswa_lama = 0${rentangSql("created_at")}`;
   const dikirim = sql`p.status not in ('draft','perbaikan')`;
 
   // Semua query dimulai serentak (pool 10 koneksi), bukan berurutan.

@@ -2,28 +2,32 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LANGKAH, type SlugLangkah } from "@/lib/constants";
+import { LANGKAH } from "@/lib/constants";
 
-export function Stepper({ selesai }: { selesai: Record<SlugLangkah, boolean> }) {
+type Langkah = readonly { slug: string; label: string }[];
+
+/** Langkah formulir bertahap. Bawaannya formulir pendaftaran; `langkah` + `basis` dipakai untuk Lengkapi Data mahasiswa lama. */
+export function Stepper({ selesai, langkah = LANGKAH, basis = "/formulir", label = "Formulir" }: { selesai: Record<string, boolean>; langkah?: Langkah; basis?: string; label?: string }) {
   const path = usePathname();
-  const aktif = LANGKAH.findIndex((l) => path.endsWith("/" + l.slug));
-  const jumlahSelesai = LANGKAH.filter((l) => selesai[l.slug]).length;
+  const aktif = langkah.findIndex((l) => path.endsWith("/" + l.slug));
+  const jumlahSelesai = langkah.filter((l) => selesai[l.slug]).length;
+  const kolom = { gridTemplateColumns: `repeat(${langkah.length}, minmax(0, 1fr))` };
   return (
-    <nav aria-label="Langkah formulir">
-      {/* HP & tablet: ringkasan satu baris + 7 segmen yang bisa disentuh */}
+    <nav aria-label={`Langkah ${label.toLowerCase()}`}>
+      {/* HP & tablet: ringkasan satu baris + segmen yang bisa disentuh */}
       <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-900/5 lg:hidden">
         <div className="flex items-baseline justify-between gap-3">
           <p className="min-w-0 text-[15px] font-bold leading-tight text-slate-900">
-            <span className="mr-1.5 text-blue-700">{aktif >= 0 ? aktif + 1 : "-"}/{LANGKAH.length}</span>
-            {aktif >= 0 ? LANGKAH[aktif].label : "Formulir"}
+            <span className="mr-1.5 text-blue-700">{aktif >= 0 ? aktif + 1 : "-"}/{langkah.length}</span>
+            {aktif >= 0 ? langkah[aktif].label : label}
           </p>
           <p className="shrink-0 text-xs font-medium text-slate-500">{jumlahSelesai} selesai</p>
         </div>
-        <ol className="mt-3 grid grid-cols-7 gap-1.5">
-          {LANGKAH.map((l, i) => (
+        <ol className="mt-3 grid gap-1.5" style={kolom}>
+          {langkah.map((l, i) => (
             <li key={l.slug}>
               <Link
-                href={`/formulir/${l.slug}`}
+                href={`${basis}/${l.slug}`}
                 aria-label={`Langkah ${i + 1}: ${l.label}${selesai[l.slug] ? " (selesai)" : ""}`}
                 aria-current={i === aktif ? "step" : undefined}
                 className="group flex h-9 items-center justify-center"
@@ -40,14 +44,14 @@ export function Stepper({ selesai }: { selesai: Record<SlugLangkah, boolean> }) 
       </div>
 
       {/* Laptop: semua langkah tampil sekaligus */}
-      <ol className="hidden gap-2 lg:grid lg:grid-cols-7">
-        {LANGKAH.map((l, i) => {
+      <ol className="hidden gap-2 lg:grid" style={kolom}>
+        {langkah.map((l, i) => {
           const isAktif = i === aktif;
           const done = selesai[l.slug];
           return (
             <li key={l.slug}>
               <Link
-                href={`/formulir/${l.slug}`}
+                href={`${basis}/${l.slug}`}
                 aria-current={isAktif ? "step" : undefined}
                 className={`flex h-full items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition ${
                   isAktif ? "border-blue-600 bg-gradient-to-r from-blue-50 to-white text-blue-900 shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"

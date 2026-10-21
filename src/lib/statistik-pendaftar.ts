@@ -23,7 +23,7 @@ async function hitung() {
   const db = await getDb();
   const tahun = tahunBerjalan();
   const { dari, sampai } = rentangTahun(tahun);
-  const pemilik = sql`select u2.id from users u2 where u2.created_at >= ${dari} and u2.created_at < ${sampai}`;
+  const pemilik = sql`select u2.id from users u2 where u2.mahasiswa_lama = 0 and u2.created_at >= ${dari} and u2.created_at < ${sampai}`;
   const dikirim = sql`p.status not in ('draft','perbaikan') and p.user_id in (${pemilik})`;
 
   type Baris = Record<string, unknown>;

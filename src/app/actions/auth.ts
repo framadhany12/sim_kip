@@ -9,6 +9,7 @@ import { dataDiri, emailVerifications, passwordResets, pendaftaran, sessions, us
 import { createSession, destroySession, getCurrentUser, newToken, requireUser, sha256 } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { nilaiForm, type FormState } from "@/lib/form-state";
+import { STATUS_MAHASISWA_LABEL, tanggalPanjang } from "@/lib/constants";
 import { isDuplikat } from "@/lib/pendaftaran";
 import { bolehCoba, cekEmailAktif, EMAIL_RE, ipKlien } from "@/lib/anti-bot";
 import { kirimEmailResetSandi, kirimEmailSandiDiubah, kirimEmailVerifikasi, smtpAktif, urlAplikasi } from "@/lib/mail";
@@ -143,7 +144,14 @@ export async function masuk(_: FormState, fd: FormData): Promise<FormState> {
   const db = await getDb();
   const [u] = await db.select().from(users).where(lewatNik ? eq(users.nik, idn) : eq(users.email, email));
   if (!u || !(await verifyPassword(pw, u.passwordHash))) return gagal;
-  if (!u.aktif) return { message: "Akun Anda dinonaktifkan. Hubungi admin untuk mengaktifkannya kembali.", values: v };
+  if (!u.aktif) {
+    const [p] = u.role === "pendaftar" ? await db.select({ s: pendaftaran.statusMahasiswa, tgl: pendaftaran.statusMahasiswaTanggal }).from(pendaftaran).where(eq(pendaftaran.userId, u.id)).limit(1) : [];
+    if (p && p.s !== "aktif") {
+      const sejak = p.tgl ? ` sejak ${tanggalPanjang(p.tgl)}` : "";
+      return { message: `Status mahasiswa Anda: ${STATUS_MAHASISWA_LABEL[p.s]}${sejak}, sehingga akun ini tidak aktif lagi. Hubungi admin KIP Kuliah bila status ini keliru.`, values: v };
+    }
+    return { message: "Akun Anda dinonaktifkan. Hubungi admin untuk mengaktifkannya kembali.", values: v };
+  }
   if (u.role === "pendaftar" && !u.emailVerifiedAt) {
     (await cookies()).set(COOKIE_VERIF, u.email, { httpOnly: true, sameSite: "lax", path: "/", maxAge: VERIF_JAM * 3600 });
     redirect("/verifikasi-email?belum=1");
@@ -244,6 +252,23 @@ export async function ubahSandi(_: FormState, fd: FormData): Promise<FormState> 
   const pwErr = cekSandi(pw);
   if (pwErr) return { errors: { password: pwErr } };
   if (pw !== fd.get("password2")) return { errors: { password2: "Konfirmasi kata sandi tidak sama." } };
-  await db.update(users).set({ passwordHash: await hashPassword(pw) }).where(eq(users.id, me.id));
+  await db.update(users).set({ passwordHash: await hashPassword(pw), wajibGantiSandi: false }).where(eq(users.id, me.id));
   return { ok: true, message: "Kata sandi berhasil diubah." };
+}
+
+/** Login pertama akun impor: sandi awal (NIK) wajib diganti. Pengguna baru saja memasukkan sandi awal, jadi sandi lama tidak diminta lagi. */
+export async function gantiSandiAwal(_: FormState, fd: FormData): Promise<FormState> {
+  const me = await getCurrentUser();
+  if (!me) redirect("/masuk");
+  if (!me.wajibGantiSandi) redirect("/dashboard");
+  const db = await getDb();
+  const [u] = await db.select({ nik: users.nik }).from(users).where(eq(users.id, me.id));
+  const pw = String(fd.get("password") ?? "");
+  const pwErr = cekSandi(pw);
+  if (pwErr) return { errors: { password: pwErr } };
+  if (u?.nik && pw.includes(u.nik)) return { errors: { password: "Kata sandi baru tidak boleh memuat NIK Anda." } };
+  if (pw !== fd.get("password2")) return { errors: { password2: "Konfirmasi kata sandi tidak sama." } };
+  await db.update(users).set({ passwordHash: await hashPassword(pw), wajibGantiSandi: false }).where(eq(users.id, me.id));
+  revalidatePath("/", "layout");
+  redirect(me.mahasiswaLama ? "/lengkapi-data" : "/dashboard");
 }

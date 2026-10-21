@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
-import { passwordResets, profilAdmin, sessions, users } from "@/db/schema";
+import { passwordResets, pendaftaran, profilAdmin, sessions, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { EMAIL_RE } from "@/lib/anti-bot";
+import { STATUS_MAHASISWA_LABEL } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { kirimEmailSandiDiubah, urlAplikasi } from "@/lib/mail";
 import { hashPassword } from "@/lib/password";
@@ -133,6 +134,11 @@ export async function aturAktifAkun(userId: string, _: FormState, fd: FormData):
   if (!aktif && u.role === "admin") {
     const [lain] = await db.select({ id: users.id }).from(users).where(and(eq(users.role, "admin"), eq(users.aktif, true), ne(users.id, userId))).limit(1);
     if (!lain) return { message: "Tidak bisa menonaktifkan: harus tersisa minimal satu admin aktif." };
+  }
+  if (aktif && u.role === "pendaftar") {
+    const [p] = await db.select({ s: pendaftaran.statusMahasiswa }).from(pendaftaran).where(eq(pendaftaran.userId, userId)).limit(1);
+    if (p && p.s !== "aktif")
+      return { message: `Status mahasiswa ${u.nama} adalah ${STATUS_MAHASISWA_LABEL[p.s]}. Ubah statusnya menjadi Aktif di Master Mahasiswa untuk mengaktifkan akun.` };
   }
   await db.transaction(async (tx) => {
     await tx.update(users).set({ aktif }).where(eq(users.id, userId));

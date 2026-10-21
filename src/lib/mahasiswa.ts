@@ -10,7 +10,7 @@ export const PER_HALAMAN_MHS = 25;
 /** Semua akun pendaftar (termasuk yang belum mengisi formulir). Bawaannya semua tahun; filter tahun memakai waktu akun dibuat (WIB). */
 export async function daftarMahasiswa(f: FilterMahasiswa) {
   const db = await getDb();
-  const c = [eq(users.role, "pendaftar")];
+  const c = [eq(users.role, "pendaftar"), eq(users.mahasiswaLama, false)];
   const tahun = parseTahun(f.tahun);
   if (tahun) {
     const { dari, sampai } = rentangTahun(tahun);

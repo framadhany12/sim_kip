@@ -13,7 +13,7 @@ const SESSION_DAYS = 7;
 export const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 export const newToken = () => randomBytes(32).toString("base64url");
 
-export type CurrentUser = { id: string; nama: string; email: string; role: "pendaftar" | "admin" };
+export type CurrentUser = { id: string; nama: string; email: string; role: "pendaftar" | "admin"; mahasiswaLama: boolean; wajibGantiSandi: boolean };
 
 export async function createSession(userId: string) {
   const db = await getDb();
@@ -45,14 +45,14 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!token) return null;
   const db = await getDb();
   const [row] = await db
-    .select({ id: users.id, nama: users.nama, email: users.email, role: users.role, verified: users.emailVerifiedAt, aktif: users.aktif })
+    .select({ id: users.id, nama: users.nama, email: users.email, role: users.role, verified: users.emailVerifiedAt, aktif: users.aktif, mahasiswaLama: users.mahasiswaLama, wajibGantiSandi: users.wajibGantiSandi })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.id, sha256(token)), gt(sessions.expiresAt, new Date())))
     .limit(1);
   // Pendaftar yang emailnya belum diverifikasi tidak dianggap login.
   if (!row || !row.aktif || (row.role === "pendaftar" && !row.verified)) return null;
-  return { id: row.id, nama: row.nama, email: row.email, role: row.role };
+  return { id: row.id, nama: row.nama, email: row.email, role: row.role, mahasiswaLama: row.mahasiswaLama, wajibGantiSandi: row.wajibGantiSandi };
 });
 
 export async function requireUser() {

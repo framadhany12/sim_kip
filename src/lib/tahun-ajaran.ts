@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { tahunAjaran, users } from "@/db/schema";
 import { tahunBerjalan } from "./tahun";
@@ -10,7 +10,7 @@ export async function jumlahPendaftarPerTahun() {
   const rows = await db
     .select({ tahun: sql<number>`year(date_add(${users.createdAt}, interval 7 hour))`, jumlah: sql<number>`count(*)` })
     .from(users)
-    .where(eq(users.role, "pendaftar"))
+    .where(and(eq(users.role, "pendaftar"), eq(users.mahasiswaLama, false)))
     .groupBy(sql`year(date_add(${users.createdAt}, interval 7 hour))`);
   return new Map(rows.map((r) => [Number(r.tahun), Number(r.jumlah)]));
 }

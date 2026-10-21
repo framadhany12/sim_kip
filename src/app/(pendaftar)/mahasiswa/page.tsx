@@ -12,10 +12,10 @@ export const metadata = { title: "Mahasiswa" };
 
 const tglLahir = (s: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${s}T00:00:00Z`));
 
-export default async function MahasiswaPage({ searchParams }: { searchParams: Promise<{ tersimpan?: string }> }) {
+export default async function MahasiswaPage({ searchParams }: { searchParams: Promise<{ tersimpan?: string; lengkap?: string }> }) {
   const { user, d } = await konteksPendaftar();
   if (!sudahMahasiswa(d)) redirect("/dashboard");
-  const { tersimpan } = await searchParams;
+  const { tersimpan, lengkap } = await searchParams;
   const x = d.diri;
 
   return (
@@ -23,6 +23,7 @@ export default async function MahasiswaPage({ searchParams }: { searchParams: Pr
       <Hero eyebrow="Politeknik TEDC Bandung" title="Data Mahasiswa" desc="Identitas, alamat, dan data akademik Anda sebagai mahasiswa penerima KIP Kuliah." />
       <BannerPengumuman pendaftaranId={d.id} />
       {tersimpan === "identitas" && <Alert tone="success">Identitas & alamat berhasil diperbarui.</Alert>}
+      {lengkap === "1" && <Alert tone="success" title="Data Anda sudah lengkap">Menu Lapor IPK dan Kegiatan sekarang bisa dipakai.</Alert>}
 
       <Card
         title="Identitas"

@@ -1,8 +1,9 @@
 import "server-only";
-import { and, asc, desc, eq, gte, isNull, like, lt, notExists, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, like, notExists, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { dataDiri, jurusan, laporanAkademik, pendaftaran, pengumumanMahasiswa, users } from "@/db/schema";
-import { parseTahun, rentangTahun } from "./tahun";
+import { angkatanSql } from "./angkatan";
+import { parseTahun } from "./tahun";
 
 /** `angkatan` = tahun pendaftar mendaftar (akun dibuat, WIB), sama dengan filter "Tahun daftar" di menu lain. */
 export type FilterPelaporan = { q?: string; jurusan?: string; angkatan?: string; semester?: string; page?: string };
@@ -19,8 +20,7 @@ function syaratMahasiswa(f: FilterPelaporan): SQL[] {
   if (f.jurusan) c.push(eq(pendaftaran.jurusanDiterimaId, f.jurusan));
   const angkatan = parseTahun(f.angkatan);
   if (angkatan) {
-    const { dari, sampai } = rentangTahun(angkatan);
-    c.push(gte(users.createdAt, dari), lt(users.createdAt, sampai));
+    c.push(sql`${angkatanSql} = ${angkatan}`);
   }
   const q = f.q?.trim();
   if (q) {
@@ -31,7 +31,7 @@ function syaratMahasiswa(f: FilterPelaporan): SQL[] {
 }
 
 const namaMhs = sql<string>`coalesce(${dataDiri.namaLengkap}, ${users.nama})`;
-const angkatanMhs = sql<number>`year(date_add(${users.createdAt}, interval 7 hour))`;
+const angkatanMhs = angkatanSql;
 
 /** Laporan IPK & transkrip, terbaru dulu. `semua` = tanpa paginasi (untuk ekspor). */
 export async function daftarPelaporan(f: FilterPelaporan, semua = false) {
@@ -86,7 +86,8 @@ export async function daftarBelumMelapor(f: FilterPelaporan, semua = false) {
       .from(laporanAkademik)
       .where(and(eq(laporanAkademik.pendaftaranId, pendaftaran.id), eq(laporanAkademik.semester, semester))),
   );
-  const where = and(...syaratMahasiswa(f), belum);
+  // Hanya mahasiswa aktif yang wajib melapor; yang lulus/dicabut/tidak aktif tidak ditagih.
+  const where = and(...syaratMahasiswa(f), eq(pendaftaran.statusMahasiswa, "aktif"), belum);
   const halaman = Math.max(1, Number(f.page) || 1);
   const dasar = () =>
     db
@@ -131,13 +132,13 @@ export async function daftarPengumumanMahasiswa() {
   const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(pendaftaran)
-    .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")));
+    .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima"), eq(pendaftaran.statusMahasiswa, "aktif")));
   // Satu query untuk semua semester, bukan satu per pengumuman.
   const sudah = await db
     .select({ semester: laporanAkademik.semester, n: sql<number>`count(*)` })
     .from(laporanAkademik)
     .innerJoin(pendaftaran, eq(pendaftaran.id, laporanAkademik.pendaftaranId))
-    .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")))
+    .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima"), eq(pendaftaran.statusMahasiswa, "aktif")))
     .groupBy(laporanAkademik.semester);
   const perSemester = new Map(sudah.map((r) => [r.semester, Number(r.n)]));
   return rows.map((r) => ({ ...r, belum: r.semester ? Math.max(0, Number(total) - (perSemester.get(r.semester) ?? 0)) : (null as number | null) }));

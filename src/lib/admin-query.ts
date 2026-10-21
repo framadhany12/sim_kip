@@ -36,7 +36,8 @@ export const FILTER_STATUS = ["semua", "masuk", ...TAHAP.filter((t) => t !== "pe
 const DALAM_PROSES: Status[] = ["terkirim", "diperiksa"];
 
 function kondisi(f: FilterPendaftar): SQL | undefined {
-  const c: (SQL | undefined)[] = [];
+  // Mahasiswa lama hasil impor tidak ikut seleksi; mereka hanya di Master Mahasiswa.
+  const c: (SQL | undefined)[] = [eq(users.mahasiswaLama, false)];
   const st = f.status || "semua";
   if (st === "masuk") c.push(inArray(pendaftaran.status, DALAM_PROSES));
   else if (st.startsWith("tahap:") && (TAHAP as readonly string[]).includes(st.slice(6)))

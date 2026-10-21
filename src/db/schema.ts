@@ -18,6 +18,10 @@ export const users = mysqlTable("users", {
   emailVerifiedAt: ts("email_verified_at"),
   /** False = akun dinonaktifkan admin: tidak bisa masuk dan sesinya dicabut. Data tetap tersimpan. */
   aktif: boolean("aktif").notNull().default(true),
+  /** Akun mahasiswa angkatan lama hasil impor admin: langsung masuk Master Mahasiswa, tidak ikut data/statistik pendaftaran. */
+  mahasiswaLama: boolean("mahasiswa_lama").notNull().default(false),
+  /** Sandi masih sandi awal dari admin; pengguna harus menggantinya sebelum memakai aplikasi. */
+  wajibGantiSandi: boolean("wajib_ganti_sandi").notNull().default(false),
   createdAt: now("created_at"),
 }, (t) => [index("users_role_created").on(t.role, t.createdAt)]);
 
@@ -67,6 +71,9 @@ export type Tahap = (typeof TAHAP)[number];
 
 export const USULAN = ["menunggu", "bersedia", "tidak"] as const;
 export type Usulan = (typeof USULAN)[number];
+/** Status studi mahasiswa (pendaftar yang diterima). Selain "aktif", akun dinonaktifkan. */
+export const STATUS_MAHASISWA = ["aktif", "dicabut", "tidak_aktif", "lulus"] as const;
+export type StatusMahasiswa = (typeof STATUS_MAHASISWA)[number];
 export const STATUS = ["draft", "terkirim", "diperiksa", "perbaikan", "diterima", "ditolak"] as const;
 export type Status = (typeof STATUS)[number];
 
@@ -97,6 +104,12 @@ export const pendaftaran = mysqlTable(
     /** Data akademik mahasiswa yang diterima: NIM dan kelas dari bagian akademik kampus; diisi mahasiswa sendiri atau admin. */
     nim: varchar("nim", { length: 30 }),
     kelas: varchar("kelas", { length: 30 }),
+    /** Angkatan kuliah. Diisi untuk mahasiswa lama hasil impor; kosong = tahun akun dibuat (WIB). */
+    angkatan: int("angkatan"),
+    statusMahasiswa: mysqlEnum("status_mahasiswa", STATUS_MAHASISWA).notNull().default("aktif"),
+    /** Tanggal berlakunya status mahasiswa (YYYY-MM-DD) dan keterangannya, diisi admin. */
+    statusMahasiswaTanggal: varchar("status_mahasiswa_tanggal", { length: 10 }),
+    statusMahasiswaKeterangan: varchar("status_mahasiswa_keterangan", { length: 255 }),
     submittedAt: ts("submitted_at"),
     createdAt: now("created_at"),
     updatedAt: now("updated_at"),

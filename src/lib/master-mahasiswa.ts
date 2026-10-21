@@ -1,10 +1,11 @@
 import "server-only";
-import { and, asc, eq, gte, like, lt, or, sql } from "drizzle-orm";
+import { and, asc, eq, like, or, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { dataDiri, jenisBeasiswa, jurusan, pendaftaran, users } from "@/db/schema";
-import { parseTahun, rentangTahun } from "./tahun";
+import { dataDiri, jenisBeasiswa, jurusan, pendaftaran, STATUS_MAHASISWA, users } from "@/db/schema";
+import { angkatanSql } from "./angkatan";
+import { parseTahun } from "./tahun";
 
-export type FilterMasterMhs = { q?: string; jurusan?: string; tahun?: string; nim?: string; page?: string };
+export type FilterMasterMhs = { q?: string; jurusan?: string; tahun?: string; nim?: string; status?: string; page?: string };
 export const PER_HALAMAN_MASTER = 25;
 
 /** Mahasiswa = pendaftar yang sudah diterima (status & hasil Diterima), lengkap dengan NIM dan kelas. */
@@ -13,10 +14,7 @@ export async function daftarMasterMahasiswa(f: FilterMasterMhs) {
   const c = [eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")];
   if (f.jurusan) c.push(eq(pendaftaran.jurusanDiterimaId, f.jurusan));
   const tahun = parseTahun(f.tahun);
-  if (tahun) {
-    const { dari, sampai } = rentangTahun(tahun);
-    c.push(gte(users.createdAt, dari), lt(users.createdAt, sampai));
-  }
+  if (tahun) c.push(sql`${angkatanSql} = ${tahun}`);
   if (f.nim === "sudah") c.push(sql`${pendaftaran.nim} is not null`);
   if (f.nim === "belum") c.push(sql`${pendaftaran.nim} is null`);
   const q = f.q?.trim();
@@ -24,7 +22,8 @@ export async function daftarMasterMahasiswa(f: FilterMasterMhs) {
     const pola = `%${q}%`;
     c.push(or(like(dataDiri.namaLengkap, pola), like(users.nama, pola), like(users.email, pola), like(dataDiri.nik, pola), like(pendaftaran.nim, pola), like(pendaftaran.kelas, pola))!);
   }
-  const where = and(...c);
+  const status = STATUS_MAHASISWA.find((s) => s === f.status);
+  const where = and(...c, status ? eq(pendaftaran.statusMahasiswa, status) : undefined);
   const halaman = Math.max(1, Number(f.page) || 1);
   const [rows, [{ total }], daftarJurusan] = await Promise.all([
     db
@@ -39,6 +38,11 @@ export async function daftarMasterMahasiswa(f: FilterMasterMhs) {
         beasiswa: jenisBeasiswa.nama,
         nim: pendaftaran.nim,
         kelas: pendaftaran.kelas,
+        status: pendaftaran.statusMahasiswa,
+        angkatan: angkatanSql,
+        mahasiswaLama: users.mahasiswaLama,
+        jurusanId: pendaftaran.jurusanDiterimaId,
+        statusTanggal: pendaftaran.statusMahasiswaTanggal,
       })
       .from(pendaftaran)
       .innerJoin(users, eq(users.id, pendaftaran.userId))

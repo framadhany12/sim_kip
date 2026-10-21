@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { Status, Tahap } from "@/db/schema";
-import { STATUS_LABEL, STATUS_TONE, labelProses } from "@/lib/constants";
+import type { Status, StatusMahasiswa, Tahap } from "@/db/schema";
+import { STATUS_LABEL, STATUS_MAHASISWA_LABEL, STATUS_MAHASISWA_TONE, STATUS_TONE, labelProses } from "@/lib/constants";
 
 export function Card({ children, className = "", title, action }: { children: ReactNode; className?: string; title?: ReactNode; action?: ReactNode }) {
   return (
@@ -56,6 +56,14 @@ export function StatusBadge({ status, tahap, usulan }: { status: Status; tahap?:
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${STATUS_TONE[status]}`}>
       {tahap !== undefined ? labelProses(status, tahap, usulan) : STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+export function StatusMahasiswaBadge({ status }: { status: StatusMahasiswa }) {
+  return (
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${STATUS_MAHASISWA_TONE[status]}`}>
+      {STATUS_MAHASISWA_LABEL[status]}
     </span>
   );
 }
