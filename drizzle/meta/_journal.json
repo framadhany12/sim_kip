@@ -127,6 +127,20 @@
       "when": 1792205687173,
       "tag": "0017_abandoned_la_nuit",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1792568473701,
+      "tag": "0018_master_sekolah",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1792570206381,
+      "tag": "0019_kata_cari_sekolah",
+      "breakpoints": true
     }
   ]
 }

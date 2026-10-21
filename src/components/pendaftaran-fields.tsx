@@ -1,6 +1,7 @@
 import { AGAMA, DESIL } from "@/db/schema";
 import { Field, Select, TextArea } from "@/components/form";
 import { Alert } from "@/components/ui";
+import { PilihSekolah } from "@/components/pilih-sekolah";
 import { WilayahSelect } from "@/components/wilayah-select";
 import { DESIL_LABEL, MAX_UMUR, STATUS_NIKAH_LABEL, tahunLulusBoleh } from "@/lib/constants";
 import type { PendaftaranLengkap } from "@/lib/pendaftaran";
@@ -222,17 +223,7 @@ export function FieldsSekolah({
   return (
     <>
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field name="namaSekolah" label="Nama sekolah" required defaultValue={s?.namaSekolah} hint="Nama SMA/SMK/MA atau sederajat sesuai ijazah." contoh="SMK Negeri 1 Cimahi" />
-        <Field
-          name="npsn"
-          label="NPSN sekolah"
-          required
-          inputMode="numeric"
-          maxLength={8}
-          defaultValue={s?.npsn}
-          hint="8 digit. Cari di referensi.data.kemdikbud.go.id atau tanyakan ke sekolah."
-          contoh="20224021"
-        />
+        <PilihSekolah defaultNama={s?.namaSekolah} defaultNpsn={s?.npsn} />
         <Select
           name="tahunLulus"
           label="Tahun lulus"

@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "admin:buat": "node scripts/buat-admin.mjs",
+    "sekolah:impor": "node scripts/impor-sekolah.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrasi.mjs",
     "db:backup": "node scripts/backup.mjs",

@@ -198,6 +198,23 @@ export const dataSekolah = mysqlTable("data_sekolah", {
   jurusanSekolah: varchar("jurusan_sekolah", { length: 100 }).notNull(),
 });
 
+/**
+ * Master sekolah asal (SMA/SMK/MA), dicari pendaftar di formulir Data Sekolah; NPSN unik.
+ * Sekolah yang belum ada dan diketik manual oleh pendaftar ikut masuk ke sini dengan sumber "pendaftar" agar bisa diperiksa admin.
+ * `data_sekolah` tetap menyimpan salinan nama + NPSN, terhubung lewat NPSN.
+ */
+export const sekolah = mysqlTable("sekolah", {
+  id: id(),
+  npsn: varchar("npsn", { length: 8 }).notNull().unique(),
+  nama: varchar("nama", { length: 150 }).notNull(),
+  /** Kabupaten/kota, membantu membedakan sekolah yang namanya mirip. */
+  kota: varchar("kota", { length: 100 }),
+  sumber: mysqlEnum("sumber", ["admin", "pendaftar"]).notNull().default("admin"),
+  /** Nama + kota yang dinormalkan untuk pencarian (SMAN → sma negeri, Kab. → kabupaten); lihat `kataCariSekolah`. */
+  kataCari: varchar("kata_cari", { length: 300 }).notNull().default(""),
+  createdAt: now("created_at"),
+}, (t) => [index("sekolah_nama").on(t.nama)]);
+
 export const jurusan = mysqlTable("jurusan", {
   id: id(),
   kode: varchar("kode", { length: 20 }).notNull().unique(),

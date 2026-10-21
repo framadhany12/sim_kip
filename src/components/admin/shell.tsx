@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   LogOut,
   Award,
+  School,
   Menu,
   Megaphone,
   PanelsTopLeft,
@@ -71,6 +72,7 @@ export function AdminShell({
         { href: "/admin/jurusan", label: "Jurusan", icon: GraduationCap },
         { href: "/admin/rekomendasi", label: "Sumber Rekomendasi", icon: Share2 },
         { href: "/admin/beasiswa", label: "Jenis Beasiswa", icon: Award },
+        { href: "/admin/sekolah", label: "Master Sekolah", icon: School },
       ],
     },
     {

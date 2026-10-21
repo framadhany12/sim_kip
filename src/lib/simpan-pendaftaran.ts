@@ -13,12 +13,14 @@ import {
   pendaftaran,
   pilihanJurusan,
   rekomendasi,
+  sekolah as masterSekolah,
   sumberRekomendasi,
   users,
   wilayahKecamatan,
 } from "@/db/schema";
 import { tahunLulusBoleh, hitungUmur, normalHp } from "./constants";
 import { isDuplikat } from "./pendaftaran";
+import { kataCariSekolah, samaNama } from "./sekolah";
 import type { FormState } from "./form-state";
 
 /**
@@ -188,7 +190,9 @@ export async function simpanSekolahCore(pendaftaranId: string, v: Nilai, modeJur
       : []),
   ]);
   const npsn = angka(v.npsn);
-  if (npsn.length !== 8) e.npsn = "NPSN terdiri dari 8 digit angka.";
+  // Mode cari: belum memilih sekolah cukup satu pesan di kolom nama.
+  if (!v.namaSekolah && v.sekolahManual !== "1") e.namaSekolah = "Cari lalu pilih sekolah dari daftar, atau isi manual bila tidak ada.";
+  else if (npsn.length !== 8) e.npsn = "NPSN terdiri dari 8 digit angka.";
   const tahun = Number(v.tahunLulus);
   // Koreksi oleh admin dan pendaftar yang sudah mengirim tidak dibatasi rentang tahun berjalan (data lama tetap bisa dikoreksi).
   if (modeJurusan === "pendaftar" && !tahunLulusBoleh().includes(tahun)) e.tahunLulus = `Hanya lulusan tahun ${tahunLulusBoleh().join(", ")} yang dapat mendaftar.`;
@@ -208,11 +212,20 @@ export async function simpanSekolahCore(pendaftaranId: string, v: Nilai, modeJur
         e.jurusan1Id = "Pendaftar sudah diumumkan diterima di salah satu jurusan; jurusan itu harus tetap menjadi Jurusan 1 atau 2.";
     }
   }
+  // NPSN yang sudah ada di master harus dipakai dengan nama sekolah yang sama; yang belum ada ditambahkan ke master.
+  const [master] = !e.npsn ? await db.select().from(masterSekolah).where(eq(masterSekolah.npsn, npsn)) : [];
+  if (master && v.namaSekolah && !samaNama(master.nama, v.namaSekolah))
+    e.npsn = `NPSN ${npsn} sudah terdaftar atas nama "${master.nama}". Cari dan pilih sekolah itu, atau periksa kembali NPSN.`;
   if (Object.keys(e).length) return gagal(e, v);
 
-  const sekolah = { namaSekolah: v.namaSekolah, npsn, tahunLulus: tahun, jurusanSekolah: v.jurusanSekolah };
+  const sekolah = { namaSekolah: master?.nama ?? v.namaSekolah.replace(/\s+/g, " "), npsn, tahunLulus: tahun, jurusanSekolah: v.jurusanSekolah };
   const pilihan = { jurusan1Id: v.jurusan1Id, jurusan2Id: v.jurusan2Id };
   await db.transaction(async (tx) => {
+    if (!master)
+      await tx
+        .insert(masterSekolah)
+        .values({ npsn, nama: sekolah.namaSekolah, kataCari: kataCariSekolah(sekolah.namaSekolah), sumber: modeJurusan === "admin" ? "admin" : "pendaftar" })
+        .onDuplicateKeyUpdate({ set: { npsn } });
     await tx.insert(dataSekolah).values({ pendaftaranId, ...sekolah }).onDuplicateKeyUpdate({ set: sekolah });
     if (ubahJurusan) await tx.insert(pilihanJurusan).values({ pendaftaranId, ...pilihan }).onDuplicateKeyUpdate({ set: pilihan });
   });
