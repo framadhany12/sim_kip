@@ -4,7 +4,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "SIM KIP Politeknik TEDC",
+    name: "SIM KIP",
     short_name: "SIM KIP",
     description: "Pendaftaran dan layanan mahasiswa KIP Kuliah Politeknik TEDC Bandung.",
     lang: "id",

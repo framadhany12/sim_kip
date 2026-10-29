@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: { default: "Pendaftaran KIP Kuliah · Politeknik TEDC Bandung", template: "%s · KIP Kuliah Politeknik TEDC" },
   description:
     "Pendaftaran KIP Kuliah Politeknik TEDC Bandung secara daring: isi formulir terpandu, unggah berkas, dan pantau status pendaftaran.",
+  // Nama di bawah ikon saat dipasang ke layar utama iPhone (Android memakai manifest.ts).
+  applicationName: "SIM KIP",
+  appleWebApp: { capable: true, title: "SIM KIP", statusBarStyle: "default" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
