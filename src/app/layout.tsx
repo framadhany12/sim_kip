@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SembunyikanDiAdmin } from "@/components/sembunyikan-di-admin";
+import { DaftarkanSW, SKRIP_TANGKAP_PASANG } from "@/components/pwa";
 
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"] });
 
@@ -24,12 +25,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             __html: "try{var t=localStorage.getItem('tema');if(t==='gelap'||(t!=='terang'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}",
           }}
         />
+        <script dangerouslySetInnerHTML={{ __html: SKRIP_TANGKAP_PASANG }} />
       </head>
       <body className={`${jakarta.variable} min-h-dvh font-sans antialiased`}>
         <SembunyikanDiAdmin>
           <SiteHeader />
         </SembunyikanDiAdmin>
         {children}
+        <DaftarkanSW />
       </body>
     </html>
   );

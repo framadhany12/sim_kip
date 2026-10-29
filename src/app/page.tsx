@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { ArrowUpRight, Check } from "lucide-react";
 import { getDb } from "@/db";
 import { jurusan } from "@/db/schema";
+import { KreditAplikasi } from "@/components/kredit-aplikasi";
 import { LogoTedc } from "@/components/logo";
 import { getCurrentUser } from "@/lib/auth";
 import { ambilLanding } from "@/lib/landing";
@@ -261,6 +262,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
             <Link href="/masuk" className="inline-flex min-h-11 items-center hover:text-white">Masuk</Link>
             <Link href="/bantuan" className="inline-flex min-h-11 items-center hover:text-white">Bantuan &amp; FAQ</Link>
           </nav>
+        </div>
+        <div className="border-t border-white/10">
+          <KreditAplikasi gelap className="mx-auto max-w-6xl px-4 py-4" />
         </div>
       </footer>
     </main>

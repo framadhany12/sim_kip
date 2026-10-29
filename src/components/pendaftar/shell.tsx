@@ -2,22 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CircleHelp, FileText, CalendarCheck, ChartColumn, GraduationCap, House, ListChecks, LogOut, UserRound, type LucideIcon } from "lucide-react";
+import { CircleHelp, FileText, CalendarCheck, ChartColumn, GraduationCap, House, ListChecks, LogOut, PiggyBank, UserRound, type LucideIcon } from "lucide-react";
 import { BottomNav } from "@/components/bottom-nav";
+import { KreditAplikasi } from "@/components/kredit-aplikasi";
+import { TombolPasang } from "@/components/pwa";
 import { TombolTema } from "@/components/tombol-tema";
 
 type Item = { href: string; label: string; match: string; icon: LucideIcon; kecuali?: string[] };
 
 const MENU_FORMULIR: Item = { href: "/formulir/data-diri", label: "Formulir", match: "/formulir", icon: FileText };
-const MENU_MAHASISWA: Item[] = [
-  { href: "/mahasiswa", label: "Mahasiswa", match: "/mahasiswa", icon: GraduationCap, kecuali: ["/mahasiswa/ipk", "/mahasiswa/kegiatan"] },
+const MENU_MAHASISWA = (bukuTabungan: boolean): Item[] => [
+  { href: "/mahasiswa", label: "Mahasiswa", match: "/mahasiswa", icon: GraduationCap, kecuali: ["/mahasiswa/ipk", "/mahasiswa/kegiatan", "/mahasiswa/buku-tabungan"] },
   { href: "/mahasiswa/ipk", label: "Laporan IPK", match: "/mahasiswa/ipk", icon: ChartColumn },
   { href: "/mahasiswa/kegiatan", label: "Kegiatan", match: "/mahasiswa/kegiatan", icon: CalendarCheck },
+  ...(bukuTabungan ? [{ href: "/mahasiswa/buku-tabungan", label: "Buku Tabungan", match: "/mahasiswa/buku-tabungan", icon: PiggyBank }] : []),
 ];
 
-const MENU = (mahasiswa: boolean): Item[] => [
-  { href: "/dashboard", label: "Beranda", match: "/dashboard", icon: House },
-  ...(mahasiswa ? MENU_MAHASISWA : [MENU_FORMULIR]),
+const MENU = (mahasiswa: boolean, bukuTabungan: boolean): Item[] => [
+  { href: "/dashboard", label: mahasiswa ? "Dashboard" : "Beranda", match: "/dashboard", icon: House },
+  ...(mahasiswa ? MENU_MAHASISWA(bukuTabungan) : [MENU_FORMULIR]),
   { href: "/status", label: "Status Seleksi", match: "/status", icon: ListChecks },
   { href: "/bantuan", label: "Bantuan", match: "/bantuan", icon: CircleHelp },
   { href: "/akun", label: "Akun Saya", match: "/akun", icon: UserRound },
@@ -34,6 +37,7 @@ export function PendaftarShell({
   logo,
   aksiKeluar,
   mahasiswa = false,
+  bukuTabungan = false,
 }: {
   children: React.ReactNode;
   nama: string;
@@ -42,6 +46,8 @@ export function PendaftarShell({
   aksiKeluar: () => Promise<void>;
   /** Pendaftar yang sudah diterima: menu Formulir diganti menu Mahasiswa. */
   mahasiswa?: boolean;
+  /** Mahasiswa angkatan 2026+ mendapat menu Buku Tabungan. */
+  bukuTabungan?: boolean;
 }) {
   const path = usePathname();
   const aktif = (i: Item) => (path === i.match || path.startsWith(i.match + "/")) && !i.kecuali?.some((k) => path === k || path.startsWith(k + "/"));
@@ -65,7 +71,7 @@ export function PendaftarShell({
           <div className="flex-1 overflow-y-auto px-3 py-5">
             <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-200/60">Menu</p>
             <ul className="space-y-0.5">
-              {MENU(mahasiswa).map((i) => {
+              {MENU(mahasiswa, bukuTabungan).map((i) => {
                 const on = aktif(i);
                 return (
                   <li key={i.href}>
@@ -103,6 +109,7 @@ export function PendaftarShell({
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-3">
+            <TombolPasang />
             <TombolTema />
             <div className="hidden text-right leading-tight sm:block">
               <p className="text-sm font-semibold text-slate-900">{nama}</p>
@@ -119,7 +126,10 @@ export function PendaftarShell({
           </div>
         </header>
         {/* pb-28: ruang untuk menu bawah (HP/tablet) beserta area aman perangkat. */}
-        <div className="mx-auto max-w-6xl px-4 pb-28 pt-5 sm:px-6 sm:pt-7 lg:px-8 lg:pb-10">{children}</div>
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-5 sm:px-6 sm:pt-7 lg:px-8 lg:pb-8">
+          {children}
+          <KreditAplikasi className="mt-10" />
+        </div>
       </div>
       <BottomNav mahasiswa={mahasiswa} />
     </div>

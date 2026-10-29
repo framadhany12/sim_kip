@@ -301,9 +301,23 @@ export const pengumumanMahasiswa = mysqlTable("pengumuman_mahasiswa", {
   judul: varchar("judul", { length: 150 }).notNull(),
   isi: text("isi").notNull(),
   semester: int("semester"),
+  /** "buku_tabungan": hanya tampil bagi mahasiswa wajib buku tabungan yang belum mengisi. Kosong = pengumuman umum/IPK. */
+  jenis: varchar("jenis", { length: 20 }),
   tenggat: varchar("tenggat", { length: 10 }),
   aktif: boolean("aktif").notNull().default(true),
   dibuatOleh: ref("dibuat_oleh").references(() => users.id, { onDelete: "set null" }),
+  createdAt: now("created_at"),
+});
+
+/** No. rekening KIP-K + foto/scan buku tabungan, satu per mahasiswa (angkatan 2026 ke atas). Terkunci setelah dikirim; admin menghapus bila keliru agar mahasiswa bisa mengirim ulang. */
+export const bukuTabungan = mysqlTable("buku_tabungan", {
+  id: id(),
+  pendaftaranId: ref("pendaftaran_id").notNull().unique("buku_tabungan_pendaftaran").references(() => pendaftaran.id, { onDelete: "cascade" }),
+  noRekening: varchar("no_rekening", { length: 30 }).notNull(),
+  fileUrl: varchar("file_url", { length: 255 }).notNull(), // path relatif di dalam folder storage
+  namaAsli: varchar("nama_asli", { length: 200 }).notNull(),
+  mimeType: varchar("mime_type", { length: 50 }).notNull(),
+  ukuran: int("ukuran").notNull(),
   createdAt: now("created_at"),
 });
 

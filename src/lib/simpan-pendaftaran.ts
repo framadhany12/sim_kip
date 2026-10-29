@@ -257,7 +257,7 @@ export async function simpanAkademikCore(pendaftaranId: string, v: Nilai): Promi
   const nim = (v.nim ?? "").replace(/\s/g, "").toUpperCase();
   const kelas = (v.kelas ?? "").trim().toUpperCase();
   if (nim && !/^[A-Z0-9][A-Z0-9./-]{3,29}$/.test(nim)) e.nim = "NIM 4–30 karakter: huruf, angka, titik, garis miring, atau strip.";
-  if (kelas && !/^[A-Z0-9][A-Z0-9 ./-]{0,29}$/.test(kelas)) e.kelas = "Kelas maksimal 30 karakter, hanya huruf, angka, spasi, atau strip (mis. TI-1A).";
+  if (kelas && !/^[A-Z0-9][A-Z0-9 ./-]{0,29}$/.test(kelas)) e.kelas = "Kelas maksimal 30 karakter, hanya huruf, angka, spasi, atau strip (mis. IF-24A).";
   const db = await getDb();
   if (nim && !e.nim) {
     const [dipakai] = await db.select({ id: pendaftaran.id }).from(pendaftaran).where(and(eq(pendaftaran.nim, nim), ne(pendaftaran.id, pendaftaranId))).limit(1);

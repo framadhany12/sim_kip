@@ -16,6 +16,7 @@
     "db:migrasi-sqlite": "node scripts/migrasi-sqlite-ke-mysql.mjs"
   },
   "dependencies": {
+    "docx": "^9.15.0",
     "drizzle-orm": "^0.44.5",
     "exceljs": "^4.4.0",
     "jsqr": "^1.4.0",
@@ -27,7 +28,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "recharts": "^3.10.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

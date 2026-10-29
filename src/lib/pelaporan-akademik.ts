@@ -3,6 +3,7 @@ import { and, asc, desc, eq, isNull, like, notExists, or, sql, type SQL } from "
 import { getDb } from "@/db";
 import { dataDiri, jurusan, laporanAkademik, pendaftaran, pengumumanMahasiswa, users } from "@/db/schema";
 import { angkatanSql } from "./angkatan";
+import { syaratPengumumanBt } from "./buku-tabungan";
 import { parseTahun } from "./tahun";
 
 /** `angkatan` = tahun pendaftar mendaftar (akun dibuat, WIB), sama dengan filter "Tahun daftar" di menu lain. */
@@ -128,7 +129,8 @@ export async function daftarJurusanFilter() {
 /** Pengumuman mahasiswa (terbaru dulu) beserta jumlah mahasiswa yang belum melapor untuk semester terkait. */
 export async function daftarPengumumanMahasiswa() {
   const db = await getDb();
-  const rows = await db.select().from(pengumumanMahasiswa).orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
+  // Pengumuman buku tabungan dikelola di menu Buku Tabungan.
+  const rows = await db.select().from(pengumumanMahasiswa).where(isNull(pengumumanMahasiswa.jenis)).orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
   const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(pendaftaran)
@@ -144,7 +146,7 @@ export async function daftarPengumumanMahasiswa() {
   return rows.map((r) => ({ ...r, belum: r.semester ? Math.max(0, Number(total) - (perSemester.get(r.semester) ?? 0)) : (null as number | null) }));
 }
 
-/** Pengumuman aktif yang masih relevan bagi satu mahasiswa: semester terkait belum dilaporkannya. */
+/** Pengumuman aktif yang masih relevan bagi satu mahasiswa: semester terkait belum dilaporkannya, dan buku tabungan (bila wajib) belum dikirimnya. */
 export async function pengumumanUntukMahasiswa(pendaftaranId: string) {
   const db = await getDb();
   const sudah = db
@@ -154,7 +156,7 @@ export async function pengumumanUntukMahasiswa(pendaftaranId: string) {
   return db
     .select()
     .from(pengumumanMahasiswa)
-    .where(and(eq(pengumumanMahasiswa.aktif, true), or(isNull(pengumumanMahasiswa.semester), notExists(sudah))))
+    .where(and(eq(pengumumanMahasiswa.aktif, true), or(isNull(pengumumanMahasiswa.semester), notExists(sudah)), await syaratPengumumanBt(pendaftaranId)))
     .orderBy(desc(pengumumanMahasiswa.createdAt))
     .limit(5);
 }

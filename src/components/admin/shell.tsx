@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { KreditAplikasi } from "@/components/kredit-aplikasi";
+import { TombolPasang } from "@/components/pwa";
 import { TombolTema } from "@/components/tombol-tema";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,6 +10,7 @@ import {
   BookOpenText,
   BookUser,
   CalendarCheck,
+  ChartPie,
   FileSpreadsheet,
   BadgeCheck,
   CalendarDays,
@@ -20,6 +23,7 @@ import {
   Menu,
   Megaphone,
   PanelsTopLeft,
+  PiggyBank,
   MessageCircleQuestion,
   Search,
   UserX,
@@ -78,9 +82,11 @@ export function AdminShell({
     {
       judul: "SIM KIP",
       item: [
+        { href: "/admin/dashboard-mahasiswa", label: "Dashboard Mahasiswa", icon: ChartPie },
         { href: "/admin/master-mahasiswa", label: "Master Mahasiswa", icon: BookUser },
         { href: "/admin/pelaporan", label: "Pelaporan IPK & Transkrip", icon: FileSpreadsheet },
         { href: "/admin/kegiatan", label: "Kegiatan", icon: CalendarCheck },
+        { href: "/admin/buku-tabungan", label: "Buku Tabungan", icon: PiggyBank },
       ],
     },
     { judul: "Informasi", item: [{ href: "/admin/landing", label: "Landing Page", icon: PanelsTopLeft }] },
@@ -188,6 +194,7 @@ export function AdminShell({
             <input type="hidden" name="tahun" value="semua" />
           </form>
           <div className="ml-auto flex items-center gap-3">
+            <TombolPasang />
             <TombolTema />
             <div className="hidden text-right leading-tight sm:block">
               <p className="text-sm font-semibold text-slate-900">{nama}</p>
@@ -198,7 +205,10 @@ export function AdminShell({
             </span>
           </div>
         </header>
-        <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+          {children}
+          <KreditAplikasi className="mt-10" />
+        </main>
       </div>
     </div>
   );

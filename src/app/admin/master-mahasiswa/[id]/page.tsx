@@ -78,7 +78,7 @@ export default async function DetailMasterMahasiswa({ params }: { params: Promis
           <Dl items={[["Jurusan diterima", d.jurusanDiterima]]} />
           <div className="grid gap-5 sm:grid-cols-2">
             <Field name="nim" label="NIM" defaultValue={d.nim} maxLength={30} hint="Dapat juga diisi mahasiswa sendiri dari menu Mahasiswa di akunnya." contoh="2026101001" />
-            <Field name="kelas" label="Kelas" defaultValue={d.kelas} maxLength={30} contoh="TI-1A" />
+            <Field name="kelas" label="Kelas" defaultValue={d.kelas} maxLength={30} contoh="IF-24A" />
             <Select
               name="jenisBeasiswaId"
               label="Jenis beasiswa"

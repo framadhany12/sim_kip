@@ -5,6 +5,7 @@ import { Hero } from "@/components/hero";
 import { FormAkademik } from "@/components/pendaftar/form-akademik";
 import { Alert, Card, Dl } from "@/components/ui";
 import { STATUS_NIKAH_LABEL } from "@/lib/constants";
+import { bukuTabunganSaya, wajibBukuTabungan } from "@/lib/buku-tabungan";
 import { konteksPendaftar } from "@/lib/konteks";
 import { sudahMahasiswa } from "@/lib/pendaftaran";
 
@@ -17,6 +18,7 @@ export default async function MahasiswaPage({ searchParams }: { searchParams: Pr
   if (!sudahMahasiswa(d)) redirect("/dashboard");
   const { tersimpan, lengkap } = await searchParams;
   const x = d.diri;
+  const [wajibBt, bt] = await Promise.all([wajibBukuTabungan(d.id), bukuTabunganSaya(d.id)]);
 
   return (
     <div className="space-y-6">
@@ -71,6 +73,27 @@ export default async function MahasiswaPage({ searchParams }: { searchParams: Pr
       >
         <p className="text-sm text-slate-600">Laporkan IPK tiap semester beserta berkas transkrip nilai Anda.</p>
       </Card>
+
+      {wajibBt && (
+        <Card
+          title="Buku Tabungan KIP-K"
+          action={
+            <Link href="/mahasiswa/buku-tabungan" className="text-sm font-semibold text-blue-700 hover:underline">
+              {bt ? "Lihat data" : "Isi sekarang"}
+            </Link>
+          }
+        >
+          <p className="text-sm text-slate-600">
+            {bt ? (
+              <>
+                Terkirim. Nomor rekening: <span className="font-mono font-semibold text-slate-900">{bt.noRekening}</span>
+              </>
+            ) : (
+              "Kirim nomor rekening KIP-K dan foto buku tabungan untuk pencairan bantuan."
+            )}
+          </p>
+        </Card>
+      )}
 
       <Card title="Akademik">
         <div className="mb-5">

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { CircleHelp, FileText, CalendarCheck, ChartColumn, GraduationCap, House, ListChecks, UserRound, type LucideIcon } from "lucide-react";
 
 const ITEM = (mahasiswa: boolean): { href: string; label: string; match: string; icon: LucideIcon; kecuali?: string[] }[] => [
-  { href: "/dashboard", label: "Beranda", match: "/dashboard", icon: House },
+  { href: "/dashboard", label: mahasiswa ? "Dashboard" : "Beranda", match: "/dashboard", icon: House },
   ...(mahasiswa
     ? [
         { href: "/mahasiswa", label: "Mahasiswa", match: "/mahasiswa", icon: GraduationCap, kecuali: ["/mahasiswa/ipk", "/mahasiswa/kegiatan"] },

@@ -23,7 +23,7 @@ export function FormAkademik({ nim, kelas }: { nim: string | null; kelas: string
     <ActionForm action={simpanAkademikMahasiswa} className="space-y-4">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field name="nim" label="NIM" defaultValue={nim} maxLength={30} hint="Isi setelah Anda menerima NIM dari bagian akademik." contoh="2026101001" />
-        <Field name="kelas" label="Kelas" defaultValue={kelas} maxLength={30} hint="Isi setelah pembagian kelas dari bagian akademik." contoh="TI-1A" />
+        <Field name="kelas" label="Kelas" defaultValue={kelas} maxLength={30} hint="Isi setelah pembagian kelas dari bagian akademik." contoh="IF-24A" />
       </div>
       <div className="flex justify-end">
         <SubmitButton>Simpan NIM & Kelas</SubmitButton>

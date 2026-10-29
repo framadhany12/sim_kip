@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { KreditAplikasi } from "@/components/kredit-aplikasi";
 import { LogoTedc } from "@/components/logo";
 import { getCurrentUser } from "@/lib/auth";
 import { KAMPUS } from "@/lib/profil";
@@ -21,6 +22,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <Link href="/" className="text-center text-sm font-medium text-slate-600 hover:text-[#0d2a63] dark:hover:text-blue-300">
         ← Kembali ke beranda
       </Link>
+      <KreditAplikasi className="sm:flex-col sm:items-center sm:text-center" />
     </main>
     </div>
   );

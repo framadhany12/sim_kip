@@ -4,6 +4,7 @@ import { keluar } from "@/app/actions/auth";
 import { NavLinks } from "./nav-links";
 import { LogoTedc } from "./logo";
 import { TombolTema } from "./tombol-tema";
+import { TombolPasang } from "./pwa";
 
 const NAV_ADMIN = [
   { href: "/admin", label: "Ringkasan", exact: true },
@@ -45,6 +46,7 @@ export async function SiteHeader() {
         </Link>
         <NavLinks links={links} hanyaDesktop={!user} />
         <div className="ml-auto flex items-center gap-2">
+          <TombolPasang gelapDiLatar />
           <TombolTema gelapDiLatar />
           {user ? (
             <>
