@@ -4,6 +4,7 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SembunyikanDiAdmin } from "@/components/sembunyikan-di-admin";
 import { DaftarkanSW, SKRIP_TANGKAP_PASANG } from "@/components/pwa";
+import { PemulihTransisi } from "@/components/pemulih-transisi";
 
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"] });
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </SembunyikanDiAdmin>
         {children}
         <DaftarkanSW />
+        <PemulihTransisi />
       </body>
     </html>
   );
