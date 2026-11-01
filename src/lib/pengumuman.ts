@@ -99,5 +99,3 @@ export async function kandidatPengumuman(f: FilterKandidat) {
 
   return { rows: rows.slice(0, BATAS_KANDIDAT), terpotong: rows.length > BATAS_KANDIDAT };
 }
-
-export type Kandidat = Awaited<ReturnType<typeof kandidatPengumuman>>["rows"][number];

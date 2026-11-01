@@ -12,7 +12,7 @@ Aplikasi pendaftaran KIP Kuliah. Next.js 15 (App Router) + React 19, Drizzle ORM
 - `npm run db:generate` (buat migrasi drizzle), `npm run db:migrate`, `npm run db:backup`
 - `npm run admin:buat -- email sandi "Nama"` membuat akun admin
 - `npm run sekolah:impor [-- berkas.csv]` mengisi master sekolah dari `database/sekolah-sma-smk.csv` (26.662 SMA/SMK se-Indonesia, salinan Dapodik; tanpa MA). NPSN yang sudah ada dilewati.
-- Setelah deploy: `npm install` lalu `npm run db:migrate` (migrasi 0000–0022), lalu `npm run sekolah:impor` sekali untuk mengisi master sekolah
+- Setelah deploy: `npm install` lalu `npm run db:migrate` (migrasi 0000–0023), lalu `npm run sekolah:impor` sekali untuk mengisi master sekolah
 
 ## Struktur
 - `src/db/schema.ts` skema Drizzle (users, pendaftaran, data_diri, data_sekolah, pilihan_jurusan, jurusan, jenis_beasiswa, riwayat, dst). Migrasi di `drizzle/`.
@@ -34,6 +34,7 @@ Tahap: administrasi → ujian → wawancara → pengusulan → pengumuman.
 - Diterima: wajib pilih jurusan (1 atau 2) dan **jenis beasiswa** (master `/admin/beasiswa`; hanya terlihat admin, jangan tampilkan ke pendaftar).
 - Data Sekolah: nama sekolah dicari dari master `sekolah` (`/api/sekolah`, komponen `pilih-sekolah.tsx`), NPSN terisi otomatis. Pencarian per kata lewat kolom `kata_cari` (`kataCariSekolah`: SMAN=SMA Negeri, Kab.=kabupaten; aturannya juga ada di drizzle/0019 dan scripts/impor-sekolah.mjs, jaga tetap sama). Tidak ada di daftar → isi manual, saat disimpan masuk master dengan `sumber=pendaftar` (NPSN yang sudah ada wajib bernama sama). Admin > Master Sekolah (`/admin/sekolah`, import Excel/CSV kolom NPSN + Nama Sekolah [+ Kabupaten/Kota], templat `/api/admin/template-sekolah`); ubah nama/NPSN ikut memperbarui `data_sekolah` (terhubung lewat NPSN).
 - Registrasi/login pakai email atau NIK (`users.nik` unik, terkunci di Data Diri untuk pendaftar). Akun belum terverifikasi >24 jam melepas NIK.
+- Detail Master Calon Mahasiswa (`/admin/mahasiswa/[id]`): semua tab dirender sekaligus, pindah tab di klien (`components/admin/tab-detail.tsx`, `?tab=` lewat history). Navigasi RSC antar-`?tab=` di build produksi kadang macet selamanya (tab Data Diri); jangan kembalikan ke `<Link>` per tab.
 
 ## Aturan kerja dengan pengguna
 - Jangan menulis/menawarkan tes `qa/` untuk fitur baru kecuali diminta.

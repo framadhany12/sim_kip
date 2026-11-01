@@ -9,6 +9,7 @@ import { FormAktif } from "@/components/admin/form-aktif";
 import { aturSandiPendaftar, simpanAkunPendaftar, simpanBagianPendaftar, type BagianEdit } from "@/app/actions/mahasiswa";
 import { ActionForm, Field, SubmitButton } from "@/components/form";
 import { FormSandi } from "@/components/admin/form-sandi";
+import { TabDetail } from "@/components/admin/tab-detail";
 import { FieldsDataDiri, FieldsEkonomi, FieldsKeluarga, FieldsSekolah } from "@/components/pendaftaran-fields";
 import { RekomendasiFields } from "@/components/rekomendasi-fields";
 import { RingkasanData } from "@/components/ringkasan-data";
@@ -51,6 +52,14 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
   const pend = await cariPendaftaranUser(id);
   const d = pend ? await muatLengkap(pend.id) : null;
   const edit = (b: BagianEdit) => simpanBagianPendaftar.bind(null, b, id);
+  const [kabupaten, jurusanAktif, semuaSumber] = await Promise.all([
+    db.select().from(wilayahKabupaten).orderBy(asc(wilayahKabupaten.nama)),
+    db.select().from(jurusan).where(eq(jurusan.aktif, true)).orderBy(asc(jurusan.nama)),
+    db.select().from(sumberRekomendasi).orderBy(asc(sumberRekomendasi.urutan), asc(sumberRekomendasi.nama)),
+  ]);
+  const opsiJurusan = jurusanAktif.map((j) => ({ value: j.id, label: j.nama }));
+  const r = d?.rekomendasi;
+  const sumber = semuaSumber.filter((x) => x.aktif || x.id === r?.sumberId).map((x) => ({ id: x.id, nama: x.aktif ? x.nama : `${x.nama} (nonaktif)`, butuhKontak: x.butuhKontak }));
 
   return (
     <div className="space-y-5">
@@ -86,115 +95,87 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
         </div>
       </div>
 
-      <nav aria-label="Bagian data" className="-mx-1 flex gap-1 overflow-x-auto border-b border-slate-200 px-1">
-        {TAB.map(([slug, label]) => (
-          <Link
-            key={slug}
-            href={`/admin/mahasiswa/${id}?tab=${slug}`}
-            aria-current={tab === slug ? "page" : undefined}
-            className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium ${
-              tab === slug ? "border-blue-700 text-blue-800" : "border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900"
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      {tab === "ringkasan" &&
-        (d ? (
-          <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
-            <RingkasanData d={d} />
-            <Card title="Riwayat">
-              <Riwayat items={d.riwayat} />
-            </Card>
-          </div>
-        ) : (
-          <Alert tone="info" title="Belum ada data formulir">
-            Akun ini baru dibuat dan belum membuka formulir pendaftaran. Anda tetap bisa mengisi datanya lewat tab-tab di atas.
-          </Alert>
-        ))}
-
-      {tab === "akun" && (
-        <Card title="Data akun">
-          <ActionForm action={simpanAkunPendaftar.bind(null, id)}>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field name="nama" label="Nama akun" required defaultValue={u.nama} hint="Nama saat membuat akun; nama lengkap pendaftar ada di tab Data Diri." />
-              <Field name="email" type="email" label="Email (untuk masuk)" required defaultValue={u.email} hint="Mengubah email mengeluarkan pendaftar dari semua perangkat." />
+      <TabDetail
+        tabs={TAB}
+        awal={tab}
+        panel={{
+          ringkasan: d ? (
+            <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+              <RingkasanData d={d} />
+              <Card title="Riwayat">
+                <Riwayat items={d.riwayat} />
+              </Card>
             </div>
-            <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700">
-              <input type="checkbox" name="terverifikasi" defaultChecked={!!u.emailVerifiedAt} className="mt-0.5 size-4 accent-blue-700" />
-              <span>
-                <b className="block text-slate-900">Email terverifikasi</b>
-                Centang bila Anda sudah memastikan email ini milik pendaftar (mis. pendaftar tidak menerima email verifikasi). Pendaftar baru bisa masuk setelah email terverifikasi.
-              </span>
-            </label>
-            <Simpan />
-          </ActionForm>
-        </Card>
-      )}
-
-      {tab === "data-diri" && (
-        <Card title="Data Diri">
-          <ActionForm action={edit("diri")}>
-            <FieldsDataDiri
-              x={d?.diri ?? null}
-              namaBawaan={u.nama}
-              kabupaten={await db.select().from(wilayahKabupaten).orderBy(asc(wilayahKabupaten.nama))}
-              admin
-            />
-            <Simpan />
-          </ActionForm>
-        </Card>
-      )}
-
-      {tab === "keluarga" && (
-        <Card title="Data Keluarga">
-          <ActionForm action={edit("keluarga")}>
-            <FieldsKeluarga x={d?.keluarga ?? null} admin />
-            <Simpan />
-          </ActionForm>
-        </Card>
-      )}
-
-      {tab === "ekonomi" && (
-        <Card title="Ekonomi Orang Tua/Wali">
-          <ActionForm action={edit("ekonomi")}>
-            <FieldsEkonomi x={d?.ekonomi ?? null} admin />
-            <Simpan />
-          </ActionForm>
-          {pend && (
-            <p className="mt-4 text-[13px] text-slate-500">
-              Berkas (termasuk Surat Keterangan Kebutuhan Ekonomi) dilihat dan diverifikasi di{" "}
-              <Link href={`/admin/pendaftar/${pend.id}`} className="font-semibold text-blue-700 hover:underline">
-                halaman berkas & status seleksi
-              </Link>
-              .
-            </p>
-          )}
-        </Card>
-      )}
-
-      {tab === "sekolah" &&
-        (await (async () => {
-          const aktif = await db.select().from(jurusan).where(eq(jurusan.aktif, true)).orderBy(asc(jurusan.nama));
-          const opsi = aktif.map((j) => ({ value: j.id, label: j.nama }));
-          return (
-            <Card title="Data Sekolah & Pilihan Jurusan">
-              <ActionForm action={edit("sekolah")}>
-                <FieldsSekolah s={d?.sekolah ?? null} pilihan={d?.pilihan ?? null} jurusan={{ mode: "edit", opsi1: opsi, opsi2: opsi }} admin />
+          ) : (
+            <Alert tone="info" title="Belum ada data formulir">
+              Akun ini baru dibuat dan belum membuka formulir pendaftaran. Anda tetap bisa mengisi datanya lewat tab-tab di atas.
+            </Alert>
+          ),
+          akun: (
+            <Card title="Data akun">
+              <ActionForm action={simpanAkunPendaftar.bind(null, id)}>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field name="nama" label="Nama akun" required defaultValue={u.nama} hint="Nama saat membuat akun; nama lengkap pendaftar ada di tab Data Diri." />
+                  <Field name="email" type="email" label="Email (untuk masuk)" required defaultValue={u.email} hint="Mengubah email mengeluarkan pendaftar dari semua perangkat." />
+                </div>
+                <label className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700">
+                  <input type="checkbox" name="terverifikasi" defaultChecked={!!u.emailVerifiedAt} className="mt-0.5 size-4 accent-blue-700" />
+                  <span>
+                    <b className="block text-slate-900">Email terverifikasi</b>
+                    Centang bila Anda sudah memastikan email ini milik pendaftar (mis. pendaftar tidak menerima email verifikasi). Pendaftar baru bisa masuk setelah email terverifikasi.
+                  </span>
+                </label>
                 <Simpan />
               </ActionForm>
             </Card>
-          );
-        })())}
-
-      {tab === "rekomendasi" &&
-        (await (async () => {
-          const semua = await db.select().from(sumberRekomendasi).orderBy(asc(sumberRekomendasi.urutan), asc(sumberRekomendasi.nama));
-          const r = d?.rekomendasi;
-          const sumber = semua.filter((s) => s.aktif || s.id === r?.sumberId).map((s) => ({ id: s.id, nama: s.aktif ? s.nama : `${s.nama} (nonaktif)`, butuhKontak: s.butuhKontak }));
-          return (
+          ),
+          "data-diri": (
+            <Card title="Data Diri">
+              <ActionForm action={edit("diri")}>
+                <FieldsDataDiri
+                  x={d?.diri ?? null}
+                  namaBawaan={u.nama}
+                  kabupaten={kabupaten}
+                  admin
+                />
+                <Simpan />
+              </ActionForm>
+            </Card>
+          ),
+          keluarga: (
+            <Card title="Data Keluarga">
+              <ActionForm action={edit("keluarga")}>
+                <FieldsKeluarga x={d?.keluarga ?? null} admin />
+                <Simpan />
+              </ActionForm>
+            </Card>
+          ),
+          ekonomi: (
+            <Card title="Ekonomi Orang Tua/Wali">
+              <ActionForm action={edit("ekonomi")}>
+                <FieldsEkonomi x={d?.ekonomi ?? null} admin />
+                <Simpan />
+              </ActionForm>
+              {pend && (
+                <p className="mt-4 text-[13px] text-slate-500">
+                  Berkas (termasuk Surat Keterangan Kebutuhan Ekonomi) dilihat dan diverifikasi di{" "}
+                  <Link href={`/admin/pendaftar/${pend.id}`} className="font-semibold text-blue-700 hover:underline">
+                    halaman berkas & status seleksi
+                  </Link>
+                  .
+                </p>
+              )}
+            </Card>
+          ),
+          sekolah: (
+            <Card title="Data Sekolah & Pilihan Jurusan">
+              <ActionForm action={edit("sekolah")}>
+                <FieldsSekolah s={d?.sekolah ?? null} pilihan={d?.pilihan ?? null} jurusan={{ mode: "edit", opsi1: opsiJurusan, opsi2: opsiJurusan }} admin />
+                <Simpan />
+              </ActionForm>
+            </Card>
+          ),
+          rekomendasi: (
             <Card title="Rekomendasi">
               {sumber.length === 0 ? (
                 <Alert tone="warning">Belum ada pilihan sumber rekomendasi. Tambahkan lewat menu Sumber Rekomendasi.</Alert>
@@ -205,29 +186,28 @@ export default async function DetailMahasiswa({ params, searchParams }: { params
                 </ActionForm>
               )}
             </Card>
-          );
-        })())}
-
-      {tab === "status" && (
-        <Card title="Status akun">
-          <FormAktif
-            nama={d?.diri?.namaLengkap ?? u.nama}
-            aktif={u.aktif}
-            action={aturAktifAkun.bind(null, id)}
-            dilarang={
-              d && !u.aktif && d.statusMahasiswa !== "aktif"
-                ? `Akun nonaktif karena status mahasiswa ${STATUS_MAHASISWA_LABEL[d.statusMahasiswa]}. Untuk mengaktifkannya, ubah status menjadi Aktif di Master Mahasiswa.`
-                : undefined
-            }
-          />
-        </Card>
-      )}
-
-      {tab === "sandi" && (
-        <Card title="Kata sandi">
-          <FormSandi nama={d?.diri?.namaLengkap ?? u.nama} action={aturSandiPendaftar.bind(null, id)} />
-        </Card>
-      )}
+          ),
+          sandi: (
+            <Card title="Kata sandi">
+              <FormSandi nama={d?.diri?.namaLengkap ?? u.nama} action={aturSandiPendaftar.bind(null, id)} />
+            </Card>
+          ),
+          status: (
+            <Card title="Status akun">
+              <FormAktif
+                nama={d?.diri?.namaLengkap ?? u.nama}
+                aktif={u.aktif}
+                action={aturAktifAkun.bind(null, id)}
+                dilarang={
+                  d && !u.aktif && d.statusMahasiswa !== "aktif"
+                    ? `Akun nonaktif karena status mahasiswa ${STATUS_MAHASISWA_LABEL[d.statusMahasiswa]}. Untuk mengaktifkannya, ubah status menjadi Aktif di Master Mahasiswa.`
+                    : undefined
+                }
+              />
+            </Card>
+          ),
+        }}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, lt } from "drizzle-orm";
 import { getDb } from "@/db";
 import { sessions, users } from "@/db/schema";
 
@@ -21,6 +21,8 @@ export async function createSession(userId: string) {
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 864e5);
   // Hanya hash token yang disimpan, jadi kebocoran database tidak membocorkan sesi aktif.
   await db.insert(sessions).values({ id: sha256(token), userId, expiresAt });
+  // Sesi kedaluwarsa tidak pernah dipakai lagi; dibuang saat ada yang login agar tabel tidak terus membesar.
+  await db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",

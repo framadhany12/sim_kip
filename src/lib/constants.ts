@@ -7,7 +7,6 @@ export function tahunLulusBoleh(): number[] {
 }
 export const MAX_UMUR = 21;
 export const MAX_FILE_MB = 2;
-export const MIME_DIIZINKAN = ["application/pdf", "image/jpeg", "image/png"];
 export const LINK_FORMAT_SURAT = "https://s.id/permohonandirektur-kiptedc";
 
 export const STATUS_LABEL: Record<Status, string> = {

@@ -55,7 +55,7 @@ export const sessions = mysqlTable("sessions", {
   id: varchar("id", { length: 64 }).primaryKey(), // sha256 dari token cookie
   userId: ref("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   expiresAt: ts("expires_at").notNull(),
-});
+}, (t) => [index("sessions_expires").on(t.expiresAt)]);
 
 export const passwordResets = mysqlTable("password_resets", {
   id: varchar("id", { length: 64 }).primaryKey(), // sha256 dari token reset
@@ -70,7 +70,6 @@ export const TAHAP = ["administrasi", "ujian", "wawancara", "pengusulan", "pengu
 export type Tahap = (typeof TAHAP)[number];
 
 export const USULAN = ["menunggu", "bersedia", "tidak"] as const;
-export type Usulan = (typeof USULAN)[number];
 /** Status studi mahasiswa (pendaftar yang diterima). Selain "aktif", akun dinonaktifkan. */
 export const STATUS_MAHASISWA = ["aktif", "dicabut", "tidak_aktif", "lulus"] as const;
 export type StatusMahasiswa = (typeof STATUS_MAHASISWA)[number];
@@ -209,7 +208,7 @@ export const dataSekolah = mysqlTable("data_sekolah", {
   npsn: varchar("npsn", { length: 8 }).notNull(),
   tahunLulus: int("tahun_lulus").notNull(),
   jurusanSekolah: varchar("jurusan_sekolah", { length: 100 }).notNull(),
-});
+}, (t) => [index("data_sekolah_npsn").on(t.npsn)]);
 
 /**
  * Master sekolah asal (SMA/SMK/MA), dicari pendaftar di formulir Data Sekolah; NPSN unik.
