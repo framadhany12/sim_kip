@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { FileSpreadsheet } from "lucide-react";
 import { STATUS_MAHASISWA } from "@/db/schema";
 import { Card, PageHeader, StatusMahasiswaBadge } from "@/components/ui";
 import { STATUS_MAHASISWA_LABEL, tanggalPanjang } from "@/lib/constants";
+import { BarHapusMassal, KotakPilih, KotakPilihSemua, PilihProvider } from "@/components/admin/pilih-mahasiswa";
 import { daftarAngkatan } from "@/lib/angkatan";
 import { daftarMasterMahasiswa, PER_HALAMAN_MASTER, type FilterMasterMhs } from "@/lib/master-mahasiswa";
 import { inputCls } from "@/lib/styles";
@@ -21,9 +23,17 @@ export default async function MasterMahasiswaPage({ searchParams }: { searchPara
         title="Master Mahasiswa"
         desc="Pendaftar yang sudah diterima dan menjadi mahasiswa. Klik nama mahasiswa untuk mengubah status (Aktif, Dicabut KIP-K, Tidak aktif, Lulus) atau mengoreksi NIM dan kelas. Selain Aktif, akun mahasiswa otomatis dinonaktifkan."
         action={
-          <Link href="/admin/master-mahasiswa/impor" className="inline-flex min-h-11 items-center rounded-lg bg-white px-4 text-sm font-semibold text-blue-700 ring-1 ring-slate-300 hover:bg-slate-50">
-            Impor mahasiswa lama
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`/api/admin/export-master-mahasiswa?${qs({ page: "" })}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800"
+            >
+              <FileSpreadsheet className="size-4" aria-hidden /> Export Excel ({total})
+            </a>
+            <Link href="/admin/master-mahasiswa/impor" className="inline-flex min-h-11 items-center rounded-lg bg-white px-4 text-sm font-semibold text-blue-700 ring-1 ring-slate-300 hover:bg-slate-50">
+              Impor mahasiswa lama
+            </Link>
+          </div>
         }
       />
       <Card>
@@ -92,10 +102,15 @@ export default async function MasterMahasiswaPage({ searchParams }: { searchPara
         </form>
       </Card>
 
+      <PilihProvider idHalaman={rows.map((r) => r.id)}>
+      <BarHapusMassal />
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[920px] text-left text-sm">
+        <table className="w-full min-w-[960px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
+              <th className="w-10 px-4 py-3">
+                <KotakPilihSemua />
+              </th>
               <th className="px-4 py-3 font-semibold">Mahasiswa</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">NIK / Kontak</th>
@@ -108,13 +123,16 @@ export default async function MasterMahasiswaPage({ searchParams }: { searchPara
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                   Belum ada mahasiswa yang cocok dengan filter.
                 </td>
               </tr>
             )}
             {rows.map((r) => (
               <tr key={r.id} className="align-top hover:bg-slate-50">
+                <td className="px-4 py-3">
+                  <KotakPilih id={r.id} nama={r.nama} />
+                </td>
                 <td className="px-4 py-3">
                   <Link href={`/admin/master-mahasiswa/${r.id}`} className="font-semibold text-blue-700 hover:underline">
                     {r.nama}
@@ -144,6 +162,7 @@ export default async function MasterMahasiswaPage({ searchParams }: { searchPara
           </tbody>
         </table>
       </div>
+      </PilihProvider>
 
       {jumlahHalaman > 1 ? (
         <nav className="flex items-center justify-between text-sm" aria-label="Halaman">

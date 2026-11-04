@@ -14,6 +14,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
     .where(and(eq(emailVerifications.id, sha256(token)), gt(emailVerifications.expiresAt, new Date())));
   if (!v) return NextResponse.redirect(new URL("/verifikasi-email?status=tidak-berlaku", req.url));
 
+  // Hanya akun pendaftar: sesi admin hanya boleh lahir dari login 2 langkah (authenticator).
+  const [akun] = await db.select({ role: users.role }).from(users).where(eq(users.id, v.userId));
+  if (akun?.role !== "pendaftar") return NextResponse.redirect(new URL("/verifikasi-email?status=tidak-berlaku", req.url));
+
   await db.transaction(async (tx) => {
     await tx.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, v.userId));
     await tx.delete(emailVerifications).where(eq(emailVerifications.userId, v.userId));

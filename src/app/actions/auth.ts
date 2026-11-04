@@ -7,6 +7,7 @@ import { and, eq, gt, isNull, lt, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { dataDiri, emailVerifications, passwordResets, pendaftaran, sessions, users } from "@/db/schema";
 import { createSession, destroySession, getCurrentUser, newToken, requireUser, sha256 } from "@/lib/auth";
+import { setTiketMfa } from "@/lib/mfa";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { STATUS_MAHASISWA_LABEL, tanggalPanjang } from "@/lib/constants";
@@ -156,8 +157,13 @@ export async function masuk(_: FormState, fd: FormData): Promise<FormState> {
     (await cookies()).set(COOKIE_VERIF, u.email, { httpOnly: true, sameSite: "lax", path: "/", maxAge: VERIF_JAM * 3600 });
     redirect("/verifikasi-email?belum=1");
   }
+  // Admin wajib login 2 langkah (authenticator): sesi baru dibuat setelah kode benar.
+  if (u.role === "admin") {
+    await setTiketMfa(u.id);
+    redirect("/masuk/verifikasi");
+  }
   await createSession(u.id);
-  redirect(u.role === "admin" ? "/admin" : "/dashboard");
+  redirect("/dashboard");
 }
 
 export async function keluar() {

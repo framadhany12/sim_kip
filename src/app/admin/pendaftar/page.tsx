@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TombolHapusPendaftar } from "@/components/admin/tombol-hapus-pendaftar";
 import { TombolUnduh } from "@/components/admin/tombol-unduh";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import { inputCls } from "@/lib/styles";
@@ -109,7 +110,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
       </Card>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[980px] text-left text-sm">
+        <table className="w-full min-w-[1060px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold">Pendaftar</th>
@@ -120,12 +121,13 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
               <th className="px-4 py-3 font-semibold">NISN</th>
               <th className="px-4 py-3 font-semibold">Penerima PIP</th>
               <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
                   Tidak ada pendaftar yang cocok dengan filter.
                 </td>
               </tr>
@@ -161,6 +163,9 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
                 <td className="px-4 py-3">
                   <StatusBadge status={r.status as Status} tahap={r.tahap} usulan={r.usulan} />
                   {r.hasil === "diterima" && r.jurusanDiterima && <span className="mt-1 block text-xs text-emerald-800">{r.jurusanDiterima}</span>}
+                </td>
+                <td className="px-4 py-3">
+                  {r.hasil === "diterima" ? <span className="text-xs text-slate-400">-</span> : <TombolHapusPendaftar id={r.id} nama={r.nama ?? r.akunNama} />}
                 </td>
               </tr>
             ))}

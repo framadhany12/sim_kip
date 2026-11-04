@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
-import { passwordResets, pendaftaran, profilAdmin, sessions, users } from "@/db/schema";
+import { kodePemulihan, passwordResets, pendaftaran, profilAdmin, sessions, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { EMAIL_RE } from "@/lib/anti-bot";
 import { STATUS_MAHASISWA_LABEL } from "@/lib/constants";
@@ -148,4 +148,18 @@ export async function aturAktifAkun(userId: string, _: FormState, fd: FormData):
   revalidatePath("/admin/mahasiswa");
   revalidatePath("/", "layout");
   return { ok: true, message: aktif ? `Akun ${u.nama} diaktifkan kembali.` : `Akun ${u.nama} dinonaktifkan dan dikeluarkan dari semua perangkat.` };
+}
+
+/** Mengatur ulang authenticator admin lain yang kehilangan ponselnya: pada login berikutnya ia diminta mendaftarkan ulang. */
+export async function aturUlangAuthenticator(userId: string): Promise<{ ok: boolean; message: string }> {
+  const saya = await requireAdmin();
+  if (saya.id === userId) return { ok: false, message: "Authenticator Anda sendiri tidak bisa diatur ulang di sini. Minta admin lain." };
+  const u = await ambilAdmin(userId);
+  if (!u) return { ok: false, message: "Admin tidak ditemukan." };
+  const db = await getDb();
+  await db.update(users).set({ totpSecret: null, totpAktif: false, totpLangkah: null }).where(eq(users.id, userId));
+  await db.delete(kodePemulihan).where(eq(kodePemulihan.userId, userId));
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+  revalidatePath("/admin/user");
+  return { ok: true, message: "Authenticator diatur ulang." };
 }

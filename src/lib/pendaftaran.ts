@@ -133,7 +133,7 @@ export function cekKelengkapan(d: PendaftaranLengkap) {
     // Kolom yang ditambahkan belakangan ikut diperiksa agar data lama diminta melengkapi.
     "data-diri": !!d.diri && !!d.diri.nomorPendaftaranKip && !!d.diri.nisn && !!d.diri.desil && d.diri.penerimaPip != null && !!d.diri.agama && !!d.diri.statusPernikahan,
     keluarga: !!d.keluarga && !!d.keluarga.teleponOrangTua,
-    ekonomi: !!d.ekonomi,
+    ekonomi: !!d.ekonomi && !!d.berkas.surat_ekonomi,
     sekolah: !!d.sekolah && !!d.pilihan,
     rekomendasi: !!d.rekomendasi,
     berkas: BERKAS_UTAMA.every((j) => d.berkas[j]),
@@ -142,7 +142,8 @@ export function cekKelengkapan(d: PendaftaranLengkap) {
   const masalah: string[] = [];
   if (!langkah["data-diri"]) masalah.push(d.diri ? "Data Diri belum lengkap (nomor pendaftaran KIP, NISN, desil, PIP, agama, status pernikahan)." : "Data Diri belum diisi.");
   if (!langkah.keluarga) masalah.push(d.keluarga ? "Nomor telepon orang tua belum diisi." : "Data Keluarga belum diisi.");
-  if (!langkah.ekonomi) masalah.push("Data Ekonomi Orang Tua belum diisi.");
+  if (!d.ekonomi) masalah.push("Data Ekonomi Orang Tua belum diisi.");
+  if (!d.berkas.surat_ekonomi) masalah.push(`Berkas ${BERKAS_INFO.surat_ekonomi.label} belum diunggah (di langkah Ekonomi Orang Tua).`);
   if (!langkah.sekolah) masalah.push("Data Sekolah & Pilihan Jurusan belum diisi.");
   if (!langkah.rekomendasi) masalah.push("Data Rekomendasi belum diisi.");
   for (const j of BERKAS_UTAMA) if (!d.berkas[j]) masalah.push(`Berkas ${BERKAS_INFO[j].label} belum diunggah.`);

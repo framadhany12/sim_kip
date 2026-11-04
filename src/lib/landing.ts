@@ -31,7 +31,7 @@ export const landingBawaan = (): LandingKonten => ({
   },
   berkas: {
     judul: "Berkas yang disiapkan",
-    item: [...BERKAS_UTAMA.map((j) => BERKAS_INFO[j].label), `${BERKAS_INFO.surat_ekonomi.label} (opsional)`],
+    item: [...BERKAS_UTAMA.map((j) => BERKAS_INFO[j].label), BERKAS_INFO.surat_ekonomi.label],
     catatan: `Format PDF, JPG, atau PNG, maksimal ${MAX_FILE_MB} MB per berkas.`,
   },
   kip: {
@@ -45,7 +45,7 @@ export const landingBawaan = (): LandingKonten => ({
     langkah: [
       { judul: "Buat akun", isi: "Daftar dengan email aktif, lalu buka tautan verifikasi yang dikirim ke email Anda." },
       { judul: "Isi formulir", isi: "Data diri, keluarga, ekonomi orang tua, sekolah, dan pilihan jurusan, dipandu di setiap kolom." },
-      { judul: "Unggah berkas", isi: "Ijazah, Akta Kelahiran, KK, KTP, dan Surat Permohonan kepada Direktur." },
+      { judul: "Unggah berkas", isi: "Ijazah, Akta Kelahiran, KK, KTP, Surat Permohonan kepada Direktur, dan Surat Keterangan Kebutuhan Ekonomi." },
       { judul: "Kirim pendaftaran", isi: "Periksa ringkasan, lalu kirim dengan sekali klik." },
       { judul: "Pantau status", isi: "Lihat catatan admin, riwayat, dan hasil akhir seleksi kapan saja." },
     ],

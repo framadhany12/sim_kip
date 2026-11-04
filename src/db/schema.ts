@@ -22,6 +22,11 @@ export const users = mysqlTable("users", {
   mahasiswaLama: boolean("mahasiswa_lama").notNull().default(false),
   /** Sandi masih sandi awal dari admin; pengguna harus menggantinya sebelum memakai aplikasi. */
   wajibGantiSandi: boolean("wajib_ganti_sandi").notNull().default(false),
+  /** Rahasia TOTP (Google Authenticator dkk.) terenkripsi AES-GCM. Wajib aktif untuk admin sebelum bisa masuk. */
+  totpSecret: varchar("totp_secret", { length: 255 }),
+  totpAktif: boolean("totp_aktif").notNull().default(false),
+  /** Langkah waktu TOTP terakhir yang dipakai; kode yang sama tidak bisa dipakai dua kali. */
+  totpLangkah: int("totp_langkah"),
   createdAt: now("created_at"),
 }, (t) => [index("users_role_created").on(t.role, t.createdAt)]);
 
@@ -56,6 +61,13 @@ export const sessions = mysqlTable("sessions", {
   userId: ref("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   expiresAt: ts("expires_at").notNull(),
 }, (t) => [index("sessions_expires").on(t.expiresAt)]);
+
+/** Kode pemulihan sekali pakai bila ponsel authenticator hilang; hanya hash-nya yang disimpan. */
+export const kodePemulihan = mysqlTable("kode_pemulihan", {
+  id: id(),
+  userId: ref("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  hash: varchar("hash", { length: 64 }).notNull(),
+}, (t) => [index("kode_pemulihan_user").on(t.userId)]);
 
 export const passwordResets = mysqlTable("password_resets", {
   id: varchar("id", { length: 64 }).primaryKey(), // sha256 dari token reset
@@ -113,7 +125,7 @@ export const pendaftaran = mysqlTable(
     createdAt: now("created_at"),
     updatedAt: now("updated_at"),
   },
-  (t) => [uniqueIndex("pendaftaran_user_gelombang").on(t.userId, t.gelombang), uniqueIndex("pendaftaran_nim").on(t.nim), index("pendaftaran_status").on(t.status), index("pendaftaran_submitted").on(t.submittedAt)],
+  (t) => [uniqueIndex("pendaftaran_user_gelombang").on(t.userId, t.gelombang), uniqueIndex("pendaftaran_nim").on(t.nim), index("pendaftaran_status").on(t.status), index("pendaftaran_submitted").on(t.submittedAt), index("pendaftaran_status_tahap").on(t.status, t.tahap), index("pendaftaran_hasil_mhs").on(t.hasil, t.statusMahasiswa)],
 );
 
 export const wilayahKabupaten = mysqlTable("wilayah_kabupaten", {
@@ -156,7 +168,7 @@ export const dataDiri = mysqlTable("data_diri", {
   penerimaPip: boolean("penerima_pip"),
   agama: mysqlEnum("agama", AGAMA),
   statusPernikahan: mysqlEnum("status_pernikahan", ["belum_menikah", "menikah"]),
-});
+}, (t) => [index("data_diri_nik").on(t.nik)]);
 
 export const dataKeluarga = mysqlTable("data_keluarga", {
   id: id(),

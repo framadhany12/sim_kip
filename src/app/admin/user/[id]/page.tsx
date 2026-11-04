@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { profilAdmin, users } from "@/db/schema";
-import { aturAktifAkun, aturSandiAdmin } from "@/app/actions/pengguna";
+import { aturAktifAkun, aturSandiAdmin, aturUlangAuthenticator } from "@/app/actions/pengguna";
+import { DialogHapus } from "@/components/admin/dialog-hapus";
 import { FormAktif } from "@/components/admin/form-aktif";
 import { FormProfilAdmin } from "@/components/admin/form-profil-admin";
 import { FormSandi } from "@/components/admin/form-sandi";
@@ -39,6 +40,23 @@ export default async function KelolaAdminPage({ params }: { params: Promise<{ id
       </Card>
       <Card title="Profil untuk calon mahasiswa">
         <FormProfilAdmin userId={u.id} profil={profil} />
+      </Card>
+      <Card title="Verifikasi 2 langkah (authenticator)">
+        <p className="text-sm text-slate-600">
+          Status: <b className={u.totpAktif ? "text-emerald-700" : "text-amber-700"}>{u.totpAktif ? "Aktif" : "Belum diatur (diminta saat login berikutnya)"}</b>
+        </p>
+        {u.totpAktif && !diriSendiri && (
+          <div className="mt-3">
+            <DialogHapus
+              judul="Atur ulang authenticator?"
+              pesan={`${u.nama} akan keluar dari semua sesi dan diminta memasang authenticator baru saat login berikutnya. Pakai ini bila ponselnya hilang.`}
+              aksi={() => aturUlangAuthenticator(u.id)}
+              labelTombol="Atur ulang authenticator"
+              labelKonfirmasi="Ya, atur ulang"
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50"
+            />
+          </div>
+        )}
       </Card>
       <Card title="Kata sandi">
         {diriSendiri ? (

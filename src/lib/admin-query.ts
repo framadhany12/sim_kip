@@ -76,7 +76,7 @@ const j1 = alias(jurusan, "j1");
 const j2 = alias(jurusan, "j2");
 const jDiterima = alias(jurusan, "j_diterima");
 
-function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
+export function baseQuery(db: Awaited<ReturnType<typeof getDb>>) {
   return db
     .select({
       id: pendaftaran.id,

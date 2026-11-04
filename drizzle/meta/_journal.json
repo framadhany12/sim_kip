@@ -169,6 +169,20 @@
       "when": 1793501567901,
       "tag": "0023_indeks_kinerja",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1793759628363,
+      "tag": "0024_indeks_pencarian",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1793761268036,
+      "tag": "0025_login_dua_langkah",
+      "breakpoints": true
     }
   ]
 }

@@ -21,7 +21,7 @@ export default async function EkonomiPage() {
           <FormFooter back="/formulir/keluarga" sudahDikirim={sudahDikirim} terkunci={terkunci} />
         </ActionForm>
       </Card>
-      <UploadBerkas jenis="surat_ekonomi" label={info.label} tips={info.tips} wajib={false} berkas={ringkasBerkas(d.berkas.surat_ekonomi)} editable={!terkunci} />
+      <UploadBerkas jenis="surat_ekonomi" label={info.label} tips={info.tips} wajib berkas={ringkasBerkas(d.berkas.surat_ekonomi)} editable={!terkunci} />
     </div>
   );
 }

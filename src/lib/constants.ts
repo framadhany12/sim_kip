@@ -119,8 +119,8 @@ export const BERKAS_INFO: Record<JenisBerkas, { label: string; tips: string; waj
   },
   surat_ekonomi: {
     label: "Surat Keterangan Kebutuhan Ekonomi",
-    tips: "Mis. SKTM dari desa/kelurahan. Opsional, namun membantu penilaian ekonomi.",
-    wajib: false,
+    tips: "Wajib diunggah, mis. SKTM dari desa/kelurahan, sebagai bukti kebutuhan ekonomi.",
+    wajib: true,
   },
 };
 

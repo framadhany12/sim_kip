@@ -18,7 +18,7 @@ export function cekLengkapMahasiswaLama(d: PendaftaranLengkap) {
   const selesai: Record<SlugLengkapi, boolean> = {
     "data-diri": langkah["data-diri"],
     keluarga: langkah.keluarga,
-    ekonomi: langkah.ekonomi,
+    ekonomi: !!d.ekonomi, // mahasiswa lama tidak mengunggah berkas
     sekolah: !!d.sekolah && !!d.jurusanDiterimaId,
     akademik: !!d.nim && !!d.kelas,
   };

@@ -8,10 +8,9 @@ import { parseTahun } from "./tahun";
 export type FilterMasterMhs = { q?: string; jurusan?: string; tahun?: string; nim?: string; status?: string; page?: string };
 export const PER_HALAMAN_MASTER = 25;
 
-/** Mahasiswa = pendaftar yang sudah diterima (status & hasil Diterima), lengkap dengan NIM dan kelas. */
-export async function daftarMasterMahasiswa(f: FilterMasterMhs) {
-  const db = await getDb();
-  const c = [eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")];
+/** Syarat WHERE Master Mahasiswa; dipakai daftar di layar dan export Excel agar filternya selalu sama. */
+export function kondisiMaster(f: FilterMasterMhs) {
+  const c =[eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")];
   if (f.jurusan) c.push(eq(pendaftaran.jurusanDiterimaId, f.jurusan));
   const tahun = parseTahun(f.tahun);
   if (tahun) c.push(sql`${angkatanSql} = ${tahun}`);
@@ -23,7 +22,13 @@ export async function daftarMasterMahasiswa(f: FilterMasterMhs) {
     c.push(or(like(dataDiri.namaLengkap, pola), like(users.nama, pola), like(users.email, pola), like(dataDiri.nik, pola), like(pendaftaran.nim, pola), like(pendaftaran.kelas, pola))!);
   }
   const status = STATUS_MAHASISWA.find((s) => s === f.status);
-  const where = and(...c, status ? eq(pendaftaran.statusMahasiswa, status) : undefined);
+  return and(...c, status ? eq(pendaftaran.statusMahasiswa, status) : undefined);
+}
+
+/** Mahasiswa = pendaftar yang sudah diterima (status & hasil Diterima), lengkap dengan NIM dan kelas. */
+export async function daftarMasterMahasiswa(f: FilterMasterMhs) {
+  const db = await getDb();
+  const where = kondisiMaster(f);
   const halaman = Math.max(1, Number(f.page) || 1);
   const [rows, [{ total }], daftarJurusan] = await Promise.all([
     db

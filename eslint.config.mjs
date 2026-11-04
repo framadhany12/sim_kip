@@ -15,6 +15,10 @@ const eslintConfig = [
     ignores: [
       "node_modules/**",
       ".next/**",
+      ".next-uji/**",
+      ".agents/**",
+      ".claude/**",
+      "qa/**",
       "out/**",
       "build/**",
       "next-env.d.ts",
