@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "dev:webpack": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/start.mjs",
     "lint": "eslint",
     "admin:buat": "node scripts/buat-admin.mjs",
     "admin:reset-2fa": "node scripts/reset-2fa.mjs",
@@ -14,9 +14,14 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrasi.mjs",
     "db:backup": "node scripts/backup.mjs",
-    "db:migrasi-sqlite": "node scripts/migrasi-sqlite-ke-mysql.mjs"
+    "db:migrasi-sqlite": "node scripts/migrasi-sqlite-ke-mysql.mjs",
+    "start:next": "next start"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "docx": "^9.15.0",
     "drizzle-orm": "^0.45.4",
     "exceljs": "^4.4.0",
@@ -30,21 +35,20 @@
     "react-dom": "19.1.0",
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@libsql/client": "^0.15.15",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
     "@types/nodemailer": "^6.4.17",
     "@types/qrcode": "^1.5.6",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.4",
     "eslint": "^9",
-    "eslint-config-next": "15.5.28",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "eslint-config-next": "15.5.28"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
