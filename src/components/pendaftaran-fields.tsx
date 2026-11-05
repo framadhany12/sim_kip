@@ -26,7 +26,8 @@ export function FieldsDataDiri({
   kabupaten,
   admin,
   tanpaKip,
-}: { x: Maybe<PendaftaranLengkap["diri"]>; namaBawaan?: string; nikAkun?: string | null; kabupaten: { id: string; nama: string; provinsi: string }[]; tanpaKip?: boolean } & Konteks) {
+  kunciDesilPip,
+}: { x: Maybe<PendaftaranLengkap["diri"]>; namaBawaan?: string; nikAkun?: string | null; kabupaten: { id: string; nama: string; provinsi: string }[]; tanpaKip?: boolean; kunciDesilPip?: boolean } & Konteks) {
   return (
     <>
       {tanpaKip ? (
@@ -49,25 +50,40 @@ export function FieldsDataDiri({
           hint={kata(admin, "Nomor dari akun SIM KIP Kuliah Anda di kip-kuliah.kemdiktisaintek.go.id.", "Nomor dari akun SIM KIP Kuliah pendaftar.")}
           className="sm:col-span-3"
         />
-        <Select
-          name="desil"
-          label="Desil"
-          required
-          defaultValue={x?.desil}
-          options={DESIL.map((v) => ({ value: v, label: DESIL_LABEL[v] }))}
-          hint="Tingkat kesejahteraan keluarga di DTSEN. Cek di akun SIM KIP Kuliah atau dtsen-form.bps.go.id."
-        />
-        <Select
-          name="penerimaPip"
-          label="Penerima PIP"
-          required
-          defaultValue={x?.penerimaPip == null ? "" : x.penerimaPip ? "ya" : "tidak"}
-          options={[
-            { value: "ya", label: "Ya" },
-            { value: "tidak", label: "Tidak" },
-          ]}
-          hint="Program Indonesia Pintar saat SD/SMP/SMA."
-        />
+        {kunciDesilPip ? (
+          <>
+            <Field
+              name="desilTerkunci"
+              label="Desil"
+              readOnly
+              defaultValue={x?.desil ? DESIL_LABEL[x.desil] : ""}
+              hint="Sudah dikirim, hanya admin yang dapat mengubah. Hubungi admin lewat menu Bantuan bila keliru."
+            />
+            <Field name="pipTerkunci" label="Penerima PIP" readOnly defaultValue={x?.penerimaPip ? "Ya" : "Tidak"} />
+          </>
+        ) : (
+          <>
+            <Select
+              name="desil"
+              label="Desil"
+              required
+              defaultValue={x?.desil}
+              options={DESIL.map((v) => ({ value: v, label: DESIL_LABEL[v] }))}
+              hint="Tingkat kesejahteraan keluarga di DTSEN. Cek di akun SIM KIP Kuliah atau dtsen-form.bps.go.id."
+            />
+            <Select
+              name="penerimaPip"
+              label="Penerima PIP"
+              required
+              defaultValue={x?.penerimaPip == null ? "" : x.penerimaPip ? "ya" : "tidak"}
+              options={[
+                { value: "ya", label: "Ya" },
+                { value: "tidak", label: "Tidak" },
+              ]}
+              hint="Program Indonesia Pintar saat SD/SMP/SMA."
+            />
+          </>
+        )}
       </div>
         </>
       )}

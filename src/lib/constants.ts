@@ -76,6 +76,9 @@ export const DESIL_TIDAK_SESUAI: readonly string[] = ["5", "6-10"];
 export const ALASAN_DESIL = "Desil Tidak Sesuai Ketentuan";
 export const PESAN_DESIL =
   "Mohon Maaf Desil Tidak Sesuai Dengan Ketentuan Kemendikristek, Silahkan Melakukan Penurunan Desil Terlebih Dahulu dan jika sudah turun bisa hubungi admin";
+/** Pendaftar berstatus menikah otomatis tidak lolos Seleksi Administrasi saat formulir dikirim. */
+export const ALASAN_MENIKAH = "Status Menikah";
+export const PESAN_MENIKAH = "Mohon Maaf Pendaftar Dengan Status Menikah Tidak Memenuhi Ketentuan KIP Kuliah. Jika data status pernikahan keliru, silahkan hubungi admin";
 /** Alasan baku bila pendaftar menjawab tidak bersedia diusulkan; alasan lengkap ditulis pendaftar sendiri. */
 export const ALASAN_TIDAK_BERSEDIA = "Tidak Bersedia Diusulkan";
 /** Pilihan alasan bila hasil Pengumuman adalah tidak diterima. */
