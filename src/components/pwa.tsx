@@ -37,11 +37,13 @@ export const SKRIP_TANGKAP_PASANG =
 export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean }) {
   const [prompt, setPrompt] = useState<PromptPasang | null>(null);
   const [ios, setIos] = useState(false);
+  const [tampil, setTampil] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     const nav = navigator as Navigator & { standalone?: boolean };
     if (matchMedia("(display-mode: standalone)").matches || nav.standalone) return;
+    setTampil(true);
     const ua = nav.userAgent;
     setIos(/iphone|ipad|ipod/i.test(ua) || (ua.includes("Macintosh") && nav.maxTouchPoints > 1));
     const baca = () => setPrompt(window.__promptPasang ?? null);
@@ -50,7 +52,8 @@ export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean 
     return () => window.removeEventListener("siap-pasang", baca);
   }, []);
 
-  if (!prompt && !ios) return null;
+  // Tanpa dialog bawaan (iPhone, atau browser belum memicunya) tombol tetap tampil dengan petunjuk manual.
+  if (!tampil) return null;
 
   async function pasang() {
     if (!prompt) return dialog.current?.showModal();
@@ -73,7 +76,7 @@ export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean 
         <Download className="size-[18px]" strokeWidth={1.8} aria-hidden />
         <span className="sr-only sm:not-sr-only">Pasang aplikasi</span>
       </button>
-      {ios && (
+      {!prompt && (
         <dialog
           ref={dialog}
           aria-labelledby="judul-pasang"
@@ -83,32 +86,44 @@ export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean 
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
               <h2 id="judul-pasang" className="text-lg font-bold">
-                Pasang SIM KIP di iPhone
+                {ios ? "Pasang SIM KIP di iPhone" : "Pasang SIM KIP"}
               </h2>
               <button type="button" onClick={() => dialog.current?.close()} className="-m-2 grid size-11 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Tutup">
                 <X className="size-5" aria-hidden />
               </button>
             </div>
-            <ol className="mt-3 space-y-3 text-[15px] text-slate-700">
-              <li className="flex gap-3">
-                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">1</span>
-                <span>
-                  Buka halaman ini di <b>Safari</b>, lalu ketuk tombol Bagikan <Share className="inline size-4 align-[-2px]" aria-label="(ikon kotak dengan panah ke atas)" />.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">2</span>
-                <span>
-                  Gulir ke bawah, pilih <b>Tambahkan ke Layar Utama</b> <SquarePlus className="inline size-4 align-[-2px]" aria-hidden />.
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">3</span>
-                <span>
-                  Ketuk <b>Tambah</b>. Ikon SIM KIP muncul di layar utama.
-                </span>
-              </li>
-            </ol>
+            {ios ? (
+              <ol className="mt-3 space-y-3 text-[15px] text-slate-700">
+                <li className="flex gap-3">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">1</span>
+                  <span>
+                    Buka halaman ini di <b>Safari</b>, lalu ketuk tombol Bagikan <Share className="inline size-4 align-[-2px]" aria-label="(ikon kotak dengan panah ke atas)" />.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">2</span>
+                  <span>
+                    Gulir ke bawah, pilih <b>Tambahkan ke Layar Utama</b> <SquarePlus className="inline size-4 align-[-2px]" aria-hidden />.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">3</span>
+                  <span>
+                    Ketuk <b>Tambah</b>. Ikon SIM KIP muncul di layar utama.
+                  </span>
+                </li>
+              </ol>
+            ) : (
+              <div className="mt-3 space-y-3 text-[15px] text-slate-700">
+                <p>
+                  <b>Chrome / Edge di laptop:</b> klik ikon pasang <Download className="inline size-4 align-[-2px]" aria-hidden /> di ujung kanan kolom alamat, atau menu <b>⋮</b> → <b>Kirim, simpan, dan bagikan</b> → <b>Instal halaman sebagai aplikasi</b> (Edge: <b>Aplikasi</b> → <b>Instal situs ini sebagai aplikasi</b>).
+                </p>
+                <p>
+                  <b>Chrome di Android:</b> ketuk menu <b>⋮</b> → <b>Instal aplikasi</b> (atau <b>Tambahkan ke layar utama</b>).
+                </p>
+                <p className="text-sm text-slate-500">Bila pilihan tidak muncul, pastikan situs dibuka lewat HTTPS dan bukan di mode penyamaran atau browser dalam aplikasi (mis. dari WhatsApp).</p>
+              </div>
+            )}
           </div>
         </dialog>
       )}

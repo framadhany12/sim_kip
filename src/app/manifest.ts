@@ -8,8 +8,9 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "SIM KIP",
     description: "Pendaftaran dan layanan mahasiswa KIP Kuliah Politeknik TEDC Bandung.",
     lang: "id",
-    // Belum masuk → /masuk, admin → /admin (diatur di lib/auth).
-    start_url: "/dashboard",
+    // "/" menjawab 200 untuk pengunjung (syarat pasang browser; /dashboard menjawab 307).
+    // Yang sudah masuk langsung diarahkan ke /admin atau /dashboard oleh halaman utama.
+    start_url: "/",
     scope: "/",
     display: "standalone",
     background_color: "#ffffff",
