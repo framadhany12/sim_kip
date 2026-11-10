@@ -77,7 +77,7 @@ export default async function JurusanPage() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.map((j) => (
-              <tr key={j.id} className={`align-top ${j.aktif ? "" : "text-slate-400"}`}>
+              <tr key={j.id} className={`align-top ${j.aktif ? "" : "text-slate-500"}`}>
                 <td className="px-4 py-3 font-mono font-semibold">{j.kode}</td>
                 <td className="px-4 py-3">
                   {j.nama}

@@ -62,6 +62,12 @@ export function PendaftarShell({
 
   return (
     <div className="min-h-dvh bg-[#f4f6fa] lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <a
+        href="#konten"
+        className="sr-only rounded-lg bg-[#f5c400] px-4 font-semibold text-[#0d2a63] focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center"
+      >
+        Lewati ke konten utama
+      </a>
       <aside className="sticky top-0 hidden h-dvh bg-[#0d2a63] lg:block">
         <nav aria-label="Menu pendaftar" className="flex h-full flex-col">
           <Link href="/dashboard" className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
@@ -108,7 +114,7 @@ export function PendaftarShell({
             {logo}
             <span className="hidden leading-tight min-[380px]:block">
               <span className="block text-[15px] font-bold text-slate-900">KIP Kuliah</span>
-              <span className="block text-[11px] text-slate-500">Politeknik TEDC</span>
+              <span className="block text-xs text-slate-500">Politeknik TEDC</span>
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-3">

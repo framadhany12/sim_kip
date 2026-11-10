@@ -153,7 +153,7 @@ export function PilihSekolah({ defaultNama, defaultNpsn }: { defaultNama?: strin
               <p className="truncate text-[15px] font-medium text-slate-900">{pilihan.nama}</p>
               {pilihan.kota && <p className="truncate text-xs text-slate-500">{pilihan.kota}</p>}
             </div>
-            <button type="button" onClick={ganti} className="shrink-0 rounded-md px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-50">
+            <button type="button" onClick={ganti} className="min-h-9 shrink-0 rounded-md px-2.5 py-1 text-sm font-medium text-blue-700 hover:bg-blue-50">
               Ganti
             </button>
           </div>

@@ -35,7 +35,7 @@ export function BottomNav({ mahasiswa = false, tanpaStatus = false }: { mahasisw
               <Link
                 href={i.href}
                 aria-current={aktif ? "page" : undefined}
-                className={`relative flex h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition active:bg-slate-100 ${
+                className={`relative flex h-16 flex-col items-center justify-center gap-0.5 text-xs font-semibold transition active:bg-slate-100 ${
                   aktif ? "text-[#0d2a63] dark:text-blue-300" : "text-slate-500"
                 }`}
               >

@@ -105,7 +105,7 @@ export function GrafikMahasiswa({
               <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
                 <div>
                   <p className="text-2xl font-semibold tabular-nums text-slate-900"><AngkaHitung nilai={totalKomposisi} /></p>
-                  <p className="text-[11px] text-slate-500">mahasiswa</p>
+                  <p className="text-xs text-slate-500">mahasiswa</p>
                 </div>
               </div>
             </div>

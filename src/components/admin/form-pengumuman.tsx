@@ -133,7 +133,7 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
                       ) : (
                         <span className="text-[13px] text-slate-600">
                           {r.jurusan1 ?? "—"}
-                          <span className="block text-slate-400">{r.jurusan2 ?? ""}</span>
+                          <span className="block text-slate-500">{r.jurusan2 ?? ""}</span>
                         </span>
                       )}
                     </td>

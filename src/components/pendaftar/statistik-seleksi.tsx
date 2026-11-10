@@ -86,7 +86,7 @@ export function StatistikSeleksi({ s }: { s: StatistikPendaftar }) {
                 <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
                   <div>
                     <p className="text-2xl font-semibold text-slate-900">{fmt.format(s.total)}</p>
-                    <p className="text-[11px] text-slate-500">pendaftar</p>
+                    <p className="text-xs text-slate-500">pendaftar</p>
                   </div>
                 </div>
               </div>
@@ -96,7 +96,7 @@ export function StatistikSeleksi({ s }: { s: StatistikPendaftar }) {
                     <span className="size-2.5 shrink-0 rounded-sm" style={{ background: x.warna }} aria-hidden />
                     <span className="flex-1 text-slate-600">{x.nama}</span>
                     <b className="tabular-nums text-slate-900">{fmt.format(x.n)}</b>
-                    <span className="w-10 text-right text-xs tabular-nums text-slate-400">{Math.round((x.n / s.total) * 100)}%</span>
+                    <span className="w-10 text-right text-xs tabular-nums text-slate-500">{Math.round((x.n / s.total) * 100)}%</span>
                   </li>
                 ))}
               </ul>

@@ -83,7 +83,7 @@ export default async function RekomendasiAdminPage() {
               </tr>
             )}
             {list.map(({ s, n }) => (
-              <tr key={s.id} className={`align-top ${s.aktif ? "" : "text-slate-400"}`}>
+              <tr key={s.id} className={`align-top ${s.aktif ? "" : "text-slate-500"}`}>
                 <td className="px-4 py-3">
                   <span className="mr-2 text-xs tabular-nums text-slate-400">#{s.urutan}</span>
                   <span className="font-medium">{s.nama}</span>

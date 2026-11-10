@@ -48,7 +48,7 @@ export default async function ManajemenUserPage() {
                   <p className="text-slate-500">{r.email}</p>
                 </td>
                 <td className="px-4 py-3"><TombolAktif userId={r.id} nama={r.nama} aktif={r.aktif} dilarang={r.id === saya.id} /></td>
-                <td className="px-4 py-3 text-slate-700">{r.jabatan || <span className="text-slate-400">Belum diisi</span>}</td>
+                <td className="px-4 py-3 text-slate-700">{r.jabatan || <span className="text-slate-500">Belum diisi</span>}</td>
                 <td className="px-4 py-3">
                   {r.tampil ? (
                     <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-300">Ditampilkan</span>

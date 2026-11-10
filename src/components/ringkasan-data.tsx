@@ -129,7 +129,7 @@ export function RingkasanData({ d, editLinks, berkasSlot }: { d: PendaftaranLeng
                       Lihat berkas ↗
                     </a>
                   ) : (
-                    <span className={BERKAS_INFO[j].wajib ? "text-amber-700" : "text-slate-400"}>Belum diunggah</span>
+                    <span className={BERKAS_INFO[j].wajib ? "text-amber-700" : "text-slate-500"}>Belum diunggah</span>
                   )}
                 </li>
               );

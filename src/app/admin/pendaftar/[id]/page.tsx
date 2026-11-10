@@ -74,7 +74,7 @@ export default async function DetailPendaftar({ params }: { params: Promise<{ id
                 </div>
               </>
             ) : (
-              <p className={`mt-2 text-sm ${BERKAS_INFO[j].wajib ? "text-amber-700" : "text-slate-400"}`}>Belum diunggah</p>
+              <p className={`mt-2 text-sm ${BERKAS_INFO[j].wajib ? "text-amber-700" : "text-slate-500"}`}>Belum diunggah</p>
             )}
           </li>
         );

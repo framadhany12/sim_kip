@@ -26,10 +26,10 @@ export function TombolAktif({ userId, nama, aktif, dilarang }: { userId: string;
         {!dilarang &&
           (konfirmasi ? (
             <span className="flex items-center gap-1" role="alertdialog" aria-label={`Konfirmasi nonaktifkan ${nama}`}>
-              <button type="button" onClick={kirim} disabled={pending} className="rounded-md bg-rose-700 px-2 py-1 text-xs font-semibold text-white hover:bg-rose-800 disabled:opacity-50">
+              <button type="button" onClick={kirim} disabled={pending} className="min-h-9 rounded-md bg-rose-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-800 disabled:opacity-50">
                 Ya
               </button>
-              <button type="button" onClick={() => setKonfirmasi(false)} className="rounded-md px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">
+              <button type="button" onClick={() => setKonfirmasi(false)} className="min-h-9 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-300 hover:bg-slate-50">
                 Batal
               </button>
             </span>

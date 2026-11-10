@@ -52,7 +52,7 @@ export function ProsesSeleksi({ status, tahap, hasil, jurusanDiterima, alasan, s
             ? "bg-emerald-600 text-white"
             : now
               ? "bg-blue-700 text-white ring-4 ring-blue-100"
-              : "bg-slate-100 text-slate-400 ring-1 ring-slate-200";
+              : "bg-slate-100 text-slate-500 ring-1 ring-slate-200";
         return (
           <li key={l.label} className={`relative flex gap-3 ${ringkas ? "pb-4 last:pb-0" : "pb-5 md:flex-col md:gap-2 md:pb-0"}`}>
             {/* garis penghubung */}

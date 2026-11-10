@@ -123,7 +123,7 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
                   {r.status ? (
                     <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-300">{labelProses(r.status, r.tahap, r.usulan)}</span>
                   ) : (
-                    <span className="text-xs text-slate-400">Belum membuka formulir</span>
+                    <span className="text-xs text-slate-500">Belum membuka formulir</span>
                   )}
                 </td>
                 <td className="px-4 py-3"><TombolAktif userId={r.id} nama={r.namaLengkap ?? r.nama} aktif={r.aktif} /></td>

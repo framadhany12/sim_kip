@@ -58,7 +58,7 @@ export default async function BeasiswaAdminPage() {
               </tr>
             )}
             {list.map(({ b, n }) => (
-              <tr key={b.id} className={`align-top ${b.aktif ? "" : "text-slate-400"}`}>
+              <tr key={b.id} className={`align-top ${b.aktif ? "" : "text-slate-500"}`}>
                 <td className="px-4 py-3">
                   <span className="mr-2 text-xs tabular-nums text-slate-400">#{b.urutan}</span>
                   <span className="font-medium">{b.nama}</span>

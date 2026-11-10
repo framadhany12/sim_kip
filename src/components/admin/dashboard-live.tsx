@@ -347,7 +347,7 @@ export function DashboardLive({ awal }: { awal: Statistik }) {
           id="f-tahun"
           value={tahun}
           onChange={(e) => ubahTahun(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none"
+          className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20"
         >
           <option value="semua">Semua tahun</option>
           {data.pilihanTahun.map((t) => (
@@ -461,7 +461,7 @@ export function DashboardLive({ awal }: { awal: Statistik }) {
                   <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
                     <div>
                       <p className="text-2xl font-semibold text-slate-900">{fmt.format(totalKomposisi)}</p>
-                      <p className="text-[11px] text-slate-500">pendaftaran</p>
+                      <p className="text-xs text-slate-500">pendaftaran</p>
                     </div>
                   </div>
                 </div>
@@ -471,7 +471,7 @@ export function DashboardLive({ awal }: { awal: Statistik }) {
                       <span className="size-2.5 shrink-0 rounded-sm" style={{ background: x.warna }} aria-hidden />
                       <span className="flex-1 text-slate-600">{x.nama}</span>
                       <b className="tabular-nums text-slate-900">{fmt.format(x.n)}</b>
-                      <span className="w-10 text-right text-xs tabular-nums text-slate-400">{Math.round((x.n / totalKomposisi) * 100)}%</span>
+                      <span className="w-10 text-right text-xs tabular-nums text-slate-500">{Math.round((x.n / totalKomposisi) * 100)}%</span>
                     </li>
                   ))}
                 </ul>
@@ -504,7 +504,7 @@ export function DashboardLive({ awal }: { awal: Statistik }) {
             </div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
               {data.perTahap.map((t) => (
-                <Link key={t.tahap} href={`/admin/pendaftar?status=tahap:${t.tahap}${thn}`} className="rounded-md border border-slate-200 px-2 py-1 text-slate-600 hover:border-blue-300 hover:text-blue-700">
+                <Link key={t.tahap} href={`/admin/pendaftar?status=tahap:${t.tahap}${thn}`} className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-2.5 py-1 text-slate-600 hover:border-blue-300 hover:text-blue-700">
                   Lihat {t.label} →
                 </Link>
               ))}
@@ -536,7 +536,7 @@ export function DashboardLive({ awal }: { awal: Statistik }) {
                         </Link>
                       </p>
                       <p className="truncate text-[13px] text-slate-600">{a.catatan?.split("\n")[0] || a.label}</p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-xs text-slate-500">
                         {a.label} · <Relatif iso={a.waktu} awal={waktuServer} /> · oleh {a.olehAdmin ? "Admin" : "Pendaftar"}
                       </p>
                     </div>

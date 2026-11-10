@@ -157,6 +157,12 @@ export function AdminShell({
 
   return (
     <div className="min-h-dvh bg-[#f4f6fa] lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <a
+        href="#konten"
+        className="sr-only rounded-lg bg-[#f5c400] px-4 font-semibold text-[#0d2a63] focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:inline-flex focus:min-h-11 focus:items-center"
+      >
+        Lewati ke konten utama
+      </a>
       {/* Sidebar desktop */}
       <aside className="sticky top-0 hidden h-dvh bg-[#0d2a63] lg:block">{sidebar}</aside>
 
@@ -205,7 +211,7 @@ export function AdminShell({
             </span>
           </div>
         </header>
-        <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+        <main id="konten" className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
           {children}
           <KreditAplikasi className="mt-10" />
         </main>
