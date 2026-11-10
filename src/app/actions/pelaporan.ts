@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { laporanAkademik, pengumumanMahasiswa } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { nilaiForm, type FormState } from "@/lib/form-state";
+import { MAKS_PESAN_HAPUS } from "@/lib/constants";
 import { hapusBerkas } from "@/lib/storage";
 
 /** Admin mengumumkan sesuatu ke seluruh mahasiswa (tampil sebagai banner di akun mahasiswa, tanpa email). */
@@ -34,13 +35,37 @@ export async function tutupPengumumanMahasiswa(id: string) {
   revalidatePath("/", "layout");
 }
 
-/** Admin menghapus laporan IPK satu semester yang keliru (beserta transkripnya) agar mahasiswa bisa melapor ulang. */
-export async function hapusLaporanIpk(id: string) {
-  await requireAdmin();
+/**
+ * Admin menghapus laporan IPK satu semester yang keliru (beserta transkripnya) agar mahasiswa bisa melapor ulang.
+ * `pesan` (opsional) menjelaskan kesalahannya; tampil sebagai banner pribadi di akun mahasiswa dan hilang sendiri
+ * setelah ia melaporkan ulang semester itu.
+ */
+export async function hapusLaporanIpk(input: { pendaftaranId: string; semester: number; pesan?: string }) {
+  const admin = await requireAdmin();
+  const pesan = (input.pesan ?? "").trim();
+  if (pesan.length > MAKS_PESAN_HAPUS) return { ok: false, message: `Pesan maksimal ${MAKS_PESAN_HAPUS} karakter.` };
   const db = await getDb();
-  const [lama] = await db.select().from(laporanAkademik).where(eq(laporanAkademik.id, id));
-  if (!lama) return;
-  await db.delete(laporanAkademik).where(eq(laporanAkademik.id, id));
+  const [lama] = await db
+    .select()
+    .from(laporanAkademik)
+    .where(and(eq(laporanAkademik.pendaftaranId, input.pendaftaranId), eq(laporanAkademik.semester, input.semester)));
+  if (!lama) return { ok: false, message: "Laporan semester ini sudah tidak ada. Muat ulang halaman." };
+  await db.delete(laporanAkademik).where(eq(laporanAkademik.id, lama.id));
   await hapusBerkas(lama.fileUrl).catch(() => {});
+  if (pesan) {
+    // Satu pesan aktif per semester: pesan lama untuk semester yang sama ditutup dulu.
+    await db
+      .update(pengumumanMahasiswa)
+      .set({ aktif: false })
+      .where(and(eq(pengumumanMahasiswa.pendaftaranId, lama.pendaftaranId), eq(pengumumanMahasiswa.semester, lama.semester)));
+    await db.insert(pengumumanMahasiswa).values({
+      judul: `Laporan IPK Semester ${lama.semester} dihapus admin`,
+      isi: pesan,
+      semester: lama.semester,
+      pendaftaranId: lama.pendaftaranId,
+      dibuatOleh: admin.id,
+    });
+  }
   revalidatePath("/", "layout");
+  return { ok: true, message: "Laporan dihapus." };
 }

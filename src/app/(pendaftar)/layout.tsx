@@ -12,7 +12,7 @@ export default async function PendaftarLayout({ children }: { children: React.Re
   const mahasiswa = !!p && sudahMahasiswa(p);
   const bukuTabungan = mahasiswa && (await wajibBukuTabungan(p.id));
   return (
-    <PendaftarShell nama={user.nama} email={user.email} logo={<LogoTedc size={36} />} aksiKeluar={keluar} mahasiswa={mahasiswa} bukuTabungan={bukuTabungan}>
+    <PendaftarShell nama={user.nama} email={user.email} logo={<LogoTedc size={36} />} aksiKeluar={keluar} mahasiswa={mahasiswa} bukuTabungan={bukuTabungan} tanpaStatus={user.mahasiswaLama}>
       <main>{user.wajibGantiSandi ? <FormSandiAwal nama={user.nama} /> : children}</main>
     </PendaftarShell>
   );

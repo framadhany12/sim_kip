@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CircleHelp, FileText, CalendarCheck, ChartColumn, GraduationCap, House, ListChecks, UserRound, type LucideIcon } from "lucide-react";
 
-const ITEM = (mahasiswa: boolean): { href: string; label: string; match: string; icon: LucideIcon; kecuali?: string[] }[] => [
+const ITEM = (mahasiswa: boolean, tanpaStatus: boolean): { href: string; label: string; match: string; icon: LucideIcon; kecuali?: string[] }[] => [
   { href: "/dashboard", label: mahasiswa ? "Dashboard" : "Beranda", match: "/dashboard", icon: House },
   ...(mahasiswa
     ? [
@@ -13,13 +13,13 @@ const ITEM = (mahasiswa: boolean): { href: string; label: string; match: string;
         { href: "/mahasiswa/kegiatan", label: "Kegiatan", match: "/mahasiswa/kegiatan", icon: CalendarCheck },
       ]
     : [{ href: "/formulir/data-diri", label: "Formulir", match: "/formulir", icon: FileText }]),
-  { href: "/status", label: "Status", match: "/status", icon: ListChecks },
+  ...(tanpaStatus ? [] : [{ href: "/status", label: "Status", match: "/status", icon: ListChecks }]),
   ...(mahasiswa ? [] : [{ href: "/bantuan", label: "Bantuan", match: "/bantuan", icon: CircleHelp }]),
   { href: "/akun", label: "Akun", match: "/akun", icon: UserRound },
 ];
 
 /** Menu bawah untuk pendaftar di HP & tablet (di bawah lebar lg): mudah dijangkau ibu jari. */
-export function BottomNav({ mahasiswa = false }: { mahasiswa?: boolean }) {
+export function BottomNav({ mahasiswa = false, tanpaStatus = false }: { mahasiswa?: boolean; tanpaStatus?: boolean }) {
   const path = usePathname();
   return (
     <nav
@@ -27,8 +27,8 @@ export function BottomNav({ mahasiswa = false }: { mahasiswa?: boolean }) {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="mx-auto grid max-w-xl" style={{ gridTemplateColumns: `repeat(${ITEM(mahasiswa).length}, minmax(0, 1fr))` }}>
-        {ITEM(mahasiswa).map((i) => {
+      <ul className="mx-auto grid max-w-xl" style={{ gridTemplateColumns: `repeat(${ITEM(mahasiswa, tanpaStatus).length}, minmax(0, 1fr))` }}>
+        {ITEM(mahasiswa, tanpaStatus).map((i) => {
           const aktif = (path === i.match || path.startsWith(i.match + "/")) && !i.kecuali?.some((k) => path === k || path.startsWith(k + "/"));
           return (
             <li key={i.href}>

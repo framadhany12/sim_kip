@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ProsesSeleksi } from "@/components/proses-seleksi";
 import { Hero } from "@/components/hero";
 import { FormUsulan } from "@/components/pendaftar/form-usulan";
@@ -10,7 +11,9 @@ import { sudahMahasiswa } from "@/lib/pendaftaran";
 export const metadata = { title: "Status Pendaftaran" };
 
 export default async function StatusPage({ searchParams }: { searchParams: Promise<{ terkirim?: string }> }) {
-  const { d, sudahDikirim, terkunci } = await konteksPendaftar();
+  const { user, d, sudahDikirim, terkunci } = await konteksPendaftar();
+  // Mahasiswa lama hasil impor tidak pernah ikut seleksi; menu Status Seleksi disembunyikan dan halamannya dialihkan.
+  if (user.mahasiswaLama) redirect("/dashboard");
   const { terkirim } = await searchParams;
   const diumumkan = d.tahap === "pengumuman" && !!d.hasil;
   const gugur = d.hasil === "ditolak" && !!d.tahap && d.tahap !== "pengumuman";

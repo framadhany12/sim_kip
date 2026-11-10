@@ -12,7 +12,8 @@ const kosong = (): JumlahStatus => ({ aktif: 0, dicabut: 0, tidak_aktif: 0, lulu
 /**
  * Ringkasan mahasiswa KIP-K (pendaftar dengan status & hasil Diterima, termasuk mahasiswa lama hasil impor):
  * jumlah per status mahasiswa, per angkatan, per program studi, serta rata-rata IPK.
- * IPK tiap mahasiswa = IPK pada semester terakhir yang ia laporkan (sama dengan grafik IPK).
+ * IPK tiap mahasiswa = IPK pada semester terakhir yang ia laporkan (sama dengan grafik IPK); rata-rata IPK dan jumlah
+ * `melapor` hanya menghitung mahasiswa aktif, sedangkan jumlah per status tetap mencakup semua status.
  */
 export async function ambilStatistikMahasiswa() {
   const db = await getDb();
@@ -21,7 +22,8 @@ export async function ambilStatistikMahasiswa() {
       coalesce(p.angkatan, year(date_add(u.created_at, interval 7 hour))) angkatan,
       coalesce(j.nama, 'Tanpa jurusan') jurusan,
       p.nim is not null nim_ada,
-      (select l.ipk from laporan_akademik l where l.pendaftaran_id = p.id order by l.semester desc limit 1) ipk
+      case when p.status_mahasiswa = 'aktif'
+        then (select l.ipk from laporan_akademik l where l.pendaftaran_id = p.id order by l.semester desc limit 1) end ipk
     from pendaftaran p
     join users u on u.id = p.user_id
     left join jurusan j on j.id = p.jurusan_diterima_id

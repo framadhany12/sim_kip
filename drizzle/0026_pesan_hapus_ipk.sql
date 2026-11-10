@@ -1,0 +1,2 @@
+ALTER TABLE `pengumuman_mahasiswa` ADD `pendaftaran_id` varchar(36);--> statement-breakpoint
+ALTER TABLE `pengumuman_mahasiswa` ADD CONSTRAINT `pengumuman_mahasiswa_pendaftaran_id_pendaftaran_id_fk` FOREIGN KEY (`pendaftaran_id`) REFERENCES `pendaftaran`(`id`) ON DELETE cascade ON UPDATE no action;

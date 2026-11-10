@@ -18,10 +18,10 @@ const MENU_MAHASISWA = (bukuTabungan: boolean): Item[] => [
   ...(bukuTabungan ? [{ href: "/mahasiswa/buku-tabungan", label: "Buku Tabungan", match: "/mahasiswa/buku-tabungan", icon: PiggyBank }] : []),
 ];
 
-const MENU = (mahasiswa: boolean, bukuTabungan: boolean): Item[] => [
+const MENU = (mahasiswa: boolean, bukuTabungan: boolean, tanpaStatus: boolean): Item[] => [
   { href: "/dashboard", label: mahasiswa ? "Dashboard" : "Beranda", match: "/dashboard", icon: House },
   ...(mahasiswa ? MENU_MAHASISWA(bukuTabungan) : [MENU_FORMULIR]),
-  { href: "/status", label: "Status Seleksi", match: "/status", icon: ListChecks },
+  ...(tanpaStatus ? [] : [{ href: "/status", label: "Status Seleksi", match: "/status", icon: ListChecks }]),
   { href: "/bantuan", label: "Bantuan", match: "/bantuan", icon: CircleHelp },
   { href: "/akun", label: "Akun Saya", match: "/akun", icon: UserRound },
 ];
@@ -38,6 +38,7 @@ export function PendaftarShell({
   aksiKeluar,
   mahasiswa = false,
   bukuTabungan = false,
+  tanpaStatus = false,
 }: {
   children: React.ReactNode;
   nama: string;
@@ -48,6 +49,8 @@ export function PendaftarShell({
   mahasiswa?: boolean;
   /** Mahasiswa angkatan 2026+ mendapat menu Buku Tabungan. */
   bukuTabungan?: boolean;
+  /** Mahasiswa lama hasil impor tidak pernah ikut seleksi: menu Status Seleksi disembunyikan. */
+  tanpaStatus?: boolean;
 }) {
   const path = usePathname();
   const aktif = (i: Item) => (path === i.match || path.startsWith(i.match + "/")) && !i.kecuali?.some((k) => path === k || path.startsWith(k + "/"));
@@ -71,7 +74,7 @@ export function PendaftarShell({
           <div className="flex-1 overflow-y-auto px-3 py-5">
             <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-200/60">Menu</p>
             <ul className="space-y-0.5">
-              {MENU(mahasiswa, bukuTabungan).map((i) => {
+              {MENU(mahasiswa, bukuTabungan, tanpaStatus).map((i) => {
                 const on = aktif(i);
                 return (
                   <li key={i.href}>
@@ -131,7 +134,7 @@ export function PendaftarShell({
           <KreditAplikasi className="mt-10" />
         </div>
       </div>
-      <BottomNav mahasiswa={mahasiswa} />
+      <BottomNav mahasiswa={mahasiswa} tanpaStatus={tanpaStatus} />
     </div>
   );
 }

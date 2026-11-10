@@ -157,17 +157,16 @@ export async function DashboardMahasiswa({ nama, d }: { nama: string; d: Pendaft
           </h2>
           <p className="mt-0.5 text-sm text-slate-600">Gambaran seluruh mahasiswa penerima KIP Kuliah Politeknik TEDC Bandung.</p>
         </div>
-        <div className="grid-muncul grid gap-3 sm:grid-cols-3">
-          <Angka label="Total mahasiswa KIP-K" nilai={statistik.total.total.toLocaleString("id-ID")} />
+        <div className="grid-muncul grid gap-3 sm:grid-cols-2">
           <Angka label="Mahasiswa aktif" nilai={statistik.total.aktif.toLocaleString("id-ID")} warna="text-emerald-700" />
           <Angka
             label="Rata-rata IPK"
             nilai={statistik.rataIpk != null && statistik.melapor >= MINIMAL_N ? ipk(statistik.rataIpk) : "-"}
-            ket={statistik.melapor >= MINIMAL_N ? `Dari ${statistik.melapor} mahasiswa yang sudah melapor` : "Belum cukup laporan"}
+            ket={statistik.melapor >= MINIMAL_N ? `Dari ${statistik.melapor} mahasiswa aktif yang sudah melapor` : "Belum cukup laporan"}
             warna="text-blue-800"
           />
         </div>
-        <GrafikMahasiswa total={statistik.total} angkatan={statistik.angkatan} jurusan={statistik.jurusan} />
+        <GrafikMahasiswa total={statistik.total} angkatan={statistik.angkatan} jurusan={statistik.jurusan} hanyaAktifLulus />
         <GrafikIpk data={grafikIpk} tandaiAngkatan={String(angkatan)} tandaiJurusan={d.jurusanDiterima ?? undefined} />
       </section>
     </div>

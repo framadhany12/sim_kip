@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import { tutupPengumumanMahasiswa } from "@/app/actions/pelaporan";
 import { FormUmumkan } from "@/components/admin/form-umumkan";
+import { TombolHapusLaporanIpk } from "@/components/admin/tombol-hapus-laporan-ipk";
 import { GrafikIpk } from "@/components/grafik-ipk";
 import { ambilStatistikIpk } from "@/lib/statistik-ipk";
 import { Card, PageHeader } from "@/components/ui";
@@ -27,6 +28,13 @@ const TAB = [
   ["grafik", "Grafik IPK"],
   ["umumkan", "Umumkan"],
 ] as const;
+
+/** "1,2,3" dari group_concat → [1, 2, 3] */
+const daftarSemester = (s: string | null) =>
+  (s ?? "")
+    .split(",")
+    .map(Number)
+    .filter((n) => n > 0);
 
 const tglPendek = (s: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${s}T00:00:00Z`));
 
@@ -235,7 +243,7 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
             </tbody>
           </table>
         ) : (
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">Mahasiswa</th>
@@ -244,12 +252,13 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
                 <th className="px-4 py-3 font-semibold">Angkatan</th>
                 <th className="px-4 py-3 font-semibold">Laporan masuk</th>
                 <th className="px-4 py-3 font-semibold">Terakhir melapor</th>
+                <th className="px-4 py-3 text-right font-semibold">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {hasil.rows.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
                     Belum ada mahasiswa yang melapor sesuai filter.
                   </td>
                 </tr>
@@ -269,6 +278,9 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
                   <td className="px-4 py-3 text-slate-700">{r.angkatan}</td>
                   <td className="px-4 py-3 text-slate-700">{ringkasSemester(r.semesterDilaporkan)}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">{tanggal(new Date(r.terakhir))}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <TombolHapusLaporanIpk pendaftaranId={r.id} nama={r.nama} semester={daftarSemester(r.semesterDilaporkan)} />
+                  </td>
                 </tr>
               ))}
             </tbody>

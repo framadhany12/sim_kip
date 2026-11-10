@@ -130,7 +130,10 @@ export async function daftarJurusanFilter() {
 export async function daftarPengumumanMahasiswa() {
   const db = await getDb();
   // Pengumuman buku tabungan dikelola di menu Buku Tabungan.
-  const rows = await db.select().from(pengumumanMahasiswa).where(isNull(pengumumanMahasiswa.jenis)).orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
+  const rows = await db
+    .select()
+    .from(pengumumanMahasiswa)
+    .where(and(isNull(pengumumanMahasiswa.jenis), isNull(pengumumanMahasiswa.pendaftaranId))).orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
   const [{ total }] = await db
     .select({ total: sql<number>`count(*)` })
     .from(pendaftaran)
@@ -146,7 +149,10 @@ export async function daftarPengumumanMahasiswa() {
   return rows.map((r) => ({ ...r, belum: r.semester ? Math.max(0, Number(total) - (perSemester.get(r.semester) ?? 0)) : (null as number | null) }));
 }
 
-/** Pengumuman aktif yang masih relevan bagi satu mahasiswa: semester terkait belum dilaporkannya, dan buku tabungan (bila wajib) belum dikirimnya. */
+/**
+ * Pengumuman aktif yang masih relevan bagi satu mahasiswa: semester terkait belum dilaporkannya, dan buku tabungan (bila wajib) belum dikirimnya.
+ * Termasuk pesan pribadi (`pendaftaranId` terisi), mis. catatan admin saat menghapus laporan IPK yang keliru.
+ */
 export async function pengumumanUntukMahasiswa(pendaftaranId: string) {
   const db = await getDb();
   const sudah = db
@@ -156,7 +162,14 @@ export async function pengumumanUntukMahasiswa(pendaftaranId: string) {
   return db
     .select()
     .from(pengumumanMahasiswa)
-    .where(and(eq(pengumumanMahasiswa.aktif, true), or(isNull(pengumumanMahasiswa.semester), notExists(sudah)), await syaratPengumumanBt(pendaftaranId)))
+    .where(
+      and(
+        eq(pengumumanMahasiswa.aktif, true),
+        or(isNull(pengumumanMahasiswa.pendaftaranId), eq(pengumumanMahasiswa.pendaftaranId, pendaftaranId)),
+        or(isNull(pengumumanMahasiswa.semester), notExists(sudah)),
+        await syaratPengumumanBt(pendaftaranId),
+      ),
+    )
     .orderBy(desc(pengumumanMahasiswa.createdAt))
     .limit(5);
 }

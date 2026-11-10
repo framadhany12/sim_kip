@@ -314,6 +314,8 @@ export const pengumumanMahasiswa = mysqlTable("pengumuman_mahasiswa", {
   semester: int("semester"),
   /** "buku_tabungan": hanya tampil bagi mahasiswa wajib buku tabungan yang belum mengisi. Kosong = pengumuman umum/IPK. */
   jenis: varchar("jenis", { length: 20 }),
+  /** Terisi = pesan pribadi untuk satu mahasiswa (mis. catatan admin saat menghapus laporan IPK yang keliru). Kosong = untuk semua mahasiswa. */
+  pendaftaranId: ref("pendaftaran_id").references(() => pendaftaran.id, { onDelete: "cascade" }),
   tenggat: varchar("tenggat", { length: 10 }),
   aktif: boolean("aktif").notNull().default(true),
   dibuatOleh: ref("dibuat_oleh").references(() => users.id, { onDelete: "set null" }),

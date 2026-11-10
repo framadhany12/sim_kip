@@ -16,7 +16,8 @@ type Baris = Record<string, unknown>;
 
 /**
  * Rata-rata IPK per angkatan (kolom angkatan, atau tahun akun dibuat WIB) dan per jurusan diterima.
- * Tiap mahasiswa dihitung SEKALI memakai IPK pada semester terakhir yang ia laporkan.
+ * Tiap mahasiswa dihitung SEKALI memakai IPK pada semester terakhir yang ia laporkan. Hanya mahasiswa berstatus aktif;
+ * yang lulus, dicabut, atau tidak aktif tidak ikut dihitung.
  * `minimalN` > 1 menyembunyikan kelompok kecil agar rata-ratanya tidak membuka IPK individu (dipakai untuk tampilan mahasiswa).
  */
 export async function ambilStatistikIpk(minimalN = 1): Promise<StatistikIpk> {
@@ -27,7 +28,7 @@ export async function ambilStatistikIpk(minimalN = 1): Promise<StatistikIpk> {
     join users u on u.id = p.user_id
     join laporan_akademik l on l.pendaftaran_id = p.id
     left join jurusan j on j.id = p.jurusan_diterima_id
-    where p.status = 'diterima' and p.hasil = 'diterima'
+    where p.status = 'diterima' and p.hasil = 'diterima' and p.status_mahasiswa = 'aktif'
       and l.semester = (select max(x.semester) from laporan_akademik x where x.pendaftaran_id = p.id)`;
   const jalankan = async (q: ReturnType<typeof sql>) => ((await db.execute(q)) as unknown as [Baris[]])[0];
   const [perAngkatan, perJurusan, [total]] = await Promise.all([

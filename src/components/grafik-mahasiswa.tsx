@@ -39,10 +39,10 @@ function TooltipIsi({ active, payload, label }: PropsTooltip) {
   );
 }
 
-function Legenda() {
+function Legenda({ seri }: { seri: typeof SERI }) {
   return (
     <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
-      {SERI.map((s) => (
+      {seri.map((s) => (
         <li key={s.key} className="flex items-center gap-1.5">
           <span aria-hidden className="size-2.5 rounded-sm" style={{ background: s.warna }} />
           {s.nama}
@@ -62,8 +62,23 @@ function Panel({ judul, sub, children, className = "" }: { judul: string; sub?: 
   );
 }
 
-/** Grafik jumlah mahasiswa KIP-K: komposisi status, per angkatan, dan per program studi. */
-export function GrafikMahasiswa({ total, angkatan, jurusan }: { total: JumlahStatus; angkatan: BarisKelompok[]; jurusan: BarisKelompok[] }) {
+/**
+ * Grafik jumlah mahasiswa KIP-K: komposisi status, per angkatan, dan per program studi.
+ * `hanyaAktifLulus` (tampilan mahasiswa): batang per angkatan & prodi hanya memuat Aktif dan Lulus; komposisi status tetap lengkap.
+ */
+export function GrafikMahasiswa({
+  total,
+  angkatan,
+  jurusan,
+  hanyaAktifLulus = false,
+}: {
+  total: JumlahStatus;
+  angkatan: BarisKelompok[];
+  jurusan: BarisKelompok[];
+  hanyaAktifLulus?: boolean;
+}) {
+  const seriBatang = hanyaAktifLulus ? SERI.filter((s) => s.key === "aktif" || s.key === "lulus") : SERI;
+  const subBatang = hanyaAktifLulus ? "Jumlah mahasiswa aktif dan lulus" : "Jumlah tiap status mahasiswa";
   const komposisi = SERI.map((s) => ({ nama: s.nama, n: total[s.key], warna: s.warna })).filter((x) => x.n > 0);
   const tinggiProdi = Math.max(140, jurusan.length * 38 + 20);
 
@@ -106,12 +121,12 @@ export function GrafikMahasiswa({ total, angkatan, jurusan }: { total: JumlahSta
         )}
       </Panel>
 
-      <Panel judul="Mahasiswa per angkatan" sub="Jumlah tiap status mahasiswa">
+      <Panel judul="Mahasiswa per angkatan" sub={subBatang}>
         {angkatan.length === 0 ? (
           <p className="text-sm text-slate-500">Belum ada mahasiswa.</p>
         ) : (
           <>
-            <Legenda />
+            <Legenda seri={seriBatang} />
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={angkatan} margin={{ top: 8, right: 8, bottom: 0, left: -16 }} barCategoryGap="28%">
@@ -119,8 +134,8 @@ export function GrafikMahasiswa({ total, angkatan, jurusan }: { total: JumlahSta
                   <XAxis dataKey="label" tick={{ ...sumbu, fill: C.ink2 }} axisLine={{ stroke: C.netral }} tickLine={false} />
                   <YAxis allowDecimals={false} tick={sumbu} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(42,120,214,0.06)" }} content={(p) => <TooltipIsi {...tt(p)} />} />
-                  {SERI.map((s, i) => (
-                    <Bar key={s.key} dataKey={s.key} name={s.nama} stackId="status" fill={s.warna} maxBarSize={48} radius={i === SERI.length - 1 ? [4, 4, 0, 0] : 0} animationDuration={500} />
+                  {seriBatang.map((s, i) => (
+                    <Bar key={s.key} dataKey={s.key} name={s.nama} stackId="status" fill={s.warna} maxBarSize={48} radius={i === seriBatang.length - 1 ? [4, 4, 0, 0] : 0} animationDuration={500} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
@@ -129,12 +144,12 @@ export function GrafikMahasiswa({ total, angkatan, jurusan }: { total: JumlahSta
         )}
       </Panel>
 
-      <Panel judul="Mahasiswa per program studi" sub="Jumlah tiap status mahasiswa" className="xl:col-span-2">
+      <Panel judul="Mahasiswa per program studi" sub={subBatang} className="xl:col-span-2">
         {jurusan.length === 0 ? (
           <p className="text-sm text-slate-500">Belum ada mahasiswa.</p>
         ) : (
           <>
-            <Legenda />
+            <Legenda seri={seriBatang} />
             <div style={{ height: tinggiProdi }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={jurusan} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }} barCategoryGap="28%">
@@ -142,8 +157,8 @@ export function GrafikMahasiswa({ total, angkatan, jurusan }: { total: JumlahSta
                   <XAxis type="number" allowDecimals={false} tick={sumbu} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="label" width={170} tick={{ ...sumbu, fill: C.ink2 }} axisLine={{ stroke: C.netral }} tickLine={false} />
                   <Tooltip cursor={{ fill: "rgba(42,120,214,0.06)" }} content={(p) => <TooltipIsi {...tt(p)} />} />
-                  {SERI.map((s, i) => (
-                    <Bar key={s.key} dataKey={s.key} name={s.nama} stackId="status" fill={s.warna} maxBarSize={22} radius={i === SERI.length - 1 ? [0, 4, 4, 0] : 0} animationDuration={500} />
+                  {seriBatang.map((s, i) => (
+                    <Bar key={s.key} dataKey={s.key} name={s.nama} stackId="status" fill={s.warna} maxBarSize={22} radius={i === seriBatang.length - 1 ? [0, 4, 4, 0] : 0} animationDuration={500} />
                   ))}
                 </BarChart>
               </ResponsiveContainer>

@@ -91,9 +91,9 @@ export function GrafikIpk({ data, tandaiAngkatan, tandaiJurusan }: { data: Stati
     <div className="space-y-4">
       {data.keseluruhan && (
         <div className="inline-flex flex-col rounded-xl border border-slate-200 bg-white px-5 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <span className="text-xs font-medium text-slate-500">Rata-rata IPK seluruh mahasiswa</span>
+          <span className="text-xs font-medium text-slate-500">Rata-rata IPK mahasiswa aktif</span>
           <span className="text-4xl font-bold tabular-nums text-slate-900">{ipk(data.keseluruhan.rata)}</span>
-          <span className="text-xs text-slate-500">dari {data.keseluruhan.n} mahasiswa yang sudah melapor (IPK semester terakhir masing-masing)</span>
+          <span className="text-xs text-slate-500">dari {data.keseluruhan.n} mahasiswa aktif yang sudah melapor (IPK semester terakhir masing-masing)</span>
         </div>
       )}
       <div className="grid gap-4 xl:grid-cols-2">

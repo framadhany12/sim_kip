@@ -54,7 +54,7 @@ export default async function DashboardMahasiswaPage() {
           <p className="text-sm font-medium text-slate-600">Rata-rata IPK</p>
           <p className="mt-1 text-3xl font-bold tabular-nums text-blue-800">{ipk(s.rataIpk)}</p>
           <p className="mt-1 text-xs text-slate-500">
-            Dari {angka(s.melapor)} mahasiswa yang sudah melapor (IPK semester terakhir)
+            Dari {angka(s.melapor)} mahasiswa aktif yang sudah melapor (IPK semester terakhir)
           </p>
         </section>
       </div>
@@ -136,7 +136,7 @@ function TabelKelompok({ judul, kolom, data, tautan }: { judul: string; kolom: s
                     </td>
                   ))}
                   <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-slate-900">{angka(b.total)}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 sm:px-5" title={`${b.melapor} mahasiswa melapor`}>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-slate-700 sm:px-5" title={`${b.melapor} mahasiswa aktif melapor`}>
                     {ipk(b.rataIpk)}
                   </td>
                 </tr>

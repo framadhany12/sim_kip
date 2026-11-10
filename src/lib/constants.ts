@@ -179,3 +179,6 @@ export const tanggal = (d: Date | null | undefined, withTime = true) =>
         timeZone: "Asia/Jakarta",
       }).format(d)
     : "-";
+
+/** Batas panjang pesan admin saat menghapus laporan IPK mahasiswa yang keliru. */
+export const MAKS_PESAN_HAPUS = 500;

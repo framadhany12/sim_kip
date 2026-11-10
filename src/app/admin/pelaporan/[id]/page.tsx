@@ -71,7 +71,7 @@ export default async function DetailPelaporanPage({ params }: { params: Promise<
                       </a>
                     </td>
                     <td className="px-4 py-2.5 text-right sm:px-5">
-                      <TombolHapusLaporanIpk id={l.id} nama={m.nama} semester={l.semester} />
+                      <TombolHapusLaporanIpk pendaftaranId={m.id} nama={m.nama} semester={[l.semester]} />
                     </td>
                   </tr>
                 ))}
