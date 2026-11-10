@@ -50,7 +50,7 @@ export default async function KelolaAdminPage({ params }: { params: Promise<{ id
             <DialogHapus
               judul="Atur ulang authenticator?"
               pesan={`${u.nama} akan keluar dari semua sesi dan diminta memasang authenticator baru saat login berikutnya. Pakai ini bila ponselnya hilang.`}
-              aksi={() => aturUlangAuthenticator(u.id)}
+              aksi={aturUlangAuthenticator.bind(null, u.id)}
               labelTombol="Atur ulang authenticator"
               labelKonfirmasi="Ya, atur ulang"
               className="rounded-lg px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50"
