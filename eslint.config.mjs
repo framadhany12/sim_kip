@@ -19,6 +19,7 @@ const eslintConfig = [
       ".agents/**",
       ".claude/**",
       "qa/**",
+      "video-tutorial/**",
       "out/**",
       "build/**",
       "next-env.d.ts",

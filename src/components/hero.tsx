@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 export function Hero({ eyebrow, title, desc, children, className = "" }: { eyebrow?: string; title: ReactNode; desc?: ReactNode; children?: ReactNode; className?: string }) {
   return (
     <section className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0d2a63] via-[#143c8f] to-[#2563eb] px-5 py-5 text-white shadow-lg shadow-blue-900/15 sm:px-7 sm:py-6 ${className}`}>
-      <span aria-hidden className="pointer-events-none absolute -right-10 -top-16 size-52 rounded-full bg-white/10" />
-      <span aria-hidden className="pointer-events-none absolute -bottom-20 right-24 size-44 rounded-full bg-[#f5c400]/15" />
+      <span aria-hidden className="melayang pointer-events-none absolute -right-10 -top-16 size-52 rounded-full bg-white/10" />
+      <span aria-hidden className="melayang-balik pointer-events-none absolute -bottom-20 right-24 size-44 rounded-full bg-[#f5c400]/15" />
       <div className="relative">
         {eyebrow && <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-200">{eyebrow}</p>}
         <h1 className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>

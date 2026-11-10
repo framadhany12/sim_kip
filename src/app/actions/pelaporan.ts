@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { pengumumanMahasiswa } from "@/db/schema";
+import { laporanAkademik, pengumumanMahasiswa } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { nilaiForm, type FormState } from "@/lib/form-state";
+import { hapusBerkas } from "@/lib/storage";
 
 /** Admin mengumumkan sesuatu ke seluruh mahasiswa (tampil sebagai banner di akun mahasiswa, tanpa email). */
 export async function buatPengumumanMahasiswa(_: FormState, fd: FormData): Promise<FormState> {
@@ -30,5 +31,16 @@ export async function tutupPengumumanMahasiswa(id: string) {
   await requireAdmin();
   const db = await getDb();
   await db.update(pengumumanMahasiswa).set({ aktif: false }).where(eq(pengumumanMahasiswa.id, id));
+  revalidatePath("/", "layout");
+}
+
+/** Admin menghapus laporan IPK satu semester yang keliru (beserta transkripnya) agar mahasiswa bisa melapor ulang. */
+export async function hapusLaporanIpk(id: string) {
+  await requireAdmin();
+  const db = await getDb();
+  const [lama] = await db.select().from(laporanAkademik).where(eq(laporanAkademik.id, id));
+  if (!lama) return;
+  await db.delete(laporanAkademik).where(eq(laporanAkademik.id, id));
+  await hapusBerkas(lama.fileUrl).catch(() => {});
   revalidatePath("/", "layout");
 }

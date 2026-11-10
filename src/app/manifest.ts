@@ -13,6 +13,14 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
+    // Desktop/browser yang tak mendukung standalone jatuh ke jendela minimal, bukan tab biasa.
+    display_override: ["standalone", "minimal-ui"],
+    orientation: "any",
+    categories: ["education"],
+    shortcuts: [
+      { name: "Dashboard", url: "/dashboard", icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }] },
+      { name: "Status pendaftaran", url: "/status", icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }] },
+    ],
     background_color: "#ffffff",
     theme_color: "#0d2a63",
     icons: [

@@ -33,7 +33,7 @@ export function Stepper({ selesai, langkah = LANGKAH, basis = "/formulir", label
                 className="group flex h-9 items-center justify-center"
               >
                 <span
-                  className={`h-2 w-full rounded-full transition ${
+                  className={`${i === aktif || selesai[l.slug] ? "langkah-isi " : ""}h-2 w-full rounded-full transition ${
                     i === aktif ? "bg-gradient-to-r from-[#2563eb] to-[#0d2a63]" : selesai[l.slug] ? "bg-emerald-500" : "bg-slate-200 group-active:bg-slate-300"
                   }`}
                 />

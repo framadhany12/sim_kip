@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { TombolHapusLaporanIpk } from "@/components/admin/tombol-hapus-laporan-ipk";
 import { Card, Dl } from "@/components/ui";
 import { tanggal } from "@/lib/constants";
 import { detailPelaporanMahasiswa, ringkasSemester } from "@/lib/pelaporan-akademik";
@@ -55,6 +56,7 @@ export default async function DetailPelaporanPage({ params }: { params: Promise<
                   <th className="px-4 py-2.5 font-semibold">IPK</th>
                   <th className="px-4 py-2.5 font-semibold">Dilaporkan</th>
                   <th className="px-4 py-2.5 font-semibold">Transkrip</th>
+                  <th className="px-4 py-2.5 text-right font-semibold sm:px-5">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -67,6 +69,9 @@ export default async function DetailPelaporanPage({ params }: { params: Promise<
                       <a href={`/api/laporan-akademik/${l.id}`} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
                         Buka
                       </a>
+                    </td>
+                    <td className="px-4 py-2.5 text-right sm:px-5">
+                      <TombolHapusLaporanIpk id={l.id} nama={m.nama} semester={l.semester} />
                     </td>
                   </tr>
                 ))}

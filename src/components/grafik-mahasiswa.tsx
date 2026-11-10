@@ -1,6 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { AngkaHitung } from "@/components/angka-hitung";
 import type { StatusMahasiswa } from "@/db/schema";
 import type { BarisKelompok, JumlahStatus } from "@/lib/statistik-mahasiswa";
 
@@ -86,7 +87,7 @@ export function GrafikMahasiswa({ total, angkatan, jurusan }: { total: JumlahSta
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
                 <div>
-                  <p className="text-2xl font-semibold tabular-nums text-slate-900">{fmt.format(total.total)}</p>
+                  <p className="text-2xl font-semibold tabular-nums text-slate-900"><AngkaHitung nilai={total.total} /></p>
                   <p className="text-[11px] text-slate-500">mahasiswa</p>
                 </div>
               </div>

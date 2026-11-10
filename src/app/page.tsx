@@ -74,7 +74,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ p
       <section className="latar-tua relative bg-[#0d2a63] text-white">
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-[#f5c400] via-[#f5c400] to-[#1e8e3e]" />
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-10 md:pb-28 md:pt-20">
-          <div className="max-w-3xl">
+          <div className="hero-urut max-w-3xl">
             <h1 className="text-[clamp(1.875rem,1.2rem+3vw,3rem)] font-extrabold leading-[1.1] tracking-tight text-balance">
               {k.hero.judul}
               {k.hero.sorot && <> <span className="text-[#f5c400]">{k.hero.sorot}</span></>}

@@ -36,7 +36,9 @@ export const SKRIP_TANGKAP_PASANG =
  */
 export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean }) {
   const [prompt, setPrompt] = useState<PromptPasang | null>(null);
-  const [ios, setIos] = useState(false);
+  const [platform, setPlatform] = useState<"ios" | "android" | "desktop">("desktop");
+  const [dalamAplikasi, setDalamAplikasi] = useState(false);
+  const [bukanSafari, setBukanSafari] = useState(false);
   const [tampil, setTampil] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -45,7 +47,12 @@ export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean 
     if (matchMedia("(display-mode: standalone)").matches || nav.standalone) return;
     setTampil(true);
     const ua = nav.userAgent;
-    setIos(/iphone|ipad|ipod/i.test(ua) || (ua.includes("Macintosh") && nav.maxTouchPoints > 1));
+    const iosPerangkat = /iphone|ipad|ipod/i.test(ua) || (ua.includes("Macintosh") && nav.maxTouchPoints > 1);
+    setPlatform(iosPerangkat ? "ios" : /android/i.test(ua) ? "android" : "desktop");
+    // Browser di dalam aplikasi lain (WhatsApp, Instagram, Facebook, Line, WebView Android) tidak bisa memasang PWA.
+    setDalamAplikasi(/FBAN|FBAV|Instagram|Line\/|MicroMessenger|TikTok|; wv\)/i.test(ua));
+    // iOS 16.4+: Chrome/Edge/Firefox juga punya "Tambahkan ke Layar Utama", tetapi menunya ada di tempat berbeda.
+    setBukanSafari(iosPerangkat && /CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua));
     const baca = () => setPrompt(window.__promptPasang ?? null);
     baca();
     window.addEventListener("siap-pasang", baca);
@@ -71,7 +78,7 @@ export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean 
         type="button"
         onClick={pasang}
         title="Pasang aplikasi SIM KIP"
-        className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg px-2.5 text-sm font-medium transition ${warna}`}
+        className={`pasang-denyut inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg px-2.5 text-sm font-medium transition ${warna}`}
       >
         <Download className="size-[18px]" strokeWidth={1.8} aria-hidden />
         <span className="sr-only sm:not-sr-only">Pasang aplikasi</span>
@@ -86,18 +93,27 @@ export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean 
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
               <h2 id="judul-pasang" className="text-lg font-bold">
-                {ios ? "Pasang SIM KIP di iPhone" : "Pasang SIM KIP"}
+                {platform === "ios" ? "Pasang SIM KIP di iPhone" : "Pasang SIM KIP"}
               </h2>
               <button type="button" onClick={() => dialog.current?.close()} className="-m-2 grid size-11 place-items-center rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Tutup">
                 <X className="size-5" aria-hidden />
               </button>
             </div>
-            {ios ? (
+            {dalamAplikasi && (
+              <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-amber-200">
+                Anda membuka SIM KIP dari dalam aplikasi lain. Buka dulu lewat menu <b>⋮</b> → <b>Buka di browser</b> ({platform === "ios" ? "Safari" : "Chrome"}), lalu pasang.
+              </p>
+            )}
+            {platform === "ios" ? (
               <ol className="mt-3 space-y-3 text-[15px] text-slate-700">
                 <li className="flex gap-3">
                   <span className="grid size-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">1</span>
                   <span>
-                    Buka halaman ini di <b>Safari</b>, lalu ketuk tombol Bagikan <Share className="inline size-4 align-[-2px]" aria-label="(ikon kotak dengan panah ke atas)" />.
+                    {bukanSafari ? (
+                      <>Ketuk tombol Bagikan <Share className="inline size-4 align-[-2px]" aria-label="(ikon kotak dengan panah ke atas)" /> di bilah browser (perlu iOS 16.4 ke atas; bila tidak ada, buka halaman ini di <b>Safari</b>).</>
+                    ) : (
+                      <>Buka halaman ini di <b>Safari</b>, lalu ketuk tombol Bagikan <Share className="inline size-4 align-[-2px]" aria-label="(ikon kotak dengan panah ke atas)" />.</>
+                    )}
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -115,13 +131,29 @@ export function TombolPasang({ gelapDiLatar = false }: { gelapDiLatar?: boolean 
               </ol>
             ) : (
               <div className="mt-3 space-y-3 text-[15px] text-slate-700">
-                <p>
-                  <b>Chrome / Edge di laptop:</b> klik ikon pasang <Download className="inline size-4 align-[-2px]" aria-hidden /> di ujung kanan kolom alamat, atau menu <b>⋮</b> → <b>Kirim, simpan, dan bagikan</b> → <b>Instal halaman sebagai aplikasi</b> (Edge: <b>Aplikasi</b> → <b>Instal situs ini sebagai aplikasi</b>).
-                </p>
-                <p>
-                  <b>Chrome di Android:</b> ketuk menu <b>⋮</b> → <b>Instal aplikasi</b> (atau <b>Tambahkan ke layar utama</b>).
-                </p>
-                <p className="text-sm text-slate-500">Bila pilihan tidak muncul, pastikan situs dibuka lewat HTTPS dan bukan di mode penyamaran atau browser dalam aplikasi (mis. dari WhatsApp).</p>
+                {platform === "android" ? (
+                  <>
+                    <p>
+                      <b>Chrome / Edge / Firefox di Android:</b> ketuk menu <b>⋮</b> → <b>Instal aplikasi</b> (atau <b>Tambahkan ke layar utama</b>).
+                    </p>
+                    <p>
+                      <b>Samsung Internet:</b> menu <b>☰</b> → <b>Tambahkan halaman ke</b> → <b>Layar utama</b>.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      <b>Chrome / Edge:</b> klik ikon pasang <Download className="inline size-4 align-[-2px]" aria-hidden /> di ujung kanan kolom alamat, atau menu <b>⋮</b> → <b>Kirim, simpan, dan bagikan</b> → <b>Instal halaman sebagai aplikasi</b> (Edge: <b>Aplikasi</b> → <b>Instal situs ini sebagai aplikasi</b>).
+                    </p>
+                    <p>
+                      <b>Safari di Mac (macOS Sonoma ke atas):</b> menu <b>File</b> → <b>Tambahkan ke Dock</b>.
+                    </p>
+                    <p>
+                      <b>Firefox di komputer</b> belum mendukung pemasangan aplikasi; gunakan Chrome atau Edge.
+                    </p>
+                  </>
+                )}
+                <p className="text-sm text-slate-500">Bila pilihan tidak muncul, pastikan situs dibuka lewat HTTPS dan bukan di mode penyamaran.</p>
               </div>
             )}
           </div>

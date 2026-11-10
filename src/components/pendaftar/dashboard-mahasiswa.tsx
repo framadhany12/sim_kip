@@ -46,7 +46,7 @@ export async function DashboardMahasiswa({ nama, d }: { nama: string; d: Pendaft
     <div className="space-y-6">
       <BannerPengumuman pendaftaranId={d.id} />
       <Hero eyebrow="Dashboard Mahasiswa KIP Kuliah" title={`Halo, ${nama.split(" ")[0]}!`} desc="Pantau data akademik, laporan IPK, dan kegiatan kemahasiswaan Anda sebagai penerima KIP Kuliah.">
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="grid-muncul grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           <HeroStat label="NIM" value={d.nim ?? "Belum diisi"} />
           <HeroStat label="Angkatan" value={angkatan} />
           <HeroStat label="IPK terakhir" value={terakhir ? ipk(terakhir.ipk) : "-"} />
@@ -66,7 +66,7 @@ export async function DashboardMahasiswa({ nama, d }: { nama: string; d: Pendaft
         </Alert>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid-muncul grid gap-4 lg:grid-cols-2">
         <Card title="Data akademik" action={<StatusMahasiswaBadge status={d.statusMahasiswa} />}>
           <Dl
             items={[
@@ -157,7 +157,7 @@ export async function DashboardMahasiswa({ nama, d }: { nama: string; d: Pendaft
           </h2>
           <p className="mt-0.5 text-sm text-slate-600">Gambaran seluruh mahasiswa penerima KIP Kuliah Politeknik TEDC Bandung.</p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid-muncul grid gap-3 sm:grid-cols-3">
           <Angka label="Total mahasiswa KIP-K" nilai={statistik.total.total.toLocaleString("id-ID")} />
           <Angka label="Mahasiswa aktif" nilai={statistik.total.aktif.toLocaleString("id-ID")} warna="text-emerald-700" />
           <Angka
@@ -176,7 +176,7 @@ export async function DashboardMahasiswa({ nama, d }: { nama: string; d: Pendaft
 
 function Angka({ label, nilai, ket, warna = "text-slate-900" }: { label: string; nilai: string; ket?: string; warna?: string }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <section className="kartu-angkat rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <p className="text-sm font-medium text-slate-600">{label}</p>
       <p className={`mt-1 text-3xl font-bold tabular-nums ${warna}`}>{nilai}</p>
       {ket && <p className="mt-1 text-xs text-slate-500">{ket}</p>}

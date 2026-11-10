@@ -45,7 +45,7 @@ function Batang({ judul, kolom, sub, data, tandai }: { judul: string; kolom: str
                     style={{ backgroundImage: "linear-gradient(to right, var(--grafik-grid) 1px, transparent 1px)", backgroundSize: "25% 100%", borderRight: "1px solid var(--grafik-grid)" }}
                     aria-hidden
                   >
-                    <span className="absolute inset-y-0 left-0 rounded-r-[4px]" style={{ width: `${Math.min(100, (t.rata / 4) * 100)}%`, background: berwarna ? "var(--grafik-bar)" : "var(--grafik-bar-redup)" }} />
+                    <span className="bar-tumbuh absolute inset-y-0 left-0 rounded-r-[4px]" style={{ width: `${Math.min(100, (t.rata / 4) * 100)}%`, background: berwarna ? "var(--grafik-bar)" : "var(--grafik-bar-redup)" }} />
                   </span>
                   <span className="text-[13px] tabular-nums text-slate-900">
                     <b>{ipk(t.rata)}</b>
