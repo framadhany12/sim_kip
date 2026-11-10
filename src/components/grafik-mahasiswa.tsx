@@ -64,7 +64,7 @@ function Panel({ judul, sub, children, className = "" }: { judul: string; sub?: 
 
 /**
  * Grafik jumlah mahasiswa KIP-K: komposisi status, per angkatan, dan per program studi.
- * `hanyaAktifLulus` (tampilan mahasiswa): batang per angkatan & prodi hanya memuat Aktif dan Lulus; komposisi status tetap lengkap.
+ * `hanyaAktifLulus` (tampilan mahasiswa): komposisi status serta batang per angkatan & prodi hanya memuat Aktif dan Lulus.
  */
 export function GrafikMahasiswa({
   total,
@@ -79,13 +79,15 @@ export function GrafikMahasiswa({
 }) {
   const seriBatang = hanyaAktifLulus ? SERI.filter((s) => s.key === "aktif" || s.key === "lulus") : SERI;
   const subBatang = hanyaAktifLulus ? "Jumlah mahasiswa aktif dan lulus" : "Jumlah tiap status mahasiswa";
-  const komposisi = SERI.map((s) => ({ nama: s.nama, n: total[s.key], warna: s.warna })).filter((x) => x.n > 0);
+  // Dasar persentase ikut menyempit agar tetap berjumlah 100%.
+  const totalKomposisi = seriBatang.reduce((n, s) => n + total[s.key], 0);
+  const komposisi = seriBatang.map((s) => ({ nama: s.nama, n: total[s.key], warna: s.warna })).filter((x) => x.n > 0);
   const tinggiProdi = Math.max(140, jurusan.length * 38 + 20);
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-      <Panel judul="Komposisi status" sub="Seluruh mahasiswa penerima KIP-K">
-        {total.total === 0 ? (
+      <Panel judul="Komposisi status" sub={hanyaAktifLulus ? "Mahasiswa aktif dan lulus penerima KIP-K" : "Seluruh mahasiswa penerima KIP-K"}>
+        {totalKomposisi === 0 ? (
           <p className="text-sm text-slate-500">Belum ada mahasiswa.</p>
         ) : (
           <div className="flex flex-col items-center gap-5 sm:flex-row xl:flex-col 2xl:flex-row">
@@ -102,18 +104,18 @@ export function GrafikMahasiswa({
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
                 <div>
-                  <p className="text-2xl font-semibold tabular-nums text-slate-900"><AngkaHitung nilai={total.total} /></p>
+                  <p className="text-2xl font-semibold tabular-nums text-slate-900"><AngkaHitung nilai={totalKomposisi} /></p>
                   <p className="text-[11px] text-slate-500">mahasiswa</p>
                 </div>
               </div>
             </div>
             <ul className="w-full space-y-2 text-sm">
-              {SERI.map((s) => (
+              {seriBatang.map((s) => (
                 <li key={s.key} className="flex items-center gap-2.5">
                   <span className="size-2.5 shrink-0 rounded-sm" style={{ background: s.warna }} aria-hidden />
                   <span className="flex-1 text-slate-600">{s.nama}</span>
                   <b className="tabular-nums text-slate-900">{fmt.format(total[s.key])}</b>
-                  <span className="w-10 text-right text-xs tabular-nums text-slate-500">{total.total ? Math.round((total[s.key] / total.total) * 100) : 0}%</span>
+                  <span className="w-10 text-right text-xs tabular-nums text-slate-500">{totalKomposisi ? Math.round((total[s.key] / totalKomposisi) * 100) : 0}%</span>
                 </li>
               ))}
             </ul>
