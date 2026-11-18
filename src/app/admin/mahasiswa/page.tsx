@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CheckCircle2, MailWarning } from "lucide-react";
 import { TombolAktif } from "@/components/admin/tombol-aktif";
+import { TombolHapusCalon } from "@/components/admin/tombol-hapus-calon";
+import { BarHapusMassal, KotakPilih, KotakPilihSemua, PilihProvider } from "@/components/admin/pilih-mahasiswa";
 import { Card, PageHeader } from "@/components/ui";
 import { daftarTahun } from "@/lib/admin-query";
 import { labelProses, tanggal } from "@/lib/constants";
@@ -15,12 +17,14 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
   const jumlahHalaman = Math.max(1, Math.ceil(total / PER_HALAMAN_MHS));
   const qs = (extra: Record<string, string | number>) =>
     new URLSearchParams(Object.entries({ ...f, ...extra }).filter(([, v]) => v !== undefined && v !== "") as [string, string][]).toString();
+  // Yang sudah menjadi mahasiswa (diterima) dihapus dari Master Mahasiswa, bukan dari sini.
+  const bisaHapus = (r: (typeof rows)[number]) => !(r.status === "diterima" && r.hasil === "diterima");
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Master Calon Mahasiswa"
-        desc="Seluruh akun pendaftar, termasuk yang belum mengisi formulir. Buka satu akun untuk melihat data lengkap, mengedit data, dan mengatur ulang kata sandi."
+        desc="Seluruh akun pendaftar, termasuk yang belum mengisi formulir. Buka satu akun untuk melihat data lengkap, mengedit data, dan mengatur ulang kata sandi. Akun yang sudah diterima sebagai mahasiswa dihapus dari Master Mahasiswa."
       />
       <Card>
         <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
@@ -72,10 +76,15 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
         </form>
       </Card>
 
+      <PilihProvider idHalaman={rows.filter(bisaHapus).map((r) => r.id)}>
+      <BarHapusMassal jenis="calon" />
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[940px] text-left text-sm">
+        <table className="w-full min-w-[1040px] text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
+              <th className="w-10 px-4 py-3">
+                <KotakPilihSemua satuan="akun" />
+              </th>
               <th className="px-4 py-3 font-semibold">Mahasiswa</th>
               <th className="px-4 py-3 font-semibold">Email</th>
               <th className="px-4 py-3 font-semibold">No. KIP / NIK / NISN</th>
@@ -83,18 +92,22 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
               <th className="px-4 py-3 font-semibold">Mendaftar</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Akun</th>
+              <th className="px-4 py-3 font-semibold">
+                <span className="sr-only">Aksi</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
                   Tidak ada akun yang cocok dengan filter.
                 </td>
               </tr>
             )}
             {rows.map((r) => (
               <tr key={r.id} className="align-top hover:bg-slate-50">
+                <td className="px-4 py-3">{bisaHapus(r) && <KotakPilih id={r.id} nama={r.namaLengkap ?? r.nama} />}</td>
                 <td className="px-4 py-3">
                   <Link href={`/admin/mahasiswa/${r.id}`} className="font-semibold text-blue-700 hover:underline">
                     {r.namaLengkap ?? r.nama}
@@ -127,11 +140,19 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
                   )}
                 </td>
                 <td className="px-4 py-3"><TombolAktif userId={r.id} nama={r.namaLengkap ?? r.nama} aktif={r.aktif} /></td>
+                <td className="px-4 py-3">
+                  {bisaHapus(r) ? (
+                    <TombolHapusCalon userId={r.id} nama={r.namaLengkap ?? r.nama} />
+                  ) : (
+                    <span className="text-xs text-slate-500" title="Sudah menjadi mahasiswa; hapus dari Master Mahasiswa">Mahasiswa</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      </PilihProvider>
 
       {jumlahHalaman > 1 && (
         <nav className="flex items-center justify-between text-sm" aria-label="Halaman">

@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { MAKS_PESAN_HAPUS } from "@/lib/constants";
+import { inputCls } from "@/lib/styles";
 
 type Hasil = { ok: boolean; message: string } | void;
 
-/** Tombol Hapus dengan popup konfirmasi sendiri (pengganti confirm() bawaan browser). */
+/**
+ * Tombol Hapus dengan popup konfirmasi sendiri (pengganti confirm() bawaan browser).
+ * `catatan` diisi = dialog memuat kolom pesan opsional untuk pengguna; isinya diteruskan ke `aksi`.
+ */
 export function DialogHapus({
   judul,
   pesan,
@@ -13,15 +18,19 @@ export function DialogHapus({
   className,
   labelTombol = "Hapus",
   labelKonfirmasi = "Ya, hapus",
+  catatan,
 }: {
   judul: string;
   pesan: string;
-  aksi: () => Promise<Hasil>;
+  aksi: (pesan: string) => Promise<Hasil>;
   className: string;
   labelTombol?: string;
   labelKonfirmasi?: string;
+  catatan?: { label: string; placeholder: string; bantuan: string };
 }) {
+  const uid = useId();
   const [buka, setBuka] = useState(false);
+  const [pesanPengguna, setPesanPengguna] = useState("");
   const [galat, setGalat] = useState("");
   const [pending, mulai] = useTransition();
   const batalRef = useRef<HTMLButtonElement>(null);
@@ -43,7 +52,7 @@ export function DialogHapus({
 
   function hapus() {
     mulai(async () => {
-      const r = await aksi();
+      const r = await aksi(pesanPengguna.trim());
       if (r && !r.ok) setGalat(r.message);
       else setBuka(false);
     });
@@ -55,6 +64,7 @@ export function DialogHapus({
         type="button"
         onClick={() => {
           setGalat("");
+          setPesanPengguna("");
           setBuka(true);
         }}
         className={className}
@@ -71,10 +81,10 @@ export function DialogHapus({
             <div
               role="alertdialog"
               aria-modal="true"
-              aria-labelledby="dlg-hapus-judul"
-              aria-describedby="dlg-hapus-pesan"
+              aria-labelledby={`${uid}-judul`}
+              aria-describedby={`${uid}-pesan`}
               onClick={(e) => e.stopPropagation()}
-              className="dialog-kotak w-full max-w-sm rounded-2xl bg-white p-5 text-left shadow-2xl ring-1 ring-slate-200"
+              className={`dialog-kotak w-full ${catatan ? "max-w-md" : "max-w-sm"} rounded-2xl bg-white p-5 text-left shadow-2xl ring-1 ring-slate-200`}
             >
               <div className="flex items-start gap-3">
                 <span
@@ -95,19 +105,41 @@ export function DialogHapus({
                 </span>
                 <div>
                   <h2
-                    id="dlg-hapus-judul"
+                    id={`${uid}-judul`}
                     className="text-base font-semibold text-slate-900"
                   >
                     {judul}
                   </h2>
                   <p
-                    id="dlg-hapus-pesan"
+                    id={`${uid}-pesan`}
                     className="mt-1 text-sm text-slate-600"
                   >
                     {pesan}
                   </p>
                 </div>
               </div>
+              {catatan && (
+                <div className="mt-4">
+                  <label htmlFor={`${uid}-catatan`} className="mb-1 block text-sm font-medium text-slate-800">
+                    {catatan.label} <span className="font-normal text-slate-500">(opsional)</span>
+                  </label>
+                  <textarea
+                    id={`${uid}-catatan`}
+                    rows={3}
+                    value={pesanPengguna}
+                    disabled={pending}
+                    maxLength={MAKS_PESAN_HAPUS}
+                    onChange={(e) => setPesanPengguna(e.target.value)}
+                    placeholder={catatan.placeholder}
+                    aria-describedby={`${uid}-bantuan`}
+                    className={inputCls}
+                  />
+                  <p id={`${uid}-bantuan`} className="mt-1 flex justify-between gap-3 text-xs text-slate-500">
+                    <span>{catatan.bantuan}</span>
+                    <span className="tabular-nums">{MAKS_PESAN_HAPUS - pesanPengguna.length}</span>
+                  </p>
+                </div>
+              )}
               {galat && (
                 <p
                   role="alert"

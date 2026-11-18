@@ -117,7 +117,12 @@ export async function ringkasanBukuTabungan() {
 
 export async function daftarPengumumanBukuTabungan() {
   const db = await getDb();
-  return db.select().from(pengumumanMahasiswa).where(eq(pengumumanMahasiswa.jenis, JENIS_PENGUMUMAN_BT)).orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
+  // Pesan pribadi (catatan saat admin menghapus kiriman) tidak ikut daftar pengumuman.
+  return db
+    .select()
+    .from(pengumumanMahasiswa)
+    .where(and(eq(pengumumanMahasiswa.jenis, JENIS_PENGUMUMAN_BT), isNull(pengumumanMahasiswa.pendaftaranId)))
+    .orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
 }
 
 /** Syarat SQL pengumuman untuk satu mahasiswa: pengumuman buku tabungan tampil hanya bila ia wajib dan belum mengirim. */

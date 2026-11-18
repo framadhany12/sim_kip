@@ -1,23 +1,44 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { bukuTabungan, pengumumanMahasiswa } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { JENIS_PENGUMUMAN_BT } from "@/lib/buku-tabungan";
+import { MAKS_PESAN_HAPUS } from "@/lib/constants";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { hapusBerkas } from "@/lib/storage";
 
-/** Admin menghapus kiriman buku tabungan yang keliru agar mahasiswa bisa mengirim ulang. */
-export async function hapusBukuTabungan(id: string) {
-  await requireAdmin();
+/**
+ * Admin menghapus kiriman buku tabungan yang keliru agar mahasiswa bisa mengirim ulang.
+ * `pesan` (opsional) menjelaskan kesalahannya; tampil sebagai banner pribadi di akun mahasiswa dan hilang sendiri
+ * setelah ia mengirim ulang (lihat `syaratPengumumanBt`).
+ */
+export async function hapusBukuTabungan(id: string, pesan = "") {
+  const admin = await requireAdmin();
+  pesan = pesan.trim();
+  if (pesan.length > MAKS_PESAN_HAPUS) return { ok: false, message: `Pesan maksimal ${MAKS_PESAN_HAPUS} karakter.` };
   const db = await getDb();
   const [lama] = await db.select().from(bukuTabungan).where(eq(bukuTabungan.id, id));
-  if (!lama) return;
+  if (!lama) return { ok: false, message: "Buku tabungan ini sudah tidak ada. Muat ulang halaman." };
   await db.delete(bukuTabungan).where(eq(bukuTabungan.id, id));
   await hapusBerkas(lama.fileUrl).catch(() => {});
+  // Pesan dari penghapusan sebelumnya ditutup agar tidak muncul lagi.
+  await db
+    .update(pengumumanMahasiswa)
+    .set({ aktif: false })
+    .where(and(eq(pengumumanMahasiswa.pendaftaranId, lama.pendaftaranId), eq(pengumumanMahasiswa.jenis, JENIS_PENGUMUMAN_BT)));
+  if (pesan)
+    await db.insert(pengumumanMahasiswa).values({
+      judul: "Buku Tabungan dihapus admin",
+      isi: pesan,
+      jenis: JENIS_PENGUMUMAN_BT,
+      pendaftaranId: lama.pendaftaranId,
+      dibuatOleh: admin.id,
+    });
   revalidatePath("/", "layout");
+  return { ok: true, message: "Buku tabungan dihapus." };
 }
 
 /** Banner ke mahasiswa angkatan 2026+ yang belum mengirim buku tabungan; hilang sendiri setelah masing-masing mengirim. */

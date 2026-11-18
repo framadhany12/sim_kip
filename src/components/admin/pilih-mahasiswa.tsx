@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { hapusMahasiswaTerpilih } from "@/app/actions/hapus-pendaftar";
+import { hapusCalonMahasiswa, hapusMahasiswaTerpilih } from "@/app/actions/hapus-pendaftar";
 import { DialogHapus } from "./dialog-hapus";
 
 type Ctx = { dipilih: Set<string>; ubah: (id: string, nilai: boolean) => void; ubahSemua: (nilai: boolean) => void; idHalaman: string[]; kosongkan: () => void };
@@ -48,7 +48,7 @@ export function KotakPilih({ id, nama }: { id: string; nama: string }) {
   return <input type="checkbox" className={kotak} checked={dipilih.has(id)} onChange={(e) => ubah(id, e.target.checked)} aria-label={`Pilih ${nama}`} />;
 }
 
-export function KotakPilihSemua() {
+export function KotakPilihSemua({ satuan = "mahasiswa" }: { satuan?: string }) {
   const { dipilih, idHalaman, ubahSemua } = usePilih();
   const semua = idHalaman.length > 0 && idHalaman.every((id) => dipilih.has(id));
   return (
@@ -61,28 +61,36 @@ export function KotakPilihSemua() {
       }}
       disabled={idHalaman.length === 0}
       onChange={(e) => ubahSemua(e.target.checked)}
-      aria-label="Pilih semua mahasiswa di halaman ini"
+      aria-label={`Pilih semua ${satuan} di halaman ini`}
     />
   );
 }
 
-/** Bilah aksi yang muncul bila ada mahasiswa yang dicentang. */
-export function BarHapusMassal() {
+const JENIS_HAPUS = {
+  mahasiswa: { satuan: "mahasiswa", rincian: "Akun {n} mahasiswa terpilih beserta seluruh data, IPK, buku tabungan, dan berkasnya", hapus: hapusMahasiswaTerpilih },
+  calon: { satuan: "akun", rincian: "{n} akun terpilih beserta seluruh data pendaftaran dan berkasnya (yang sudah menjadi mahasiswa dilewati)", hapus: hapusCalonMahasiswa },
+};
+
+/** Bilah aksi yang muncul bila ada baris yang dicentang. `calon` = Master Calon Mahasiswa (id = id akun). */
+export function BarHapusMassal({ jenis = "mahasiswa" }: { jenis?: keyof typeof JENIS_HAPUS }) {
   const { dipilih, kosongkan } = usePilih();
   if (dipilih.size === 0) return null;
   const ids = [...dipilih];
+  const { satuan, rincian, hapus } = JENIS_HAPUS[jenis];
   return (
-    <div role="region" aria-label="Aksi untuk mahasiswa terpilih" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
-      <span className="font-medium text-blue-900">{ids.length} mahasiswa dipilih</span>
+    <div role="region" aria-label={`Aksi untuk ${satuan} terpilih`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
+      <span className="font-medium text-blue-900">
+        {ids.length} {satuan} dipilih
+      </span>
       <span className="flex items-center gap-2">
         <button type="button" onClick={kosongkan} className="rounded-lg px-3 py-1.5 font-medium text-slate-700 ring-1 ring-slate-300 hover:bg-white">
           Batal pilih
         </button>
         <DialogHapus
-          judul={`Hapus ${ids.length} mahasiswa?`}
-          pesan={`Akun ${ids.length} mahasiswa terpilih beserta seluruh data, IPK, buku tabungan, dan berkasnya akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.`}
+          judul={`Hapus ${ids.length} ${satuan}?`}
+          pesan={`${rincian.replace("{n}", String(ids.length))} akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.`}
           aksi={async () => {
-            const r = await hapusMahasiswaTerpilih(ids);
+            const r = await hapus(ids);
             if (r.ok) kosongkan();
             return r;
           }}

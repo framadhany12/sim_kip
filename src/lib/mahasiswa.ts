@@ -53,6 +53,7 @@ export async function daftarMahasiswa(f: FilterMahasiswa) {
         status: pendaftaran.status,
         tahap: pendaftaran.tahap,
         usulan: pendaftaran.usulan,
+        hasil: pendaftaran.hasil,
         namaLengkap: dataDiri.namaLengkap,
         nomorKip: dataDiri.nomorPendaftaranKip,
         nik: dataDiri.nik,

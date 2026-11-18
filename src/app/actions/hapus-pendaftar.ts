@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { berkas, bukuTabungan, laporanAkademik, pendaftaran, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
@@ -72,4 +72,49 @@ export async function hapusMahasiswaTerpilih(pendaftaranIds: string[]): Promise<
   revalidatePath("/admin", "layout");
   const dilewati = ids.length - boleh.length;
   return { ok: true, message: `${boleh.length} mahasiswa dihapus${dilewati ? `, ${dilewati} dilewati` : ""}.` };
+}
+
+/**
+ * Admin menghapus akun dari Master Calon Mahasiswa (satu atau beberapa sekaligus): akun beserta seluruh pendaftaran,
+ * data, riwayat, pertanyaan, dan berkasnya. Yang sudah menjadi mahasiswa (diterima) dilewati; hapus dari Master Mahasiswa.
+ * Tidak bisa dibatalkan.
+ */
+export async function hapusCalonMahasiswa(userIds: string[]): Promise<{ ok: boolean; message: string }> {
+  await requireAdmin();
+  const ids = [...new Set(userIds.filter((x) => typeof x === "string" && x.length > 0))];
+  if (ids.length === 0) return { ok: false, message: "Pilih minimal satu akun." };
+  if (ids.length > BATAS_HAPUS_MASSAL) return { ok: false, message: `Maksimal ${BATAS_HAPUS_MASSAL} akun sekali hapus.` };
+
+  const db = await getDb();
+  const boleh = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      and(
+        inArray(users.id, ids),
+        eq(users.role, "pendaftar"),
+        eq(users.mahasiswaLama, false),
+        sql`not exists (select 1 from pendaftaran p where p.user_id = ${users.id} and p.status = 'diterima' and p.hasil = 'diterima')`,
+      ),
+    );
+  if (boleh.length === 0)
+    return { ok: false, message: ids.length === 1 ? "Akun ini sudah menjadi mahasiswa; hapus dari Master Mahasiswa." : "Tidak ada akun yang bisa dihapus dari pilihan ini." };
+
+  const uid = boleh.map((r) => r.id);
+  const pid = (await db.select({ id: pendaftaran.id }).from(pendaftaran).where(inArray(pendaftaran.userId, uid))).map((r) => r.id);
+  const [b, l, t] = pid.length
+    ? await Promise.all([
+        db.select({ f: berkas.fileUrl }).from(berkas).where(inArray(berkas.pendaftaranId, pid)),
+        db.select({ f: laporanAkademik.fileUrl }).from(laporanAkademik).where(inArray(laporanAkademik.pendaftaranId, pid)),
+        db.select({ f: bukuTabungan.fileUrl }).from(bukuTabungan).where(inArray(bukuTabungan.pendaftaranId, pid)),
+      ])
+    : [[], [], []];
+
+  await db.delete(users).where(inArray(users.id, uid));
+  // File di disk dihapus setelah baris database; yang gagal dihapus tidak menggagalkan penghapusan.
+  const berkasDisk = [...b, ...l, ...t];
+  for (let i = 0; i < berkasDisk.length; i += 50) await Promise.all(berkasDisk.slice(i, i + 50).map((x) => hapusBerkas(x.f).catch(() => {})));
+  revalidatePath("/admin", "layout");
+  const dilewati = ids.length - uid.length;
+  return { ok: true, message: `${uid.length} akun dihapus${dilewati ? `, ${dilewati} sudah mahasiswa dilewati` : ""}.` };
 }
