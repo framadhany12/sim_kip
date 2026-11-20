@@ -30,6 +30,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
         <script dangerouslySetInnerHTML={{ __html: SKRIP_TANGKAP_PASANG }} />
+        {/* use-credentials: manifest ikut membawa cookie WAF sehingga tidak dibalas halaman tantangan (lihat manifest.webmanifest/route.ts). */}
+        <link rel="manifest" href="/manifest.webmanifest" crossOrigin="use-credentials" />
       </head>
       <body className={`${jakarta.variable} min-h-dvh font-sans antialiased`}>
         <SembunyikanDiAdmin>
