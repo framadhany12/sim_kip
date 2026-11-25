@@ -43,7 +43,7 @@ Tahap: administrasi → ujian → wawancara → pengusulan → pengumuman.
 - Konfirmasi dulu sebelum tindakan sulit dibalik atau keluar (push, hapus data). Jangan ubah/hapus akun pengguna di DB lokal (admin@kip.local, frs@poltektedc.ac.id, ari@gmail.com, isal21@gmail.com).
 - Akun uji buatan Claude (qa.admin@kip.test, uji.*) dihapus setelah uji.
 - Atribusi commit: akhiri pesan dengan `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
-- Remote GitHub tujuan: `https://github.com/framadhany12/kip_kuliah.git` (belum terpasang; pengguna menjalankan push sendiri).
+- Remote GitHub tujuan: `https://github.com/framadhany12/sim_kip.git`.
 
 ## Uji E2E (pola)
 Build produksi `NEXT_DIST_DIR=.next-uji npx next build`, `next start -p 3120`, skrip sementara di `qa/` dengan puppeteer-core, akun QA via `admin:buat`, lalu matikan server dan hapus `.next-uji`. `next dev` kurang andal untuk uji aksi server.
