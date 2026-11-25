@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormFilter } from "@/components/form-filter";
 import { FileSpreadsheet } from "lucide-react";
 import { STATUS_MAHASISWA } from "@/db/schema";
 import { Card, PageHeader, StatusMahasiswaBadge } from "@/components/ui";
@@ -37,7 +38,7 @@ export default async function MasterMahasiswaPage({ searchParams }: { searchPara
         }
       />
       <Card>
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[2fr_1.2fr_1fr_1fr_1fr_auto]">
+        <FormFilter className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[2fr_1.2fr_1fr_1fr_1fr_auto]">
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
               Cari nama, email, NIK, NIM, atau kelas
@@ -94,12 +95,11 @@ export default async function MasterMahasiswaPage({ searchParams }: { searchPara
             </select>
           </div>
           <div className="flex items-end gap-2">
-            <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href="/admin/master-mahasiswa" className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
               Reset
             </Link>
           </div>
-        </form>
+        </FormFilter>
       </Card>
 
       <PilihProvider idHalaman={rows.map((r) => r.id)}>

@@ -18,11 +18,13 @@ export function PemulihTransisi() {
     window.addEventListener("click", jadwalkan, true);
     window.addEventListener("submit", jadwalkan, true);
     window.addEventListener("popstate", jadwalkan);
+    window.addEventListener("kip:navigasi", jadwalkan);
     return () => {
       timer.forEach(clearTimeout);
       window.removeEventListener("click", jadwalkan, true);
       window.removeEventListener("submit", jadwalkan, true);
       window.removeEventListener("popstate", jadwalkan);
+      window.removeEventListener("kip:navigasi", jadwalkan);
     };
   }, []);
   return null;

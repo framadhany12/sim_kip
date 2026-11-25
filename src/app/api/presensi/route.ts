@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { presensiKegiatan } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { ambilKegiatan, kodeValid, statusKegiatan } from "@/lib/kegiatan";
+import { angkatanPendaftaran } from "@/lib/angkatan";
+import { ambilKegiatan, angkatanTermasuk, kodeValid, statusKegiatan } from "@/lib/kegiatan";
 import { cariPendaftaranUser, isDuplikat, sudahMahasiswa } from "@/lib/pendaftaran";
 
 const jawab = (message: string, status: number, ekstra: object = {}) => NextResponse.json({ ...(status < 300 ? { ok: true } : { error: message }), message, ...ekstra }, { status });
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
   if (typeof body.kegiatanId !== "string" || typeof body.token !== "string" || !body.kegiatanId || !body.token) return jawab("Barcode tidak valid.", 400);
   const k = await ambilKegiatan(body.kegiatanId);
   if (!k) return jawab("Kegiatan tidak ditemukan.", 404);
+  if (!angkatanTermasuk(k.angkatanSasaran, await angkatanPendaftaran(p.id))) return jawab("Kegiatan ini bukan untuk angkatan Anda.", 403);
   if (!kodeValid(k.rahasia, body.token)) return jawab("Barcode sudah kedaluwarsa. Pindai ulang barcode yang sedang tampil.", 400);
   const status = statusKegiatan(k);
   if (status === "akan") return jawab("Kegiatan belum dimulai.", 400);

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormFilter } from "@/components/form-filter";
 import { TombolHapusPendaftar } from "@/components/admin/tombol-hapus-pendaftar";
 import { TombolUnduh } from "@/components/admin/tombol-unduh";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
@@ -45,7 +46,7 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
         }
       />
       <Card>
-        <form className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))_auto]">
+        <FormFilter className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))_auto]">
           <div className="sm:col-span-2 lg:col-span-3 xl:col-span-1">
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
               Cari pendaftar
@@ -101,12 +102,11 @@ export default async function DaftarPendaftar({ searchParams }: { searchParams: 
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href="/admin/pendaftar" className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
               Reset
             </Link>
           </div>
-        </form>
+        </FormFilter>
       </Card>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">

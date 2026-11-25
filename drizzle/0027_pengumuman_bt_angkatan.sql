@@ -1,0 +1,1 @@
+ALTER TABLE `pengumuman_mahasiswa` ADD `angkatan_sasaran` varchar(60);

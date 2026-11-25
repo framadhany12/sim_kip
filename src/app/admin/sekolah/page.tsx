@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { FormFilter } from "@/components/form-filter";
 import { and, asc, count, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
-import { dataSekolah, sekolah } from "@/db/schema";
+import { sekolah } from "@/db/schema";
 import { sahkanSekolah, simpanSekolahMaster } from "@/app/actions/sekolah";
 import { ActionForm, Field, SubmitButton } from "@/components/form";
 import { FormImportSekolah } from "@/components/admin/form-import-sekolah";
@@ -47,8 +48,9 @@ export default async function SekolahAdminPage({ searchParams }: { searchParams:
   const db = await getDb();
   const [rows, [{ total }], [{ perluCek }]] = await Promise.all([
     db
+      // sekolah.npsn ditulis lengkap: lewat ${sekolah.npsn} Drizzle menulis `npsn` saja di daftar kolom, sehingga `npsn = npsn` selalu benar.
       // Subquery, bukan JOIN + GROUP BY ke seluruh master: ~15x lebih cepat untuk 26 ribu sekolah.
-      .select({ s: sekolah, dipakai: sql<number>`(select count(*) from ${dataSekolah} where ${dataSekolah.npsn} = ${sekolah.npsn})`.mapWith(Number) })
+      .select({ s: sekolah, dipakai: sql<number>`(select count(*) from data_sekolah d where d.npsn = sekolah.npsn)`.mapWith(Number) })
       .from(sekolah)
       .where(where)
       // Tambahan pendaftar yang belum diperiksa tampil paling atas.
@@ -69,7 +71,7 @@ export default async function SekolahAdminPage({ searchParams }: { searchParams:
         desc="Daftar SMA/SMK/MA yang dicari pendaftar di formulir Data Sekolah; NPSN terisi otomatis saat sekolah dipilih. Sekolah yang diketik manual oleh pendaftar masuk ke sini dengan tanda “Tambahan pendaftar” untuk diperiksa."
       />
       <Card>
-        <form className="grid gap-3 sm:grid-cols-[2fr_1fr_auto]">
+        <FormFilter className="grid gap-3 sm:grid-cols-[2fr_1fr_auto]">
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
               Cari nama, NPSN, atau kota
@@ -87,9 +89,11 @@ export default async function SekolahAdminPage({ searchParams }: { searchParams:
             </select>
           </div>
           <div className="flex items-end">
-            <button className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 sm:w-auto">Terapkan</button>
+            <Link href="/admin/sekolah" className="inline-flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
+              Reset
+            </Link>
           </div>
-        </form>
+        </FormFilter>
       </Card>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">

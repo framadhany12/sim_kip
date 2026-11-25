@@ -1,0 +1,1 @@
+ALTER TABLE `kegiatan` ADD `angkatan_sasaran` varchar(60);

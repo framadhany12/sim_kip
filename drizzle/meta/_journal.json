@@ -190,6 +190,20 @@
       "when": 1794316261088,
       "tag": "0026_pesan_hapus_ipk",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1795593664258,
+      "tag": "0027_pengumuman_bt_angkatan",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1795596772697,
+      "tag": "0028_kegiatan_angkatan",
+      "breakpoints": true
     }
   ]
 }

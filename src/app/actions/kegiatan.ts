@@ -7,8 +7,9 @@ import { kegiatan } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { nilaiForm, type FormState } from "@/lib/form-state";
 import { rahasiaBaru, waktuWib } from "@/lib/kegiatan";
+import { ringkasPerAngkatan } from "@/lib/pelaporan-akademik";
 
-/** Admin (kemahasiswaan) menambahkan kegiatan; kode QR presensinya dibuat otomatis. */
+/** Admin (kemahasiswaan) menambahkan kegiatan untuk angkatan terpilih atau semua angkatan; kode QR presensinya dibuat otomatis. */
 export async function tambahKegiatan(_: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
   const v = nilaiForm(fd);
@@ -21,8 +22,12 @@ export async function tambahKegiatan(_: FormState, fd: FormData): Promise<FormSt
   if (!mulai) e.mulai = "Isi waktu mulai.";
   if (!selesai) e.selesai = "Isi waktu selesai.";
   if (mulai && selesai && selesai <= mulai) e.selesai = "Waktu selesai harus setelah waktu mulai.";
+  const dipilih = [...new Set(fd.getAll("angkatan").map((x) => Number(x)))].filter((n) => Number.isInteger(n) && n > 1900 && n < 2200).sort((a, b) => a - b);
+  if (dipilih.length === 0) e.angkatan = "Pilih minimal satu angkatan.";
   if (Object.keys(e).length) return { errors: e, values: v };
 
+  // Semua angkatan terpilih = tanpa sasaran, jadi angkatan yang muncul kemudian ikut berhak hadir.
+  const semua = (await ringkasPerAngkatan()).every((a) => dipilih.includes(a.angkatan));
   const db = await getDb();
   await db.insert(kegiatan).values({
     nama: v.nama,
@@ -31,6 +36,7 @@ export async function tambahKegiatan(_: FormState, fd: FormData): Promise<FormSt
     mulai: mulai!,
     selesai: selesai!,
     rahasia: rahasiaBaru(),
+    angkatanSasaran: semua ? null : dipilih.join(","),
     dibuatOleh: admin.id,
   });
   revalidatePath("/", "layout");

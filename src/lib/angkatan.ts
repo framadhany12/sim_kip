@@ -17,3 +17,14 @@ export async function daftarAngkatan(): Promise<number[]> {
     .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima")));
   return [...new Set([tahunBerjalan(), ...rows.map((r) => Number(r.a))])].sort((a, b) => a - b);
 }
+
+/** Angkatan satu pendaftaran, atau null bila tidak ditemukan. */
+export async function angkatanPendaftaran(pendaftaranId: string) {
+  const db = await getDb();
+  const [r] = await db
+    .select({ a: angkatanSql })
+    .from(pendaftaran)
+    .innerJoin(users, eq(users.id, pendaftaran.userId))
+    .where(eq(pendaftaran.id, pendaftaranId));
+  return r ? Number(r.a) : null;
+}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormFilter } from "@/components/form-filter";
 import { TombolUnduh } from "@/components/admin/tombol-unduh";
 import { Card, PageHeader, StatusBadge } from "@/components/ui";
 import type { Status } from "@/db/schema";
@@ -33,7 +34,7 @@ export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak";
         }
       />
       <Card>
-        <form className={`grid gap-3 sm:grid-cols-2 ${diterima ? "lg:grid-cols-[2fr_1fr_auto]" : "lg:grid-cols-[2fr_1fr_1fr_auto]"}`}>
+        <FormFilter className={`grid gap-3 sm:grid-cols-2 ${diterima ? "lg:grid-cols-[2fr_1fr_auto]" : "lg:grid-cols-[2fr_1fr_1fr_auto]"}`}>
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
               Cari nama, NIK, NISN, No. Pendaftaran KIP, sekolah, atau email
@@ -69,12 +70,11 @@ export async function DaftarHasil({ jenis, f }: { jenis: "diterima" | "ditolak";
             </div>
           )}
           <div className="flex items-end gap-2">
-            <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href={`/admin/${jenis}`} className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
               Reset
             </Link>
           </div>
-        </form>
+        </FormFilter>
       </Card>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">

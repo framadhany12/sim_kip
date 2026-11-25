@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TabelCari } from "@/components/tabel-cari";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
 import { BarcodeKegiatan } from "@/components/admin/barcode-kegiatan";
@@ -25,7 +26,7 @@ export default async function DetailKegiatan({ params }: { params: Promise<{ id:
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{k.nama}</h1>
         <p className="mt-0.5 text-sm text-slate-600">
           {tanggal(k.mulai)} s.d. {tanggal(k.selesai)}
-          {k.lokasi && <> · {k.lokasi}</>}
+          {k.lokasi && <> · {k.lokasi}</>} · {k.angkatanSasaran ? `Angkatan ${k.angkatanSasaran.split(",").join(", ")}` : "Semua angkatan"}
         </p>
         {k.deskripsi && <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{k.deskripsi}</p>}
       </div>
@@ -47,40 +48,42 @@ export default async function DetailKegiatan({ params }: { params: Promise<{ id:
             </a>
           }
         >
-          <div className="-mx-4 overflow-x-auto sm:-mx-5">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-2.5 font-semibold sm:px-5">No</th>
-                  <th className="px-4 py-2.5 font-semibold">Mahasiswa</th>
-                  <th className="px-4 py-2.5 font-semibold">NIM / Kelas</th>
-                  <th className="px-4 py-2.5 font-semibold">Jurusan</th>
-                  <th className="px-4 py-2.5 font-semibold">Waktu hadir</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rekap.length === 0 && (
+          <TabelCari label="Cari mahasiswa (nama, NIM)">
+            <div className="-mx-4 overflow-x-auto sm:-mx-5">
+              <table className="w-full min-w-[560px] text-left text-sm">
+                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
-                    <td colSpan={5} className="px-5 py-8 text-center text-slate-500">
-                      Belum ada yang presensi.
-                    </td>
+                    <th className="px-4 py-2.5 font-semibold sm:px-5">No</th>
+                    <th className="px-4 py-2.5 font-semibold">Mahasiswa</th>
+                    <th className="px-4 py-2.5 font-semibold">NIM / Kelas</th>
+                    <th className="px-4 py-2.5 font-semibold">Jurusan</th>
+                    <th className="px-4 py-2.5 font-semibold">Waktu hadir</th>
                   </tr>
-                )}
-                {rekap.map((r, i) => (
-                  <tr key={r.id}>
-                    <td className="px-4 py-2.5 tabular-nums text-slate-500 sm:px-5">{i + 1}</td>
-                    <td className="px-4 py-2.5 font-semibold text-slate-900">{r.nama}</td>
-                    <td className="px-4 py-2.5 font-mono text-[13px] text-slate-700">
-                      {r.nim ?? "—"}
-                      <span className="block font-sans text-slate-500">{r.kelas ?? "—"}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-slate-700">{r.jurusan ?? "—"}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-slate-600">{tanggal(r.waktu)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {rekap.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-5 py-8 text-center text-slate-500">
+                        Belum ada yang presensi.
+                      </td>
+                    </tr>
+                  )}
+                  {rekap.map((r, i) => (
+                    <tr key={r.id}>
+                      <td className="px-4 py-2.5 tabular-nums text-slate-500 sm:px-5">{i + 1}</td>
+                      <td className="px-4 py-2.5 font-semibold text-slate-900">{r.nama}</td>
+                      <td className="px-4 py-2.5 font-mono text-[13px] text-slate-700">
+                        {r.nim ?? "—"}
+                        <span className="block font-sans text-slate-500">{r.kelas ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-700">{r.jurusan ?? "—"}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-slate-600">{tanggal(r.waktu)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabelCari>
         </Card>
       </div>
     </div>

@@ -1,11 +1,12 @@
 import { Download } from "lucide-react";
+import { FormFilter } from "@/components/form-filter";
 import Link from "next/link";
 import { tutupPengumumanMahasiswa } from "@/app/actions/pelaporan";
 import { FormUmumkanBukuTabungan } from "@/components/admin/form-umumkan-buku-tabungan";
 import { TombolHapusBukuTabungan } from "@/components/admin/tombol-hapus-buku-tabungan";
 import { Card, PageHeader } from "@/components/ui";
 import { daftarAngkatan } from "@/lib/angkatan";
-import { ANGKATAN_BUKU_TABUNGAN, daftarBukuTabungan, daftarPengumumanBukuTabungan, PER_HALAMAN_BT, ringkasanBukuTabungan, type FilterBukuTabungan } from "@/lib/buku-tabungan";
+import { ANGKATAN_BUKU_TABUNGAN, belumPerAngkatan, daftarBukuTabungan, daftarPengumumanBukuTabungan, PER_HALAMAN_BT, ringkasanBukuTabungan, type FilterBukuTabungan } from "@/lib/buku-tabungan";
 import { tanggal, tanggalPanjang } from "@/lib/constants";
 import { daftarJurusanFilter } from "@/lib/pelaporan-akademik";
 import { inputCls } from "@/lib/styles";
@@ -49,17 +50,17 @@ export default async function BukuTabunganAdminPage({ searchParams }: { searchPa
           </Link>
         ))}
       </nav>
-      {tab === "umumkan" ? <Umumkan belum={ringkas.belum} /> : <Daftar tab={tab} f={f} />}
+      {tab === "umumkan" ? <Umumkan /> : <Daftar tab={tab} f={f} />}
     </div>
   );
 }
 
-async function Umumkan({ belum }: { belum: number }) {
-  const daftar = await daftarPengumumanBukuTabungan();
+async function Umumkan() {
+  const [daftar, pilihan] = await Promise.all([daftarPengumumanBukuTabungan(), belumPerAngkatan()]);
   return (
     <div className="space-y-5">
       <Card title="Umumkan ke yang belum mengisi">
-        <FormUmumkanBukuTabungan belum={belum} />
+        <FormUmumkanBukuTabungan pilihan={pilihan} />
       </Card>
       <Card title="Pengumuman sebelumnya">
         {daftar.length === 0 ? (
@@ -74,7 +75,7 @@ async function Umumkan({ belum }: { belum: number }) {
                   </p>
                   <p className="mt-0.5 whitespace-pre-line text-sm text-slate-600">{p.isi}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {tanggal(p.createdAt)}
+                    {tanggal(p.createdAt)} · {p.angkatanSasaran ? `Angkatan ${p.angkatanSasaran.split(",").join(", ")}` : "Semua angkatan"}
                     {p.tenggat && <> · Batas {tanggalPanjang(p.tenggat)}</>}
                   </p>
                 </div>
@@ -110,7 +111,7 @@ async function Daftar({ tab, f }: { tab: "sudah" | "belum"; f: Params }) {
   return (
     <>
       <Card>
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1.4fr_1fr_auto]">
+        <FormFilter className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1.4fr_1fr_auto]">
           <input type="hidden" name="tab" value={tab} />
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
@@ -147,12 +148,11 @@ async function Daftar({ tab, f }: { tab: "sudah" | "belum"; f: Params }) {
             </select>
           </div>
           <div className="flex items-end gap-2">
-            <button className="min-h-11 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href={`?tab=${tab}`} className="inline-flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
               Reset
             </Link>
           </div>
-        </form>
+        </FormFilter>
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

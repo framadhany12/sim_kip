@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormFilter } from "@/components/form-filter";
 import { Megaphone } from "lucide-react";
 import { umumkanMassal } from "@/app/actions/admin";
 import { FormPengumuman } from "@/components/admin/form-pengumuman";
@@ -101,7 +102,7 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
         {MODE[jenis].deskripsi}
       </p>
 
-      <form className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
+      <FormFilter className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
         <input type="hidden" name="jenis" value={jenis} />
         <div>
           <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
@@ -143,25 +144,24 @@ export default async function PengumumanPage({ searchParams }: { searchParams: P
           </select>
         </div>
         <div className="flex items-end gap-2">
-          <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
           <Link href={`/admin/pengumuman?jenis=${jenis}`} className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
             Reset
           </Link>
         </div>
-      </form>
+      </FormFilter>
       {parseTahun(sp.tahun) === undefined && sp.tahun !== SEMUA_TAHUN && (
         <p className="-mt-2 text-xs text-slate-500">Menampilkan tahun berjalan ({tahunBerjalan()}); berpindah otomatis setiap 1 Januari.</p>
       )}
 
       {terpotong && (
         <Alert tone="warning" title={`Hanya ${BATAS_KANDIDAT} nama pertama yang ditampilkan`}>
-          Persempit dengan pencarian atau filter tahap/tahun agar daftar lengkap. Umumkan yang tampil lebih dulu, sisanya akan muncul setelah daftar dimuat ulang.
+          Persempit dengan pencarian atau filter tahap/tahun agar daftar lengkap. Pilihan yang sudah dicentang tetap tersimpan saat Anda mencari lagi.
         </Alert>
       )}
 
-      {/* key: daftar baru (mis. setelah ganti mode/filter) mengosongkan pilihan lama */}
+      {/* key: ganti jenis pengumuman mengosongkan pilihan; ganti pencarian/filter tidak, pilihan bertahan */}
       <FormPengumuman
-        key={`${jenis}-${sp.tahap}-${sp.tahun}-${sp.q}`}
+        key={jenis}
         jenis={jenis}
         rows={rows.map((r) => ({
           id: r.id,

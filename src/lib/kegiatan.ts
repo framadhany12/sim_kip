@@ -1,7 +1,8 @@
 import "server-only";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { getDb } from "@/db";
+import { angkatanPendaftaran } from "./angkatan";
 import { dataDiri, jurusan, kegiatan, pendaftaran, presensiKegiatan, users } from "@/db/schema";
 
 /** Kode QR berganti setiap STEP_DETIK; kode jendela sebelumnya masih diterima agar pemindaian di ujung pergantian tidak gagal. */
@@ -49,7 +50,9 @@ export async function daftarKegiatan() {
       lokasi: kegiatan.lokasi,
       mulai: kegiatan.mulai,
       selesai: kegiatan.selesai,
-      hadir: sql<number>`(select count(*) from presensi_kegiatan p where p.kegiatan_id = ${kegiatan.id})`,
+      angkatanSasaran: kegiatan.angkatanSasaran,
+      // kegiatan.id ditulis lengkap: bila hanya `id`, Drizzle menulisnya tanpa nama tabel dan MySQL membacanya sebagai id presensi (p.id), hasilnya selalu 0.
+      hadir: sql<number>`(select count(*) from presensi_kegiatan p where p.kegiatan_id = kegiatan.id)`,
     })
     .from(kegiatan)
     .orderBy(desc(kegiatan.mulai));
@@ -82,9 +85,14 @@ export async function rekapKegiatan(kegiatanId: string) {
     .orderBy(asc(presensiKegiatan.waktu));
 }
 
-/** Kegiatan beserta status kehadiran satu mahasiswa. */
+/** Angkatan sasaran ("2025,2026", kosong = semua) memuat angkatan ini? */
+export const angkatanTermasuk = (sasaran: string | null, angkatan: number | null) => !sasaran || (angkatan !== null && sasaran.split(",").map(Number).includes(angkatan));
+
+/** Kegiatan untuk angkatan satu mahasiswa, beserta status kehadirannya. */
 export async function kegiatanUntukMahasiswa(pendaftaranId: string) {
   const db = await getDb();
+  const angkatan = await angkatanPendaftaran(pendaftaranId);
+  const sasaran = angkatan === null ? isNull(kegiatan.angkatanSasaran) : or(isNull(kegiatan.angkatanSasaran), sql`find_in_set(${angkatan}, ${kegiatan.angkatanSasaran}) > 0`);
   return db
     .select({
       id: kegiatan.id,
@@ -97,5 +105,6 @@ export async function kegiatanUntukMahasiswa(pendaftaranId: string) {
     })
     .from(kegiatan)
     .leftJoin(presensiKegiatan, and(eq(presensiKegiatan.kegiatanId, kegiatan.id), eq(presensiKegiatan.pendaftaranId, pendaftaranId)))
+    .where(sasaran)
     .orderBy(desc(kegiatan.mulai));
 }

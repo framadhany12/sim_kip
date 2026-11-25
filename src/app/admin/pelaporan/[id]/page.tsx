@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TabelCari } from "@/components/tabel-cari";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { TombolHapusLaporanIpk } from "@/components/admin/tombol-hapus-laporan-ipk";
@@ -48,36 +49,38 @@ export default async function DetailPelaporanPage({ params }: { params: Promise<
         {m.laporan.length === 0 ? (
           <p className="text-sm text-slate-500">Mahasiswa ini belum melaporkan IPK.</p>
         ) : (
-          <div className="-mx-4 overflow-x-auto sm:-mx-5">
-            <table className="w-full min-w-[480px] text-left text-sm">
-              <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-2.5 font-semibold sm:px-5">Semester</th>
-                  <th className="px-4 py-2.5 font-semibold">IPK</th>
-                  <th className="px-4 py-2.5 font-semibold">Dilaporkan</th>
-                  <th className="px-4 py-2.5 font-semibold">Transkrip</th>
-                  <th className="px-4 py-2.5 text-right font-semibold sm:px-5">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {m.laporan.map((l) => (
-                  <tr key={l.id}>
-                    <td className="px-4 py-2.5 font-semibold text-slate-900 sm:px-5">Semester {l.semester}</td>
-                    <td className="px-4 py-2.5 font-semibold tabular-nums text-slate-900">{ipkFmt(l.ipk)}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-slate-600">{tanggal(l.updatedAt)}</td>
-                    <td className="px-4 py-2.5">
-                      <a href={`/api/laporan-akademik/${l.id}`} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
-                        Buka
-                      </a>
-                    </td>
-                    <td className="px-4 py-2.5 text-right sm:px-5">
-                      <TombolHapusLaporanIpk pendaftaranId={m.id} nama={m.nama} semester={[l.semester]} />
-                    </td>
+          <TabelCari label="Cari semester">
+            <div className="-mx-4 overflow-x-auto sm:-mx-5">
+              <table className="w-full min-w-[480px] text-left text-sm">
+                <thead className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-2.5 font-semibold sm:px-5">Semester</th>
+                    <th className="px-4 py-2.5 font-semibold">IPK</th>
+                    <th className="px-4 py-2.5 font-semibold">Dilaporkan</th>
+                    <th className="px-4 py-2.5 font-semibold">Transkrip</th>
+                    <th className="px-4 py-2.5 text-right font-semibold sm:px-5">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {m.laporan.map((l) => (
+                    <tr key={l.id}>
+                      <td className="px-4 py-2.5 font-semibold text-slate-900 sm:px-5">Semester {l.semester}</td>
+                      <td className="px-4 py-2.5 font-semibold tabular-nums text-slate-900">{ipkFmt(l.ipk)}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-slate-600">{tanggal(l.updatedAt)}</td>
+                      <td className="px-4 py-2.5">
+                        <a href={`/api/laporan-akademik/${l.id}`} target="_blank" rel="noreferrer" className="font-semibold text-blue-700 hover:underline">
+                          Buka
+                        </a>
+                      </td>
+                      <td className="px-4 py-2.5 text-right sm:px-5">
+                        <TombolHapusLaporanIpk pendaftaranId={m.id} nama={m.nama} semester={[l.semester]} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabelCari>
         )}
       </Card>
     </div>

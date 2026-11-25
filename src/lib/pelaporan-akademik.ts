@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, desc, eq, isNull, like, notExists, or, sql, type SQL } from "drizzle-orm";
 import { getDb } from "@/db";
 import { dataDiri, jurusan, laporanAkademik, pendaftaran, pengumumanMahasiswa, users } from "@/db/schema";
-import { angkatanSql } from "./angkatan";
+import { angkatanPendaftaran, angkatanSql } from "./angkatan";
 import { syaratPengumumanBt } from "./buku-tabungan";
 import { parseTahun } from "./tahun";
 
@@ -126,27 +126,55 @@ export async function daftarJurusanFilter() {
   return db.select({ id: jurusan.id, nama: jurusan.nama }).from(jurusan).orderBy(asc(jurusan.nama));
 }
 
-/** Pengumuman mahasiswa (terbaru dulu) beserta jumlah mahasiswa yang belum melapor untuk semester terkait. */
+const syaratAktif = () => and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima"), eq(pendaftaran.statusMahasiswa, "aktif"))!;
+
+/** Mahasiswa aktif per angkatan, beserta jumlah yang sudah melapor tiap semester. Untuk sasaran dan hitungan pengumuman. */
+export async function ringkasPerAngkatan() {
+  const db = await getDb();
+  const [total, sudah] = await Promise.all([
+    db
+      .select({ angkatan: angkatanSql, n: sql<number>`count(*)` })
+      .from(pendaftaran)
+      .innerJoin(users, eq(users.id, pendaftaran.userId))
+      .where(syaratAktif())
+      .groupBy(angkatanSql),
+    db
+      .select({ angkatan: angkatanSql, semester: laporanAkademik.semester, n: sql<number>`count(*)` })
+      .from(laporanAkademik)
+      .innerJoin(pendaftaran, eq(pendaftaran.id, laporanAkademik.pendaftaranId))
+      .innerJoin(users, eq(users.id, pendaftaran.userId))
+      .where(syaratAktif())
+      .groupBy(angkatanSql, laporanAkademik.semester),
+  ]);
+  return total
+    .map((t) => {
+      const angkatan = Number(t.angkatan);
+      const perSemester: Record<number, number> = {};
+      for (const r of sudah) if (Number(r.angkatan) === angkatan) perSemester[r.semester] = Number(r.n);
+      return { angkatan, total: Number(t.n), sudah: perSemester };
+    })
+    .sort((x, y) => x.angkatan - y.angkatan);
+}
+
+/** Pengumuman mahasiswa (terbaru dulu) beserta jumlah mahasiswa sasaran yang belum melapor untuk semester terkait. */
 export async function daftarPengumumanMahasiswa() {
   const db = await getDb();
   // Pengumuman buku tabungan dikelola di menu Buku Tabungan.
-  const rows = await db
-    .select()
-    .from(pengumumanMahasiswa)
-    .where(and(isNull(pengumumanMahasiswa.jenis), isNull(pengumumanMahasiswa.pendaftaranId))).orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
-  const [{ total }] = await db
-    .select({ total: sql<number>`count(*)` })
-    .from(pendaftaran)
-    .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima"), eq(pendaftaran.statusMahasiswa, "aktif")));
-  // Satu query untuk semua semester, bukan satu per pengumuman.
-  const sudah = await db
-    .select({ semester: laporanAkademik.semester, n: sql<number>`count(*)` })
-    .from(laporanAkademik)
-    .innerJoin(pendaftaran, eq(pendaftaran.id, laporanAkademik.pendaftaranId))
-    .where(and(eq(pendaftaran.status, "diterima"), eq(pendaftaran.hasil, "diterima"), eq(pendaftaran.statusMahasiswa, "aktif")))
-    .groupBy(laporanAkademik.semester);
-  const perSemester = new Map(sudah.map((r) => [r.semester, Number(r.n)]));
-  return rows.map((r) => ({ ...r, belum: r.semester ? Math.max(0, Number(total) - (perSemester.get(r.semester) ?? 0)) : (null as number | null) }));
+  const [rows, perAngkatan] = await Promise.all([
+    db
+      .select()
+      .from(pengumumanMahasiswa)
+      .where(and(isNull(pengumumanMahasiswa.jenis), isNull(pengumumanMahasiswa.pendaftaranId)))
+      .orderBy(desc(pengumumanMahasiswa.createdAt))
+      .limit(30),
+    ringkasPerAngkatan(),
+  ]);
+  return rows.map((r) => {
+    if (!r.semester) return { ...r, belum: null as number | null };
+    const sasaran = r.angkatanSasaran ? new Set(r.angkatanSasaran.split(",").map(Number)) : null;
+    const belum = perAngkatan.filter((a) => !sasaran || sasaran.has(a.angkatan)).reduce((n, a) => n + Math.max(0, a.total - (a.sudah[r.semester!] ?? 0)), 0);
+    return { ...r, belum };
+  });
 }
 
 /**
@@ -155,6 +183,9 @@ export async function daftarPengumumanMahasiswa() {
  */
 export async function pengumumanUntukMahasiswa(pendaftaranId: string) {
   const db = await getDb();
+  const angkatan = await angkatanPendaftaran(pendaftaranId);
+  // Sasaran angkatan kosong = semua angkatan; pesan pribadi tidak punya sasaran.
+  const sasaran = angkatan === null ? isNull(pengumumanMahasiswa.angkatanSasaran) : or(isNull(pengumumanMahasiswa.angkatanSasaran), sql`find_in_set(${angkatan}, ${pengumumanMahasiswa.angkatanSasaran}) > 0`);
   const sudah = db
     .select({ x: sql`1` })
     .from(laporanAkademik)
@@ -167,6 +198,7 @@ export async function pengumumanUntukMahasiswa(pendaftaranId: string) {
         eq(pengumumanMahasiswa.aktif, true),
         or(isNull(pengumumanMahasiswa.pendaftaranId), eq(pengumumanMahasiswa.pendaftaranId, pendaftaranId)),
         or(isNull(pengumumanMahasiswa.semester), notExists(sudah)),
+        sasaran,
         await syaratPengumumanBt(pendaftaranId),
       ),
     )

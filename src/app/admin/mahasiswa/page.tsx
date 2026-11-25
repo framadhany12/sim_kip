@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormFilter } from "@/components/form-filter";
 import { CheckCircle2, MailWarning } from "lucide-react";
 import { TombolAktif } from "@/components/admin/tombol-aktif";
 import { TombolHapusCalon } from "@/components/admin/tombol-hapus-calon";
@@ -27,7 +28,7 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
         desc="Seluruh akun pendaftar, termasuk yang belum mengisi formulir. Buka satu akun untuk melihat data lengkap, mengedit data, dan mengatur ulang kata sandi. Akun yang sudah diterima sebagai mahasiswa dihapus dari Master Mahasiswa."
       />
       <Card>
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
+        <FormFilter className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
               Cari nama, email, NIK, NISN, No. Pendaftaran KIP, atau sekolah
@@ -68,12 +69,11 @@ export default async function MasterMahasiswa({ searchParams }: { searchParams: 
             </select>
           </div>
           <div className="flex items-end gap-2">
-            <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href="/admin/mahasiswa" className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
               Reset
             </Link>
           </div>
-        </form>
+        </FormFilter>
       </Card>
 
       <PilihProvider idHalaman={rows.filter(bisaHapus).map((r) => r.id)}>

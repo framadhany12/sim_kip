@@ -115,6 +115,20 @@ export async function ringkasanBukuTabungan() {
   return { sudah: Number(r?.sudah ?? 0), belum: Number(r?.belum ?? 0) };
 }
 
+/** Mahasiswa aktif yang belum mengirim, per angkatan (hanya angkatan wajib). Untuk pilihan sasaran pengumuman. */
+export async function belumPerAngkatan() {
+  const db = await getDb();
+  const rows = await db
+    .select({ angkatan: angkatanSql, n: sql<number>`count(*)` })
+    .from(pendaftaran)
+    .innerJoin(users, eq(users.id, pendaftaran.userId))
+    .leftJoin(bukuTabungan, eq(bukuTabungan.pendaftaranId, pendaftaran.id))
+    .where(and(syaratWajib(), sql`${bukuTabungan.id} is null`, eq(pendaftaran.statusMahasiswa, "aktif")))
+    .groupBy(angkatanSql)
+    .orderBy(asc(angkatanSql));
+  return rows.map((r) => ({ angkatan: Number(r.angkatan), belum: Number(r.n) }));
+}
+
 export async function daftarPengumumanBukuTabungan() {
   const db = await getDb();
   // Pesan pribadi (catatan saat admin menghapus kiriman) tidak ikut daftar pengumuman.
@@ -125,7 +139,10 @@ export async function daftarPengumumanBukuTabungan() {
     .orderBy(desc(pengumumanMahasiswa.createdAt)).limit(30);
 }
 
-/** Syarat SQL pengumuman untuk satu mahasiswa: pengumuman buku tabungan tampil hanya bila ia wajib dan belum mengirim. */
+/**
+ * Syarat SQL pengumuman untuk satu mahasiswa: pengumuman buku tabungan tampil hanya bila ia wajib dan belum mengirim.
+ * Sasaran angkatan disaring terpisah untuk semua jenis pengumuman (`pengumumanUntukMahasiswa`).
+ */
 export async function syaratPengumumanBt(pendaftaranId: string) {
   const db = await getDb();
   if (!(await wajibBukuTabungan(pendaftaranId))) return isNull(pengumumanMahasiswa.jenis);

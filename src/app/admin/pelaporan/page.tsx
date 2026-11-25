@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormFilter } from "@/components/form-filter";
 import { Download } from "lucide-react";
 import { tutupPengumumanMahasiswa } from "@/app/actions/pelaporan";
 import { FormUmumkan } from "@/components/admin/form-umumkan";
@@ -14,6 +15,7 @@ import {
   daftarMahasiswaMelapor,
   ringkasSemester,
   daftarPengumumanMahasiswa,
+  ringkasPerAngkatan,
   PER_HALAMAN_LAPORAN,
   type FilterPelaporan,
 } from "@/lib/pelaporan-akademik";
@@ -47,7 +49,7 @@ export default async function PelaporanPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Pelaporan IPK & Transkrip" desc="Pantau IPK dan transkrip nilai yang dilaporkan mahasiswa, lihat siapa yang belum melapor, dan umumkan kewajiban lapor ke semua mahasiswa." />
+      <PageHeader title="Pelaporan IPK & Transkrip" desc="Pantau IPK dan transkrip nilai yang dilaporkan mahasiswa, lihat siapa yang belum melapor, dan umumkan kewajiban lapor ke semua angkatan atau angkatan tertentu." />
       <nav className="flex gap-1 border-b border-slate-200" aria-label="Bagian pelaporan">
         {TAB.map(([k, label]) => (
           <Link
@@ -71,11 +73,11 @@ async function Grafik() {
 }
 
 async function Umumkan() {
-  const daftar = await daftarPengumumanMahasiswa();
+  const [daftar, ringkas] = await Promise.all([daftarPengumumanMahasiswa(), ringkasPerAngkatan()]);
   return (
     <div className="space-y-5">
       <Card title="Buat pengumuman untuk mahasiswa">
-        <FormUmumkan />
+        <FormUmumkan ringkas={ringkas} />
       </Card>
       <Card title="Pengumuman sebelumnya">
         {daftar.length === 0 ? (
@@ -90,7 +92,7 @@ async function Umumkan() {
                   </p>
                   <p className="mt-0.5 whitespace-pre-line text-sm text-slate-600">{p.isi}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {tanggal(p.createdAt)}
+                    {tanggal(p.createdAt)} · {p.angkatanSasaran ? `Angkatan ${p.angkatanSasaran.split(",").join(", ")}` : "Semua angkatan"}
                     {p.semester && <> · Semester {p.semester}</>}
                     {p.tenggat && <> · Batas {tglPendek(p.tenggat)}</>}
                     {p.belum !== null && (
@@ -129,7 +131,7 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
   return (
     <>
       <Card>
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1.4fr_1fr_1fr_auto]">
+        <FormFilter className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1.4fr_1fr_1fr_auto]">
           <input type="hidden" name="tab" value={tab} />
           <div>
             <label htmlFor="q" className="mb-1 block text-xs font-medium text-slate-600">
@@ -177,12 +179,11 @@ async function Daftar({ tab, f, qs, qsFilter }: { tab: "laporan" | "belum"; f: P
             </select>
           </div>
           <div className="flex items-end gap-2">
-            <button className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Terapkan</button>
             <Link href={`?tab=${tab}`} className="rounded-lg px-3 py-2.5 text-sm text-slate-600 hover:bg-slate-100">
               Reset
             </Link>
           </div>
-        </form>
+        </FormFilter>
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

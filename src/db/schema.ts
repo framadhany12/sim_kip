@@ -316,6 +316,8 @@ export const pengumumanMahasiswa = mysqlTable("pengumuman_mahasiswa", {
   jenis: varchar("jenis", { length: 20 }),
   /** Terisi = pesan pribadi untuk satu mahasiswa (mis. catatan admin saat menghapus laporan IPK yang keliru). Kosong = untuk semua mahasiswa. */
   pendaftaranId: ref("pendaftaran_id").references(() => pendaftaran.id, { onDelete: "cascade" }),
+  /** Khusus jenis "buku_tabungan": angkatan sasaran, dipisah koma ("2026,2027"). Kosong = semua angkatan yang wajib. */
+  angkatanSasaran: varchar("angkatan_sasaran", { length: 60 }),
   tenggat: varchar("tenggat", { length: 10 }),
   aktif: boolean("aktif").notNull().default(true),
   dibuatOleh: ref("dibuat_oleh").references(() => users.id, { onDelete: "set null" }),
@@ -343,6 +345,8 @@ export const kegiatan = mysqlTable("kegiatan", {
   mulai: ts("mulai").notNull(),
   selesai: ts("selesai").notNull(),
   rahasia: varchar("rahasia", { length: 64 }).notNull(),
+  /** Angkatan peserta, dipisah koma ("2025,2026"). Kosong = semua angkatan. */
+  angkatanSasaran: varchar("angkatan_sasaran", { length: 60 }),
   dibuatOleh: ref("dibuat_oleh").references(() => users.id, { onDelete: "set null" }),
   createdAt: now("created_at"),
 });

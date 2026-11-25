@@ -31,38 +31,49 @@ const TEKS: Record<JenisPengumuman, { tombol: string; ringkas: string; gaya: str
 /** Isian & daftar pilih-banyak; harus berada di dalam <ActionForm>. */
 function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; rows: BarisKandidat[]; opsiAlasan: string[]; beasiswa: { id: string; nama: string }[] }) {
   const state = useFormErrors();
-  const [dipilih, setDipilih] = useState<Set<string>>(new Set());
+  // Pilihan bertahan saat pencarian/filter berubah, jadi disimpan beserta datanya (barisnya bisa hilang dari daftar yang tampil).
+  const [dipilih, setDipilih] = useState<Map<string, BarisKandidat>>(new Map());
   const [jurusan, setJurusan] = useState<Record<string, string>>({});
   const [alasan, setAlasan] = useState(state?.values?.alasan ?? "");
   const [konfirmasi, setKonfirmasi] = useState(false);
   const [jenisBeasiswa, setJenisBeasiswa] = useState(beasiswa[0]?.id ?? "");
   const semuaRef = useRef<HTMLInputElement>(null);
 
-  // Baris yang sudah diumumkan (hilang dari daftar setelah dimuat ulang) otomatis keluar dari pilihan.
-  const ada = useMemo(() => new Set(rows.map((r) => r.id)), [rows]);
-  const terpilih = useMemo(() => rows.filter((r) => dipilih.has(r.id) && ada.has(r.id)), [rows, dipilih, ada]);
+  const terpilih = useMemo(() => [...dipilih.values()], [dipilih]);
+  const tampil = useMemo(() => new Set(rows.map((r) => r.id)), [rows]);
+  const terpilihTampil = rows.filter((r) => dipilih.has(r.id)).length;
+  const luarDaftar = terpilih.filter((r) => !tampil.has(r.id));
   const jurusanBaris = (r: BarisKandidat) => jurusan[r.id] ?? r.jurusan1Id ?? "";
   const tanpaJurusan = jenis === "diterima" ? terpilih.filter((r) => !r.jurusan1Id && !r.jurusan2Id) : [];
 
   useEffect(() => {
-    if (semuaRef.current) semuaRef.current.indeterminate = terpilih.length > 0 && terpilih.length < rows.length;
-  }, [terpilih.length, rows.length]);
+    if (semuaRef.current) semuaRef.current.indeterminate = terpilihTampil > 0 && terpilihTampil < rows.length;
+  }, [terpilihTampil, rows.length]);
   // Setelah berhasil diumumkan, tutup panel konfirmasi.
   useEffect(() => {
     if (state?.ok) {
       setKonfirmasi(false);
-      setDipilih(new Set());
+      setDipilih(new Map());
     }
   }, [state]);
 
-  const ubah = (id: string) =>
+  const ubah = (r: BarisKandidat) =>
     setDipilih((s) => {
-      const n = new Set(s);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
+      const n = new Map(s);
+      if (n.has(r.id)) n.delete(r.id);
+      else n.set(r.id, r);
       return n;
     });
-  const semua = (on: boolean) => setDipilih(on ? new Set(rows.map((r) => r.id)) : new Set());
+  // Hanya menyentuh baris yang tampil; pilihan dari pencarian sebelumnya tetap.
+  const semua = (on: boolean) =>
+    setDipilih((s) => {
+      const n = new Map(s);
+      for (const r of rows) {
+        if (on) n.set(r.id, r);
+        else n.delete(r.id);
+      }
+      return n;
+    });
   const t = TEKS[jenis];
   const butuhAlasan = opsiAlasan.length > 0;
   // Hanya hasil akhir (diterima / tidak diterima / tidak lolos administrasi) yang bisa dikirim lewat email.
@@ -82,8 +93,8 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
                   <input
                     ref={semuaRef}
                     type="checkbox"
-                    aria-label="Pilih semua"
-                    checked={terpilih.length === rows.length && rows.length > 0}
+                    aria-label="Pilih semua yang tampil"
+                    checked={terpilihTampil === rows.length && rows.length > 0}
                     onChange={(e) => semua(e.target.checked)}
                     className="size-4 accent-blue-700"
                   />
@@ -101,7 +112,7 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
                 return (
                   <tr key={r.id} className={on ? "bg-blue-50/60" : "hover:bg-slate-50"}>
                     <td className="px-3 py-2.5">
-                      <input type="checkbox" name="ids" value={r.id} checked={on} onChange={() => ubah(r.id)} aria-label={`Pilih ${r.nama}`} className="size-4 accent-blue-700" />
+                      <input type="checkbox" name="ids" value={r.id} checked={on} onChange={() => ubah(r)} aria-label={`Pilih ${r.nama}`} className="size-4 accent-blue-700" />
                     </td>
                     <td className="px-3 py-2.5">
                       <Link href={`/admin/pendaftar/${r.id}`} target="_blank" className="font-semibold text-blue-700 hover:underline">
@@ -145,7 +156,15 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
         </div>
       )}
 
-      {rows.length > 0 && (
+      {/* Pilihan yang sedang tidak tampil di tabel tetap ikut terkirim. */}
+      {luarDaftar.map((r) => (
+        <span key={r.id} hidden>
+          <input type="hidden" name="ids" value={r.id} />
+          {jenis === "diterima" && (r.jurusan1Id || r.jurusan2Id) && <input type="hidden" name={`jurusan:${r.id}`} value={jurusanBaris(r)} />}
+        </span>
+      ))}
+
+      {(rows.length > 0 || terpilih.length > 0) && (
         <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-2">
           {butuhAlasan && (
             <FieldShell
@@ -203,12 +222,18 @@ function Isi({ jenis, rows, opsiAlasan, beasiswa }: { jenis: JenisPengumuman; ro
       )}
 
       {/* Bilah aksi: lengket di bawah agar tombol selalu terjangkau saat daftar panjang */}
-      {rows.length > 0 && (
+      {(rows.length > 0 || terpilih.length > 0) && (
         <div className="sticky bottom-3 z-20 rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
           {!konfirmasi ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm text-slate-600" aria-live="polite">
-                <b className="text-slate-900">{terpilih.length}</b> dari {rows.length} pendaftar dipilih
+                <b className="text-slate-900">{terpilih.length}</b> pendaftar dipilih
+                {luarDaftar.length > 0 && <span className="text-slate-500"> ({luarDaftar.length} di luar daftar yang tampil)</span>}
+                {terpilih.length > 0 && (
+                  <button type="button" onClick={() => setDipilih(new Map())} className="ml-3 font-medium text-blue-700 hover:underline">
+                    Batal pilih semua
+                  </button>
+                )}
                 {terpilih.length > 0 && tanpaJurusan.length > 0 && <span className="ml-2 text-rose-700">· {tanpaJurusan.length} belum punya pilihan jurusan</span>}
               </p>
               <button

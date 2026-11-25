@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { hapusCalonMahasiswa, hapusMahasiswaTerpilih } from "@/app/actions/hapus-pendaftar";
 import { DialogHapus } from "./dialog-hapus";
 
@@ -12,16 +12,10 @@ const usePilih = () => {
   return c;
 };
 
-/** Menyimpan mahasiswa yang dicentang di halaman ini; pilihan dibuang otomatis saat pindah halaman atau filter. */
+/** Menyimpan yang dicentang. Pilihan bertahan saat mencari, memfilter, atau pindah halaman; hanya hilang lewat "Batal pilih" atau setelah dihapus. */
 export function PilihProvider({ idHalaman, children }: { idHalaman: string[]; children: ReactNode }) {
   const [dipilih, setDipilih] = useState<Set<string>>(new Set());
   const kunci = idHalaman.join(",");
-  useEffect(() => {
-    setDipilih((s) => {
-      const sisa = new Set([...s].filter((id) => kunci.split(",").includes(id)));
-      return sisa.size === s.size ? s : sisa;
-    });
-  }, [kunci]);
   const nilai = useMemo<Ctx>(
     () => ({
       dipilih,
@@ -33,7 +27,16 @@ export function PilihProvider({ idHalaman, children }: { idHalaman: string[]; ch
           else n.delete(id);
           return n;
         }),
-      ubahSemua: (v) => setDipilih(v ? new Set(kunci ? kunci.split(",") : []) : new Set()),
+      // Hanya menyentuh baris yang tampil; pilihan dari pencarian/halaman lain tidak ikut berubah.
+      ubahSemua: (v) =>
+        setDipilih((s) => {
+          const n = new Set(s);
+          for (const id of kunci ? kunci.split(",") : []) {
+            if (v) n.add(id);
+            else n.delete(id);
+          }
+          return n;
+        }),
       kosongkan: () => setDipilih(new Set()),
     }),
     [dipilih, kunci],
@@ -61,7 +64,7 @@ export function KotakPilihSemua({ satuan = "mahasiswa" }: { satuan?: string }) {
       }}
       disabled={idHalaman.length === 0}
       onChange={(e) => ubahSemua(e.target.checked)}
-      aria-label={`Pilih semua ${satuan} di halaman ini`}
+      aria-label={`Pilih semua ${satuan} yang tampil`}
     />
   );
 }
@@ -73,14 +76,16 @@ const JENIS_HAPUS = {
 
 /** Bilah aksi yang muncul bila ada baris yang dicentang. `calon` = Master Calon Mahasiswa (id = id akun). */
 export function BarHapusMassal({ jenis = "mahasiswa" }: { jenis?: keyof typeof JENIS_HAPUS }) {
-  const { dipilih, kosongkan } = usePilih();
+  const { dipilih, idHalaman, kosongkan } = usePilih();
   if (dipilih.size === 0) return null;
   const ids = [...dipilih];
+  const luar = ids.filter((id) => !idHalaman.includes(id)).length;
   const { satuan, rincian, hapus } = JENIS_HAPUS[jenis];
   return (
     <div role="region" aria-label={`Aksi untuk ${satuan} terpilih`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
       <span className="font-medium text-blue-900">
         {ids.length} {satuan} dipilih
+        {luar > 0 && <span className="font-normal text-blue-800"> ({luar} di luar daftar yang tampil)</span>}
       </span>
       <span className="flex items-center gap-2">
         <button type="button" onClick={kosongkan} className="rounded-lg px-3 py-1.5 font-medium text-slate-700 ring-1 ring-slate-300 hover:bg-white">
